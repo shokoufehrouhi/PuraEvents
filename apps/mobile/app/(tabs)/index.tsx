@@ -11,6 +11,7 @@ import { EventIcon } from '../../src/components/EventIcon';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents } from '../../src/storage/events';
 import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
+import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import { accents } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../src/utils/calendars';
@@ -122,7 +123,12 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
         <View style={styles.rowIcons}>
           {event.reminders.length > 0 ? <Ionicons name="notifications" size={14} color={colors.secondary} /> : null}
           {event.repeat !== 'none' ? (
-            <Ionicons name="repeat" size={14} color={colors.secondary} style={{ marginLeft: 6 }} />
+            <Ionicons
+              name={REPEAT_STYLES[event.repeat].icon}
+              size={14}
+              color={REPEAT_STYLES[event.repeat].color}
+              style={{ marginLeft: 6 }}
+            />
           ) : null}
         </View>
         <Text style={[typography.headline, { color: colors.text }]}>{Math.max(days, 0)}</Text>
