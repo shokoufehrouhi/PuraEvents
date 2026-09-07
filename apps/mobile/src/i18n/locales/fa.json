@@ -76,11 +76,14 @@
     "repeatMonthlyDesc": "هر ماه، روز {{day}}",
     "repeatYearlyDesc": "هر سال، تاریخ {{date}}",
     "done": "تمام",
-    "eventDetails": "جزئیات رویداد",
+    "eventDetails": "جزئیات",
     "dateTimeLabel": "تاریخ و ساعت",
     "timezoneLabel": "منطقه زمانی",
     "reminderOn": "یادآور فعال",
-    "reminderSectionTitle": "یادآور"
+    "reminderSectionTitle": "یادآور",
+    "appearanceLabel": "ظاهر",
+    "colorLabel": "رنگ",
+    "noteSectionTitle": "یادداشت"
   },
   "countdown": {
     "days": "{{count}} روز",

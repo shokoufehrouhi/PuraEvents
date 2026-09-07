@@ -76,11 +76,14 @@
     "repeatMonthlyDesc": "Her ayın {{day}}",
     "repeatYearlyDesc": "Her yıl {{date}}",
     "done": "Bitti",
-    "eventDetails": "Etkinlik Ayrıntıları",
+    "eventDetails": "Ayrıntılar",
     "dateTimeLabel": "Tarih ve saat",
     "timezoneLabel": "Saat dilimi",
     "reminderOn": "Hatırlatıcı açık",
-    "reminderSectionTitle": "Hatırlatıcı"
+    "reminderSectionTitle": "Hatırlatıcı",
+    "appearanceLabel": "Görünüm",
+    "colorLabel": "Renk",
+    "noteSectionTitle": "Not"
   },
   "countdown": {
     "days": "{{count}}g",

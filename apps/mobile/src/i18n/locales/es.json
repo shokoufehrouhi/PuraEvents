@@ -76,11 +76,14 @@
     "repeatMonthlyDesc": "Cada mes el {{day}}",
     "repeatYearlyDesc": "Cada año el {{date}}",
     "done": "Listo",
-    "eventDetails": "Detalles del evento",
+    "eventDetails": "Detalles",
     "dateTimeLabel": "Fecha y hora",
     "timezoneLabel": "Zona horaria",
     "reminderOn": "Recordatorio activado",
-    "reminderSectionTitle": "Recordatorio"
+    "reminderSectionTitle": "Recordatorio",
+    "appearanceLabel": "Apariencia",
+    "colorLabel": "Color",
+    "noteSectionTitle": "Nota"
   },
   "countdown": {
     "days": "{{count}}d",

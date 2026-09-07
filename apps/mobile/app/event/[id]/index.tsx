@@ -1,6 +1,7 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,41 +13,42 @@ import { cancelRemindersForEvent } from '../../../src/notifications';
 import { deleteEvent, getEvent } from '../../../src/storage/events';
 import { getCategoryIcon } from '../../../src/theme/icons';
 import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext';
+import { accents } from '../../../src/theme/tokens';
 import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { reminderLabel } from '../../../src/utils/reminders';
 
-// A single "EVENT DETAILS"/"REMINDER" row: icon badge + two-line text +
-// chevron. All of them route to the edit screen — this app has no separate
-// per-field editor, so tapping any detail opens the one place they're all
-// actually editable.
+// A single "EVENT DETAILS"/"REMINDER"/"NOTE"/"APPEARANCE" row: icon badge +
+// two-line text. Purely informational, not tappable — editing any of this
+// happens through the header's own Edit button, so a per-row chevron/tap
+// would just be a second, redundant way to reach the same screen.
 function DetailRow({
   icon,
   label,
   value,
-  onPress,
+  badge,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
-  onPress: () => void;
+  // Custom leading element (e.g. the Appearance row's gradient swatch)
+  // instead of the usual neutral icon badge.
+  badge?: ReactNode;
 }) {
   const { colors, spacing, radius, typography } = useTheme();
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.detailRow, { padding: spacing.md, opacity: pressed ? 0.6 : 1 }]}
-    >
-      <View style={[styles.detailBadge, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md }]}>
-        <Ionicons name={icon} size={20} color={colors.text} />
-      </View>
+    <View style={[styles.detailRow, { padding: spacing.md }]}>
+      {badge ?? (
+        <View style={[styles.detailBadge, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md }]}>
+          {icon ? <Ionicons name={icon} size={20} color={colors.text} /> : null}
+        </View>
+      )}
       <View style={{ flex: 1, marginLeft: 12 }}>
         <Text style={[typography.bodyStrong, { color: colors.text }]}>{label}</Text>
-        <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{value}</Text>
+        {value ? <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{value}</Text> : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.outline} />
-    </Pressable>
+    </View>
   );
 }
 
@@ -156,9 +158,9 @@ export default function EventDetailScreen() {
         </View>
 
         <Section title={t('events.eventDetails')}>
-          <DetailRow icon="calendar-outline" label={t('events.dateTimeLabel')} value={dateTimeValue} onPress={goEdit} />
-          <DetailRow icon="globe-outline" label={t('events.timezoneLabel')} value={event.timezone} onPress={goEdit} />
-          <DetailRow icon="repeat" label={t('events.repeatLabel')} value={t(`events.repeat.${event.repeat}`)} onPress={goEdit} />
+          <DetailRow icon="calendar-outline" label={t('events.dateTimeLabel')} value={dateTimeValue} />
+          <DetailRow icon="globe-outline" label={t('events.timezoneLabel')} value={event.timezone} />
+          <DetailRow icon="repeat" label={t('events.repeatLabel')} value={t(`events.repeat.${event.repeat}`)} />
         </Section>
 
         {event.reminders.length > 0 ? (
@@ -167,20 +169,31 @@ export default function EventDetailScreen() {
               const fireAt = nextOccurrence.subtract(offset, 'minute');
               const fireTime = fireAt.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm');
               const fireValue = `${formatCivilDateFull(fireAt.toISOString(), prefs.calendar, useFarsiDigits)} · ${fireTime}`;
-              return (
-                <DetailRow key={offset} icon="notifications-outline" label={reminderLabel(offset, t)} value={fireValue} onPress={goEdit} />
-              );
+              return <DetailRow key={offset} icon="notifications-outline" label={reminderLabel(offset, t)} value={fireValue} />;
             })}
           </Section>
         ) : null}
 
         {event.note ? (
-          <Section title={t('events.noteLabel')}>
-            <View style={{ padding: spacing.md }}>
-              <Text style={[typography.body, { color: colors.text }]}>{event.note}</Text>
-            </View>
+          <Section title={t('events.noteSectionTitle')}>
+            <DetailRow icon="document-text-outline" label={event.note} value="" />
           </Section>
         ) : null}
+
+        <Section title={t('events.appearanceLabel')}>
+          <DetailRow
+            label={t('events.colorLabel')}
+            value={`${event.accentColor.charAt(0).toUpperCase()}${event.accentColor.slice(1)} · ${t(`events.category.${event.category}`)}`}
+            badge={
+              <LinearGradient
+                colors={[accents[event.accentColor], accents.violet]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.detailBadge, { borderRadius: radius.md }]}
+              />
+            }
+          />
+        </Section>
 
         <View style={styles.buttonRow}>
           <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
