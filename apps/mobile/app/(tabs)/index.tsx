@@ -80,6 +80,16 @@ export default function EventListScreen() {
   const [events, setEvents] = useState<PurEvent[]>([]);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
   const [heroPhotoUri, setHeroPhotoUri] = useState<string | null>(null);
+  // Ticks the Upcoming/Past split live (see the useMemo below) so an event
+  // moves to Past on its own once its time passes, without the user having
+  // to leave and come back to this screen — same cadence as HeroCountdown's
+  // own tick.
+  const [now, setNow] = useState(() => dayjs());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(dayjs()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -109,7 +119,6 @@ export default function EventListScreen() {
   }, []);
 
   const { upcoming, pastList } = useMemo(() => {
-    const now = dayjs();
     // A repeating event's *next* occurrence is always upcoming by
     // definition — only a one-time (repeat: 'none') event can be "past".
     const isPast = (e: PurEvent) => e.repeat === 'none' && !dayjs(e.dateTimeISO).isAfter(now);
@@ -117,7 +126,7 @@ export default function EventListScreen() {
       upcoming: events.filter((e) => !isPast(e)),
       pastList: events.filter(isPast).reverse(),
     };
-  }, [events]);
+  }, [events, now]);
 
   const listData = tab === 'upcoming' ? upcoming : pastList;
 
