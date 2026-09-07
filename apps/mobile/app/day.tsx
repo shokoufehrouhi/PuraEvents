@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CivilCalendarPicker } from '../src/components/CivilCalendarPicker';
 import { EventHeroCard } from '../src/components/EventHeroCard';
+import { EmptyState } from '../src/components/ui/EmptyState';
 import { listEvents } from '../src/storage/events';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { accents, rowBadgeColors } from '../src/theme/tokens';
@@ -149,36 +150,44 @@ export default function DayScreen() {
         </Text>
       </View>
 
-      {/* "Events" timeline card — bell-badge header (+ a persistent "+ Add"
-          shortcut) followed by every event on the selected date as a
-          colored-dot/name/date-time row connected by a thin vertical line,
-          hairline dividers between rows, chevron to open that event's
-          detail. Per the supplied component spec (light/dark + empty
-          variant), not the earlier per-event separate-card style. */}
-      <View style={[styles.timelineCard, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
-        <View style={[styles.timelineHeader, { padding: spacing.md }]}>
-          <View style={[styles.timelineHeaderBadge, { backgroundColor: rowBadgeColors.pink, borderRadius: radius.md }]}>
-            <Ionicons name="notifications" size={18} color="#FFFFFF" />
+      {dayEvents.length === 0 ? (
+        // Same illustrated "holder" used for the Events tab's own empty
+        // states — not the timeline card's header at all in this case,
+        // matching how the Events tab shows only the EmptyState (no
+        // grouped-card header stacked above it) when a tab has nothing.
+        <EmptyState
+          icon="calendar-outline"
+          badgeIcon="time"
+          badgeColor={colors.primary}
+          title={t('day.emptyTitle')}
+          subtitle={t('day.emptySubtitle')}
+          action={{ kind: 'button', label: t('events.createEvent'), onPress: () => router.push('/event/new') }}
+        />
+      ) : (
+        // "Events" timeline card — bell-badge header (+ a persistent
+        // "+ Add" shortcut) followed by every event on the selected date
+        // as a colored-dot/name/date-time row connected by a thin vertical
+        // line, hairline dividers between rows, chevron to open that
+        // event's detail.
+        <View style={[styles.timelineCard, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
+          <View style={[styles.timelineHeader, { padding: spacing.md }]}>
+            <View style={[styles.timelineHeaderBadge, { backgroundColor: rowBadgeColors.pink, borderRadius: radius.md }]}>
+              <Ionicons name="notifications" size={18} color="#FFFFFF" />
+            </View>
+            <Text style={[typography.bodyStrong, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t('tabs.events')}</Text>
+            <Pressable onPress={() => router.push('/event/new')} hitSlop={8}>
+              <Text style={[typography.bodyStrong, { color: colors.primary }]}>+ {t('events.add')}</Text>
+            </Pressable>
           </View>
-          <Text style={[typography.bodyStrong, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t('tabs.events')}</Text>
-          <Pressable onPress={() => router.push('/event/new')} hitSlop={8}>
-            <Text style={[typography.bodyStrong, { color: colors.primary }]}>+ {t('events.add')}</Text>
-          </Pressable>
+          <View style={[styles.divider, { backgroundColor: colors.outline }]} />
+          {dayEvents.map((event, i) => (
+            <Fragment key={event.id}>
+              <DayEventRow event={event} isLast={i === dayEvents.length - 1} onPress={() => router.push(`/event/${event.id}`)} />
+              {i < dayEvents.length - 1 ? <View style={[styles.divider, { backgroundColor: colors.outline }]} /> : null}
+            </Fragment>
+          ))}
         </View>
-        {dayEvents.length === 0 ? (
-          <Text style={[typography.body, styles.timelineEmpty, { color: colors.secondary }]}>{t('day.empty')}</Text>
-        ) : (
-          <>
-            <View style={[styles.divider, { backgroundColor: colors.outline }]} />
-            {dayEvents.map((event, i) => (
-              <Fragment key={event.id}>
-                <DayEventRow event={event} isLast={i === dayEvents.length - 1} onPress={() => router.push(`/event/${event.id}`)} />
-                {i < dayEvents.length - 1 ? <View style={[styles.divider, { backgroundColor: colors.outline }]} /> : null}
-              </Fragment>
-            ))}
-          </>
-        )}
-      </View>
+      )}
     </ScrollView>
   );
 }
@@ -188,7 +197,6 @@ const styles = StyleSheet.create({
   timelineCard: { overflow: 'hidden' },
   timelineHeader: { flexDirection: 'row', alignItems: 'center' },
   timelineHeaderBadge: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  timelineEmpty: { textAlign: 'center', paddingHorizontal: 16, paddingBottom: 20 },
   timelineRow: { flexDirection: 'row' },
   timelineGutter: { width: 20, alignItems: 'center', marginRight: 12 },
   timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 18 },

@@ -190,7 +190,8 @@
     "system": "System"
   },
   "day": {
-    "empty": "Keine Ereignisse an diesem Tag.",
+    "emptyTitle": "Keine Ereignisse",
+    "emptySubtitle": "Für diesen Tag geplante Ereignisse erscheinen hier.",
     "backTitle": "Start",
     "at": "um"
   }

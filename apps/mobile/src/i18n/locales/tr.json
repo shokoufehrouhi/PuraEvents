@@ -190,7 +190,8 @@
     "system": "Sistem"
   },
   "day": {
-    "empty": "Bu gün için etkinlik yok.",
+    "emptyTitle": "Etkinlik yok",
+    "emptySubtitle": "Bu gün için planlanan etkinlikler burada görünecek.",
     "backTitle": "Ana Sayfa",
     "at": "saat"
   }
