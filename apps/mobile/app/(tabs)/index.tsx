@@ -10,6 +10,7 @@ import { EventHeroCard } from '../../src/components/EventHeroCard';
 import { EventIcon } from '../../src/components/EventIcon';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents } from '../../src/storage/events';
+import { getCategoryIcon } from '../../src/theme/icons';
 import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
 import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import { accents } from '../../src/theme/tokens';
@@ -101,6 +102,10 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
   const { prefs } = usePreferences();
   const nextOccurrence = getNextOccurrence(event.dateTimeISO, event.repeat);
   const days = daysUntil(nextOccurrence.toISOString());
+  // Matches the mockup: the remaining-days count/label is tinted with the
+  // event's own category color instead of neutral text, same color used
+  // for that category's icon badge elsewhere.
+  const { color: categoryColor } = getCategoryIcon(event.category);
 
   return (
     <Pressable
@@ -132,8 +137,8 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
           ) : null}
         </View>
         <View style={styles.rowDays}>
-          <Text style={[typography.headline, styles.rowDaysNumber, { color: colors.text }]}>{Math.max(days, 0)}</Text>
-          <Text style={[typography.caption, styles.rowDate, { color: colors.secondary }]}>DAYS</Text>
+          <Text style={[typography.headline, styles.rowDaysNumber, { color: categoryColor }]}>{Math.max(days, 0)}</Text>
+          <Text style={[typography.caption, styles.rowDate, { color: categoryColor }]}>DAYS</Text>
         </View>
       </View>
     </Pressable>
