@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CivilCalendarPicker } from '../src/components/CivilCalendarPicker';
 import { EventHeroCard } from '../src/components/EventHeroCard';
 import { EventIcon } from '../src/components/EventIcon';
+import { EmptyState } from '../src/components/ui/EmptyState';
 import { listEvents } from '../src/storage/events';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import type { PurEvent } from '../src/types/event';
@@ -112,7 +113,13 @@ export default function DayScreen() {
         </View>
 
         {dayEvents.length === 0 ? (
-          <Text style={[typography.body, styles.empty, { color: colors.secondary }]}>{t('day.empty')}</Text>
+          <EmptyState
+            icon="calendar-outline"
+            badgeIcon="time"
+            badgeColor={colors.primary}
+            title={t('day.emptyTitle')}
+            subtitle={t('day.emptySubtitle')}
+          />
         ) : (
           dayEvents.map((event) => (
             <Pressable
@@ -144,5 +151,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
   eventRow: { flexDirection: 'row', alignItems: 'center' },
   eventRowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
-  empty: { textAlign: 'center', marginTop: 24 },
 });

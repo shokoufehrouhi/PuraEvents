@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventHeroCard } from '../../src/components/EventHeroCard';
 import { EventIcon } from '../../src/components/EventIcon';
+import { EmptyState } from '../../src/components/ui/EmptyState';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents } from '../../src/storage/events';
 import { getCategoryIcon } from '../../src/theme/icons';
@@ -21,79 +22,6 @@ import { getNextOccurrence } from '../../src/utils/recurrence';
 
 function daysUntil(iso: string): number {
   return Math.ceil(dayjs(iso).diff(dayjs(), 'hour') / 24);
-}
-
-interface EmptyStateAction {
-  kind: 'button' | 'link';
-  label: string;
-  onPress: () => void;
-}
-
-// Placeholder card for an empty Upcoming/Past list, per the "Compact
-// holder" mockup: a soft primary-tinted card with a two-layer icon
-// illustration (a big soft-circle badge + a small solid corner badge),
-// bold title, secondary subtitle, and a next-step action (a "Create
-// event" button for Upcoming, a "View upcoming events" link for Past).
-// Built from theme tokens/Ionicons rather than cropped mockup art so it
-// stays theme-aware (light/dark) and mirrors correctly under RTL — the
-// mockup's own callouts ("RTL ready", "Light + Dark ready") point the
-// same direction a static raster illustration couldn't follow.
-function EmptyState({
-  icon,
-  badgeIcon,
-  badgeColor,
-  title,
-  subtitle,
-  action,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  badgeIcon: keyof typeof Ionicons.glyphMap;
-  badgeColor: string;
-  title: string;
-  subtitle: string;
-  action: EmptyStateAction;
-}) {
-  const { colors, spacing, radius, typography } = useTheme();
-  return (
-    <View
-      style={[
-        styles.emptyBox,
-        {
-          backgroundColor: `${colors.primary}0D`,
-          borderColor: `${colors.primary}33`,
-          borderRadius: radius.lg,
-          padding: spacing.xl,
-        },
-      ]}
-    >
-      <View style={styles.emptyIllustration}>
-        <View style={[styles.emptyIconCircle, { backgroundColor: `${colors.primary}1F` }]}>
-          <Ionicons name={icon} size={38} color={colors.primary} />
-        </View>
-        <View style={[styles.emptyBadge, { backgroundColor: badgeColor, borderColor: colors.background }]}>
-          <Ionicons name={badgeIcon} size={15} color="#FFFFFF" />
-        </View>
-      </View>
-      <Text style={[typography.bodyStrong, styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-      <Text style={[typography.caption, styles.emptySubtitle, { color: colors.secondary }]}>{subtitle}</Text>
-      {action.kind === 'button' ? (
-        <Pressable
-          onPress={action.onPress}
-          style={({ pressed }) => [
-            styles.emptyButton,
-            { backgroundColor: colors.primary, borderRadius: radius.pill, opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <Ionicons name="add" size={16} color="#FFFFFF" />
-          <Text style={styles.emptyButtonText}>{action.label}</Text>
-        </Pressable>
-      ) : (
-        <Pressable onPress={action.onPress} hitSlop={8} style={{ marginTop: spacing.sm }}>
-          <Text style={[typography.bodyStrong, { color: colors.primary }]}>{action.label}</Text>
-        </Pressable>
-      )}
-    </View>
-  );
 }
 
 function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) {
@@ -274,28 +202,4 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 19 },
   rowDate: { fontSize: 15 },
   rowDaysNumber: { fontSize: 24 },
-  emptyBox: { alignItems: 'center', borderWidth: 1, marginTop: 32 },
-  emptyIllustration: { marginBottom: 16 },
-  emptyIconCircle: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center' },
-  emptyBadge: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
-  emptySubtitle: { textAlign: 'center', marginBottom: 16, paddingHorizontal: 8 },
-  emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-  },
-  emptyButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });
