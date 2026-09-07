@@ -1,74 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventHeroCard } from '../../src/components/EventHeroCard';
-import { EventIcon } from '../../src/components/EventIcon';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents } from '../../src/storage/events';
-import { getCategoryIcon } from '../../src/theme/icons';
 import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
-import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import { accents } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence } from '../../src/utils/recurrence';
 
-function daysUntil(iso: string): number {
-  return Math.ceil(dayjs(iso).diff(dayjs(), 'hour') / 24);
-}
-
+// One row inside the grouped "Events" card below — name + date/time,
+// chevron to open the detail screen. Matches the Reminders section's row
+// format (see event detail/wizard) rather than the earlier per-event card
+// with its own icon/countdown-number, per explicit request.
 function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) {
-  const { colors, spacing, radius, typography } = useTheme();
+  const { colors, spacing, typography } = useTheme();
   const { i18n } = useTranslation();
   const { prefs } = usePreferences();
   const nextOccurrence = getNextOccurrence(event.dateTimeISO, event.repeat);
-  const days = daysUntil(nextOccurrence.toISOString());
-  // Matches the mockup: the remaining-days count/label is tinted with the
-  // event's own category color instead of neutral text, same color used
-  // for that category's icon badge elsewhere.
-  const { color: categoryColor } = getCategoryIcon(event.category);
+  const time = nextOccurrence.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm');
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.sm + 4, opacity: pressed ? 0.7 : 1 },
-      ]}
+      style={({ pressed }) => [styles.groupedRow, { paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 4, opacity: pressed ? 0.6 : 1 }]}
     >
-      <EventIcon category={event.category} size={58} />
-      <View style={styles.rowMiddle}>
-        <Text style={[typography.bodyStrong, styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
+      <View style={{ flex: 1 }}>
+        <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
           {event.title}
         </Text>
-        <Text style={[typography.caption, styles.rowDate, { color: colors.secondary }]}>
-          {formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, shouldUseFarsiDigits(i18n.language))}
+        <Text style={[typography.caption, { color: colors.secondary }]}>
+          {formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, shouldUseFarsiDigits(i18n.language))} · {time}
         </Text>
       </View>
-      <View style={styles.rowRight}>
-        <View style={styles.rowIcons}>
-          {event.reminders.length > 0 ? <Ionicons name="notifications" size={24} color={colors.secondary} /> : null}
-          {event.repeat !== 'none' ? (
-            <Ionicons
-              name={REPEAT_STYLES[event.repeat].icon}
-              size={24}
-              color={REPEAT_STYLES[event.repeat].color}
-              style={{ marginLeft: 8 }}
-            />
-          ) : null}
-        </View>
-        <View style={styles.rowDays}>
-          <Text style={[typography.headline, styles.rowDaysNumber, { color: categoryColor }]}>{Math.max(days, 0)}</Text>
-          <Text style={[typography.caption, styles.rowDate, { color: categoryColor }]}>Days</Text>
-        </View>
-      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.outline} />
     </Pressable>
   );
 }
@@ -76,7 +49,7 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
 export default function EventListScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { colors, spacing, typography } = useTheme();
+  const { colors, spacing, radius, typography } = useTheme();
   const [events, setEvents] = useState<PurEvent[]>([]);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
   const [heroPhotoUri, setHeroPhotoUri] = useState<string | null>(null);
@@ -141,11 +114,8 @@ export default function EventListScreen() {
         />
       </View>
 
-      <FlatList
-        data={listData}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
-        ListHeaderComponent={
+      <ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}>
+        {tab === 'upcoming' ? (
           // Always a generic "Today" banner — never tied to a specific
           // event's title/countdown (a user explicitly asked why "their"
           // event had to sit on the banner instead of just showing as a
@@ -153,53 +123,63 @@ export default function EventListScreen() {
           // the Day view (app/day.tsx) — a browsable day-by-day agenda,
           // defaulting to today, listing whatever events fall on the
           // selected date.
-          tab === 'upcoming' ? (
-            <Pressable onPress={() => router.push('/day')} style={{ marginBottom: spacing.sm }}>
-              <EventHeroCard photoUri={heroPhotoUri ?? undefined} />
-            </Pressable>
-          ) : null
-        }
-        ListEmptyComponent={
-          // Upcoming/Past both just check their own list now that the
-          // banner no longer "hides" the nearest event — Past keeps its
-          // own message (no "add your first countdown" CTA — that action
-          // belongs to the Upcoming/global empty state).
-          tab === 'upcoming' ? (
-            upcoming.length === 0 ? (
-              <EmptyState
-                icon="calendar-outline"
-                badgeIcon="time"
-                badgeColor={colors.primary}
-                title={t('events.emptyTitle')}
-                subtitle={t('events.emptySubtitle')}
-                action={{ kind: 'button', label: t('events.createEvent'), onPress: () => router.push('/event/new') }}
-              />
-            ) : null
-          ) : pastList.length === 0 ? (
-            <EmptyState
-              icon="mail-open-outline"
-              badgeIcon="checkmark"
-              badgeColor={accents.mint}
-              title={t('events.emptyPastTitle')}
-              subtitle={t('events.emptyPastSubtitle')}
-              action={{ kind: 'link', label: t('events.viewUpcoming'), onPress: () => setTab('upcoming') }}
-            />
-          ) : null
-        }
-        renderItem={({ item }) => <EventRow event={item} onPress={() => router.push(`/event/${item.id}`)} />}
-      />
+          <Pressable onPress={() => router.push('/day')}>
+            <EventHeroCard photoUri={heroPhotoUri ?? undefined} />
+          </Pressable>
+        ) : null}
+
+        {listData.length > 0 ? (
+          // Grouped card matching the Reminders section's look (see event
+          // detail/wizard): a title row (bell + "Events" + a persistent
+          // "+ Add" shortcut alongside the header's own add button) with
+          // every event as a name/date-time row underneath, hairline
+          // dividers between them, chevron to open that event's detail.
+          <View style={[styles.groupedCard, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
+            <View style={[styles.groupedHeader, { padding: spacing.md }]}>
+              <Ionicons name="notifications" size={20} color={colors.text} />
+              <Text style={[typography.bodyStrong, { color: colors.text, flex: 1, marginLeft: 10 }]}>
+                {t('tabs.events')}
+              </Text>
+              <Pressable onPress={() => router.push('/event/new')} hitSlop={8}>
+                <Text style={[typography.bodyStrong, { color: colors.primary }]}>+ {t('events.add')}</Text>
+              </Pressable>
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.outline }]} />
+            {listData.map((item, i) => (
+              <Fragment key={item.id}>
+                <EventRow event={item} onPress={() => router.push(`/event/${item.id}`)} />
+                {i < listData.length - 1 ? <View style={[styles.divider, { backgroundColor: colors.outline }]} /> : null}
+              </Fragment>
+            ))}
+          </View>
+        ) : tab === 'upcoming' ? (
+          <EmptyState
+            icon="calendar-outline"
+            badgeIcon="time"
+            badgeColor={colors.primary}
+            title={t('events.emptyTitle')}
+            subtitle={t('events.emptySubtitle')}
+            action={{ kind: 'button', label: t('events.createEvent'), onPress: () => router.push('/event/new') }}
+          />
+        ) : (
+          <EmptyState
+            icon="mail-open-outline"
+            badgeIcon="checkmark"
+            badgeColor={accents.mint}
+            title={t('events.emptyPastTitle')}
+            subtitle={t('events.emptyPastSubtitle')}
+            action={{ kind: 'link', label: t('events.viewUpcoming'), onPress: () => setTab('upcoming') }}
+          />
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  rowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
-  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rowIcons: { flexDirection: 'row', alignItems: 'center' },
-  rowDays: { alignItems: 'center' },
-  rowTitle: { fontSize: 19 },
-  rowDate: { fontSize: 15 },
-  rowDaysNumber: { fontSize: 24 },
+  groupedCard: { overflow: 'hidden' },
+  groupedHeader: { flexDirection: 'row', alignItems: 'center' },
+  groupedRow: { flexDirection: 'row', alignItems: 'center' },
+  divider: { height: StyleSheet.hairlineWidth },
 });
