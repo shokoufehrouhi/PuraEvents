@@ -190,6 +190,7 @@
     "system": "Sistem"
   },
   "day": {
+    "title": "Gün",
     "emptyTitle": "Etkinlik yok",
     "emptySubtitle": "Bu gün için planlanan etkinlikler burada görünecek."
   }

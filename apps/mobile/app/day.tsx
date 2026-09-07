@@ -4,7 +4,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CivilCalendarPicker } from '../src/components/CivilCalendarPicker';
 import { EventHeroCard } from '../src/components/EventHeroCard';
@@ -17,12 +16,14 @@ import { formatCivilDateFull, shouldUseFarsiDigits } from '../src/utils/calendar
 import { fetchLocationPhotoUrl } from '../src/utils/locationPhoto';
 import { doesEventOccurOnDate } from '../src/utils/recurrence';
 
-// Opened by tapping the Events tab's "Today" hero banner. Same hero banner
-// up top (always the real current date/time, unrelated to what's picked
-// below); a date row lets the user browse any day (past or future); the
-// device timezone is shown for context but isn't a per-event setting so
-// it's read-only; and the list below shows every event — repeating or
-// not — that falls on whichever day is currently selected, in time order.
+// Opened by tapping the Events tab's "Today" hero banner. Title/back button
+// are the native Stack header (see app/_layout.tsx's "day" screen options),
+// not a custom in-screen header. Same hero banner up top (always the real
+// current date/time, unrelated to what's picked below); a date row lets
+// the user browse any day (past or future); the device timezone is shown
+// for context but isn't a per-event setting so it's read-only; and the
+// list below shows every event — repeating or not — that falls on
+// whichever day is currently selected, in time order.
 export default function DayScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -70,84 +71,78 @@ export default function DayScreen() {
   const utcOffset = dayjs().format('Z');
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </Pressable>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
+    >
+      <EventHeroCard photoUri={heroPhotoUri ?? undefined} />
+
+      <Pressable
+        onPress={() => setDatePickerOpen((v) => !v)}
+        style={[styles.row, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md }]}
+      >
+        <Ionicons name="calendar-outline" size={20} color={colors.secondary} />
+        <Text style={[typography.body, { color: colors.text, marginLeft: 10, flex: 1 }]}>
+          {formatCivilDateFull(selectedDate.toISOString(), prefs.calendar, useFarsiDigits)}
+        </Text>
+        <Ionicons name={datePickerOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
+      </Pressable>
+
+      {datePickerOpen ? (
+        <CivilCalendarPicker
+          calendar={prefs.calendar}
+          value={selectedDate}
+          onChange={(date) => {
+            setSelectedDate(date);
+            setDatePickerOpen(false);
+          }}
+          useFarsiDigits={useFarsiDigits}
+        />
+      ) : null}
+
+      {/* Device timezone, informational only — not a per-event field, so
+          no chevron/onPress here (unlike the date row above it). */}
+      <View style={[styles.row, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md }]}>
+        <Ionicons name="globe-outline" size={20} color={colors.secondary} />
+        <Text style={[typography.body, { color: colors.text, marginLeft: 10 }]}>
+          {deviceTimeZone} (UTC{utcOffset})
+        </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}>
-        <EventHeroCard photoUri={heroPhotoUri ?? undefined} />
-
-        <Pressable
-          onPress={() => setDatePickerOpen((v) => !v)}
-          style={[styles.row, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md }]}
-        >
-          <Ionicons name="calendar-outline" size={20} color={colors.secondary} />
-          <Text style={[typography.body, { color: colors.text, marginLeft: 10, flex: 1 }]}>
-            {formatCivilDateFull(selectedDate.toISOString(), prefs.calendar, useFarsiDigits)}
-          </Text>
-          <Ionicons name={datePickerOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
-        </Pressable>
-
-        {datePickerOpen ? (
-          <CivilCalendarPicker
-            calendar={prefs.calendar}
-            value={selectedDate}
-            onChange={(date) => {
-              setSelectedDate(date);
-              setDatePickerOpen(false);
-            }}
-            useFarsiDigits={useFarsiDigits}
-          />
-        ) : null}
-
-        {/* Device timezone, informational only — not a per-event field, so
-            no chevron/onPress here (unlike the date row above it). */}
-        <View style={[styles.row, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md }]}>
-          <Ionicons name="globe-outline" size={20} color={colors.secondary} />
-          <Text style={[typography.body, { color: colors.text, marginLeft: 10 }]}>
-            {deviceTimeZone} (UTC{utcOffset})
-          </Text>
-        </View>
-
-        {dayEvents.length === 0 ? (
-          <EmptyState
-            icon="calendar-outline"
-            badgeIcon="time"
-            badgeColor={colors.primary}
-            title={t('day.emptyTitle')}
-            subtitle={t('day.emptySubtitle')}
-          />
-        ) : (
-          dayEvents.map((event) => (
-            <Pressable
-              key={event.id}
-              onPress={() => router.push(`/event/${event.id}`)}
-              style={({ pressed }) => [
-                styles.eventRow,
-                { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.sm + 4, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <EventIcon category={event.category} size={44} />
-              <View style={styles.eventRowMiddle}>
-                <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
-                  {event.title}
-                </Text>
-                <Text style={[typography.caption, { color: colors.secondary }]}>{dayjs(event.dateTimeISO).format('HH:mm')}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
-    </SafeAreaView>
+      {dayEvents.length === 0 ? (
+        <EmptyState
+          icon="calendar-outline"
+          badgeIcon="time"
+          badgeColor={colors.primary}
+          title={t('day.emptyTitle')}
+          subtitle={t('day.emptySubtitle')}
+        />
+      ) : (
+        dayEvents.map((event) => (
+          <Pressable
+            key={event.id}
+            onPress={() => router.push(`/event/${event.id}`)}
+            style={({ pressed }) => [
+              styles.eventRow,
+              { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.sm + 4, opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <EventIcon category={event.category} size={44} />
+            <View style={styles.eventRowMiddle}>
+              <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
+                {event.title}
+              </Text>
+              <Text style={[typography.caption, { color: colors.secondary }]}>{dayjs(event.dateTimeISO).format('HH:mm')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+          </Pressable>
+        ))
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 8, paddingBottom: 4 },
   row: { flexDirection: 'row', alignItems: 'center' },
   eventRow: { flexDirection: 'row', alignItems: 'center' },
   eventRowMiddle: { flex: 1, marginLeft: 12, gap: 2 },

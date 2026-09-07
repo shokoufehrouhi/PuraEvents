@@ -190,6 +190,7 @@
     "system": "System"
   },
   "day": {
+    "title": "Tag",
     "emptyTitle": "Keine Ereignisse",
     "emptySubtitle": "Für diesen Tag geplante Ereignisse erscheinen hier."
   }
