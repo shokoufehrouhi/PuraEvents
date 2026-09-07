@@ -4,7 +4,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
 import { Button } from '../../../src/components/ui/Button';
@@ -57,6 +57,7 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { prefs } = usePreferences();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [event, setEvent] = useState<PurEvent | null>(null);
 
@@ -194,16 +195,17 @@ export default function EventDetailScreen() {
             }
           />
         </Section>
-
-        <View style={styles.buttonRow}>
-          <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
-          <Button
-            label={t('events.addWidget')}
-            onPress={() => router.push('/widgets')}
-            style={{ flex: 1, marginLeft: 8 }}
-          />
-        </View>
       </ScrollView>
+
+      <View
+        style={[
+          styles.footer,
+          { paddingHorizontal: spacing.md, paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.outline, backgroundColor: colors.background },
+        ]}
+      >
+        <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
+        <Button label={t('events.addWidget')} onPress={() => router.push('/widgets')} style={{ flex: 1, marginLeft: 8 }} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -226,5 +228,7 @@ const styles = StyleSheet.create({
   },
   detailRow: { flexDirection: 'row', alignItems: 'center' },
   detailBadge: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  buttonRow: { flexDirection: 'row', marginTop: 8 },
+  // Fixed outside the ScrollView so Share/Add Widget always stay visible at
+  // the bottom of the screen — only the form content above scrolls.
+  footer: { flexDirection: 'row', paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
 });
