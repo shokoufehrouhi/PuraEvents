@@ -50,8 +50,8 @@ export function HeroCountdown({ targetISO, textColor = '#fff', labelColor = 'rgb
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 22 },
-  col: { alignItems: 'flex-start' },
-  number: { fontSize: 52, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 56 },
+  col: { alignItems: 'center' },
+  number: { fontSize: 50, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 54 },
   label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, marginTop: 2 },
   past: { fontSize: 20, fontWeight: '700' },
 });
