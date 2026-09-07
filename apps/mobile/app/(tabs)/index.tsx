@@ -124,13 +124,20 @@ export default function EventListScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Text style={[typography.title, { color: colors.text }]}>{t('appName')}</Text>
-        <Pressable onPress={() => router.push('/event/new')} hitSlop={12}>
-          <Ionicons name="add-circle" size={30} color={colors.primary} />
+        <Text style={[typography.title, styles.headerTitle, { color: colors.text }]}>{t('appName')}</Text>
+        <Pressable
+          onPress={() => router.push('/event/new')}
+          hitSlop={12}
+          style={({ pressed }) => [
+            styles.headerAddButton,
+            { backgroundColor: colors.surface, borderColor: colors.outline, opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Ionicons name="add" size={22} color={colors.primary} />
         </Pressable>
       </View>
 
-      <View style={{ paddingHorizontal: spacing.md, marginTop: spacing.sm }}>
+      <View style={{ paddingHorizontal: spacing.md, marginTop: spacing.lg }}>
         <SegmentedControl
           value={tab}
           onChange={setTab}
@@ -194,6 +201,15 @@ export default function EventListScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
+  headerTitle: { fontSize: 28, fontWeight: '700' },
+  headerAddButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
