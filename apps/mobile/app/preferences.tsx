@@ -159,7 +159,14 @@ export default function PreferencesScreen() {
       </Section>
 
       <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>Preview</Text>
-      <EventHeroCard event={previewEvent} height={140} photoUri={previewPhotoUri ?? undefined} showPhoto />
+      <EventHeroCard
+        event={previewEvent}
+        height={140}
+        photoUri={previewPhotoUri ?? undefined}
+        showPhoto
+        countdownNumberSize={36}
+        countdownLabelSize={9}
+      />
     </ScrollView>
   );
 }

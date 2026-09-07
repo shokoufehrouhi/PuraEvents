@@ -7,12 +7,24 @@ interface Props {
   targetISO: string;
   textColor?: string;
   labelColor?: string;
+  // Overrides for spots that want a smaller countdown than the default
+  // (e.g. Preferences' compact Preview card) without shrinking every other
+  // hero card that shares this component (Events tab, event detail, wizard
+  // preview) — leave unset for the standard size.
+  numberSize?: number;
+  labelSize?: number;
 }
 
 // Big three-column D/H/M countdown used on hero cards (event list + detail),
 // matching the approved mockups. Ticks once a minute — the seconds-level
 // CountdownText component is used in tighter row layouts instead.
-export function HeroCountdown({ targetISO, textColor = '#fff', labelColor = 'rgba(255,255,255,0.75)' }: Props) {
+export function HeroCountdown({
+  targetISO,
+  textColor = '#fff',
+  labelColor = 'rgba(255,255,255,0.75)',
+  numberSize = 44,
+  labelSize = 12,
+}: Props) {
   const { t } = useTranslation();
   const [now, setNow] = useState(() => dayjs());
 
@@ -40,8 +52,8 @@ export function HeroCountdown({ targetISO, textColor = '#fff', labelColor = 'rgb
     <View style={styles.row}>
       {columns.map(([value, label]) => (
         <View key={label} style={styles.col}>
-          <Text style={[styles.number, { color: textColor }]}>{value}</Text>
-          <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
+          <Text style={[styles.number, { color: textColor, fontSize: numberSize, lineHeight: numberSize + 4 }]}>{value}</Text>
+          <Text style={[styles.label, { color: labelColor, fontSize: labelSize }]}>{label}</Text>
         </View>
       ))}
     </View>
@@ -51,7 +63,7 @@ export function HeroCountdown({ targetISO, textColor = '#fff', labelColor = 'rgb
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 22 },
   col: { alignItems: 'center' },
-  number: { fontSize: 48, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 52 },
-  label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, marginTop: 2 },
+  number: { fontWeight: '900', fontVariant: ['tabular-nums'] },
+  label: { fontWeight: '800', letterSpacing: 0.5, marginTop: 2 },
   past: { fontSize: 20, fontWeight: '700' },
 });

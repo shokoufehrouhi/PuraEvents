@@ -36,6 +36,11 @@ interface Props {
   // photo background regardless of fetch success, e.g. the Preferences
   // screen's live preview.
   showPhoto?: boolean;
+  // Shrinks just the D/H/M countdown's own text — for a compact card (e.g.
+  // Preferences' Preview) without affecting every other hero card that
+  // shares HeroCountdown's default size.
+  countdownNumberSize?: number;
+  countdownLabelSize?: number;
 }
 
 // Hero card for an event — one of three flat presets (Clean/Color/Dark, see
@@ -43,7 +48,7 @@ interface Props {
 // fills with the event's own accentColor; the other two are fixed colors
 // independent of accent/category. MVP has no cover-photo picker yet — see
 // docs/PROJECT.md follow-ups.
-export function EventHeroCard({ event, height = 170, photoUri, showPhoto }: Props) {
+export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countdownNumberSize, countdownLabelSize }: Props) {
   const { t, i18n } = useTranslation();
   const { radius, spacing, prefs } = usePreferences();
   const preset = event ? CARD_THEMES[event.cardTheme] ?? CARD_THEMES.color : CARD_THEMES.color;
@@ -96,7 +101,13 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto }: Prop
           <Text style={[styles.dateLine, { color: secondaryColor }]} numberOfLines={1}>
             {formatEventDateLine(nextOccurrenceISO, event.repeat, prefs.calendar, i18n.language)}
           </Text>
-          <HeroCountdown targetISO={nextOccurrenceISO} textColor={textColor} labelColor={secondaryColor} />
+          <HeroCountdown
+            targetISO={nextOccurrenceISO}
+            textColor={textColor}
+            labelColor={secondaryColor}
+            numberSize={countdownNumberSize}
+            labelSize={countdownLabelSize}
+          />
         </View>
       </>
     ) : (
