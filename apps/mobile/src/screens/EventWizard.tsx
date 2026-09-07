@@ -264,7 +264,7 @@ export function EventWizard({ mode, eventId }: Props) {
             onPress={openCategoryPicker}
             style={[styles.dropdownField, { borderColor: colors.outline, borderRadius: radius.md }]}
           >
-            <EventIcon category={category} size={24} />
+            <EventIcon category={category} size={32} />
             <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t(`events.category.${category}`)}</Text>
             <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
           </Pressable>
