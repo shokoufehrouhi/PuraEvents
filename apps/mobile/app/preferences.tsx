@@ -12,7 +12,7 @@ import i18n from '../src/i18n';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
 import type { PurEvent } from '../src/types/event';
-import { fetchLocationPhotoUrl } from '../src/utils/locationPhoto';
+import { fetchLocationPhotoUrl, getLocalPlaceName } from '../src/utils/locationPhoto';
 import { awaitPick } from '../src/utils/pickerBridge';
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -22,22 +22,6 @@ const LANGUAGE_NAMES: Record<string, string> = {
   es: 'Español',
   de: 'Deutsch',
   tr: 'Türkçe',
-};
-
-// Static sample used only to render the live "Preview" card at the bottom,
-// matching the mockup — it does not read/write real event data.
-const PREVIEW_EVENT: PurEvent = {
-  id: 'preview',
-  title: 'Tokyo Trip',
-  dateTimeISO: new Date(Date.now() + 18 * 86400000 + 6 * 3600000 + 24 * 60000).toISOString(),
-  timezone: 'Asia/Tokyo',
-  category: 'travel',
-  accentColor: 'coral',
-  cardTheme: 'color',
-  repeat: 'none',
-  reminders: [],
-  createdAt: '',
-  updatedAt: '',
 };
 
 export default function PreferencesScreen() {
@@ -52,6 +36,25 @@ export default function PreferencesScreen() {
   // was last manually picked (falling back to the device zone the first
   // time, before any manual pick has ever been made).
   const currentTimezone = prefs.autoTimezone ? deviceTimezone : prefs.manualTimezone ?? deviceTimezone;
+  // The Preview card's photo and title should reflect this same effective
+  // timezone (manual override or device) rather than always the device's —
+  // e.g. picking Tokyo here should turn it into an actual "Tokyo Trip" with
+  // a Tokyo photo, not the fixed sample it was before.
+  const previewCity = getLocalPlaceName(currentTimezone);
+  const [previewTargetISO] = useState(() => new Date(Date.now() + 18 * 86400000 + 6 * 3600000 + 24 * 60000).toISOString());
+  const previewEvent: PurEvent = {
+    id: 'preview',
+    title: t('preferences.previewTripTitle', { city: previewCity }),
+    dateTimeISO: previewTargetISO,
+    timezone: currentTimezone,
+    category: 'travel',
+    accentColor: 'coral',
+    cardTheme: 'color',
+    repeat: 'none',
+    reminders: [],
+    createdAt: '',
+    updatedAt: '',
+  };
 
   async function openTimezonePicker() {
     if (prefs.autoTimezone) return;
@@ -60,19 +63,19 @@ export default function PreferencesScreen() {
     setPrefs({ manualTimezone: picked });
   }
 
-  // Same photo the Events tab's own "Today" banner uses (same helper, same
-  // per-launch fetch) — this Preview card should look like that banner's
-  // default appearance (photo background, white text) rather than a flat
-  // color, per the user's request.
+  // Same helper the Events tab's own "Today" banner uses, but for
+  // *this* screen's effective timezone (not always the device's) — so
+  // toggling Automatic or picking a different manual zone refetches a
+  // matching photo instead of always showing wherever the device is.
   useEffect(() => {
     let cancelled = false;
-    fetchLocationPhotoUrl().then((url) => {
+    fetchLocationPhotoUrl(currentTimezone).then((url) => {
       if (!cancelled) setPreviewPhotoUri(url);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currentTimezone]);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
@@ -156,7 +159,7 @@ export default function PreferencesScreen() {
       </Section>
 
       <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>Preview</Text>
-      <EventHeroCard event={PREVIEW_EVENT} height={140} photoUri={previewPhotoUri ?? undefined} showPhoto />
+      <EventHeroCard event={previewEvent} height={140} photoUri={previewPhotoUri ?? undefined} showPhoto />
     </ScrollView>
   );
 }

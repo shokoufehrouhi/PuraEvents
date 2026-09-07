@@ -133,7 +133,8 @@
     "currentTimezone": "Current time zone",
     "saturday": "Saturday",
     "searchTimezone": "Search timezone",
-    "noTimezoneMatch": "No timezones match your search."
+    "noTimezoneMatch": "No timezones match your search.",
+    "previewTripTitle": "{{city}} Trip"
   },
   "paywall": {
     "title": "Make every moment count",

@@ -133,7 +133,8 @@
     "currentTimezone": "Aktuelle Zeitzone",
     "saturday": "Samstag",
     "searchTimezone": "Zeitzone suchen",
-    "noTimezoneMatch": "Keine Zeitzone entspricht deiner Suche."
+    "noTimezoneMatch": "Keine Zeitzone entspricht deiner Suche.",
+    "previewTripTitle": "{{city}}-Reise"
   },
   "paywall": {
     "title": "Mach jeden Moment zählen",

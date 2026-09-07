@@ -133,7 +133,8 @@
     "currentTimezone": "Geçerli saat dilimi",
     "saturday": "Cumartesi",
     "searchTimezone": "Saat dilimi ara",
-    "noTimezoneMatch": "Aramanızla eşleşen saat dilimi yok."
+    "noTimezoneMatch": "Aramanızla eşleşen saat dilimi yok.",
+    "previewTripTitle": "{{city}} Gezisi"
   },
   "paywall": {
     "title": "Her anı değerli kıl",

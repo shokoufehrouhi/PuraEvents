@@ -133,7 +133,8 @@
     "currentTimezone": "منطقه‌ی زمانی فعلی",
     "saturday": "شنبه",
     "searchTimezone": "جستجوی منطقه زمانی",
-    "noTimezoneMatch": "هیچ منطقه زمانی مطابق جستجوی شما یافت نشد."
+    "noTimezoneMatch": "هیچ منطقه زمانی مطابق جستجوی شما یافت نشد.",
+    "previewTripTitle": "سفر {{city}}"
   },
   "paywall": {
     "title": "هر لحظه را به‌یادماندنی کن",

@@ -133,7 +133,8 @@
     "currentTimezone": "Zona horaria actual",
     "saturday": "Sábado",
     "searchTimezone": "Buscar zona horaria",
-    "noTimezoneMatch": "Ninguna zona horaria coincide con tu búsqueda."
+    "noTimezoneMatch": "Ninguna zona horaria coincide con tu búsqueda.",
+    "previewTripTitle": "Viaje a {{city}}"
   },
   "paywall": {
     "title": "Haz que cada momento cuente",
