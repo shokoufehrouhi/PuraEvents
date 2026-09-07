@@ -66,7 +66,7 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
         </View>
         <View style={styles.rowDays}>
           <Text style={[typography.headline, styles.rowDaysNumber, { color: categoryColor }]}>{Math.max(days, 0)}</Text>
-          <Text style={[typography.caption, styles.rowDate, { color: categoryColor }]}>DAYS</Text>
+          <Text style={[typography.caption, styles.rowDate, { color: categoryColor }]}>Days</Text>
         </View>
       </View>
     </Pressable>
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   rowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   rowIcons: { flexDirection: 'row', alignItems: 'center' },
-  rowDays: { alignItems: 'flex-end' },
+  rowDays: { alignItems: 'center' },
   rowTitle: { fontSize: 19 },
   rowDate: { fontSize: 15 },
   rowDaysNumber: { fontSize: 24 },

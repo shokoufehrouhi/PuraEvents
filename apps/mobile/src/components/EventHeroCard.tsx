@@ -10,17 +10,25 @@ import { getNextOccurrenceISO } from '../utils/recurrence';
 import { EventIcon } from './EventIcon';
 import { HeroCountdown } from './HeroCountdown';
 
+// Local, always-available background for the generic "Today" banner when
+// there's no real event to theme it and the Pexels photo couldn't be
+// fetched (offline, or the API is blocked/filtered in some countries) — an
+// on-brand violet skyline illustration rather than a flat color, so the
+// banner never looks broken or empty.
+const FALLBACK_HERO_IMAGE = require('../../assets/images/hero-fallback.png');
+
 interface Props {
   // Optional so the top-of-Events-tab banner can render even with zero
   // events (falls back to a generic "Today" caption/date, no
   // title/category/countdown — see the no-event branch below).
   event?: PurEvent;
   height?: number;
-  // When set, renders a photo background (with a dark scrim for text
-  // legibility) instead of the event's own Clean/Color/Dark theme — used
-  // only for the "current/next event" card at the top of the Events tab,
-  // showing a photo of the user's own current city/country, not the
-  // event's cardTheme. Leave unset everywhere else (event detail, etc.).
+  // A fetched photo of the user's own current city/country, shown with a
+  // dark scrim for text legibility. Only meaningful when `event` is unset
+  // (the generic "Today" banner) — that banner always gets photo-style
+  // treatment, falling back to FALLBACK_HERO_IMAGE below when this is
+  // unset/fetch failed, rather than ever showing a flat color. Leave unset
+  // for real event-based cards (event detail, wizard preview, etc.).
   photoUri?: string;
 }
 
@@ -36,12 +44,21 @@ export function EventHeroCard({ event, height = 170, photoUri }: Props) {
   const background = preset.background ?? accents[event?.accentColor ?? 'violet'] ?? accents.violet;
   const nextOccurrenceISO = event ? getNextOccurrenceISO(event.dateTimeISO, event.repeat) : null;
 
-  // A photo's own brightness varies, so force legible white-on-scrim text
-  // instead of trusting whatever the event's own theme picked.
-  const textColor = photoUri ? '#FFFFFF' : preset.text;
-  const secondaryColor = photoUri ? 'rgba(255,255,255,0.85)' : preset.secondary;
+  // The generic "Today" banner always gets the photo treatment (real photo
+  // or the local fallback image below) — a photo's own brightness varies,
+  // so force legible white-on-scrim text instead of trusting whatever the
+  // event's own theme picked. Event-based cards elsewhere (wizard preview,
+  // etc.) never set photoUri and keep their flat CARD_THEMES look.
+  const isPhotoBanner = !event;
+  const textColor = isPhotoBanner ? '#FFFFFF' : preset.text;
+  const secondaryColor = isPhotoBanner ? 'rgba(255,255,255,0.85)' : preset.secondary;
 
-  const caption = photoUri ? (
+  // "Today Trips" is about this being the generic no-event banner, not
+  // about whether the photo happened to load — keep it (and the rest of
+  // the layout) exactly the same on the fallback background so a
+  // failed/slow photo fetch doesn't change the card's format, only its
+  // background image.
+  const caption = isPhotoBanner ? (
     <Text style={styles.heroCaption} numberOfLines={1}>
       {t('events.heroCaption')}
     </Text>
@@ -90,10 +107,10 @@ export function EventHeroCard({ event, height = 170, photoUri }: Props) {
       </>
     );
 
-  if (photoUri) {
+  if (isPhotoBanner) {
     return (
       <ImageBackground
-        source={{ uri: photoUri }}
+        source={photoUri ? { uri: photoUri } : FALLBACK_HERO_IMAGE}
         style={[styles.card, { borderRadius: radius.lg, minHeight: height }]}
         imageStyle={{ borderRadius: radius.lg }}
       >

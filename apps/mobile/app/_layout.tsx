@@ -39,7 +39,7 @@ function Navigation() {
         }}
       >
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="day" options={{ ...headerOptions, title: t('day.title'), headerBackTitle: t('tabs.events') }} />
+        <Stack.Screen name="day" options={{ ...headerOptions, title: t('tabs.events'), headerBackTitle: t('day.backTitle') }} />
         <Stack.Screen name="event/new" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="event/category-picker" />
         <Stack.Screen name="event/repeat-picker" />
