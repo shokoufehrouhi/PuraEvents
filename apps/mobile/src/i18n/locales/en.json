@@ -188,5 +188,8 @@
     "proNote": "Pro themes and custom backgrounds available with Pro.",
     "rounded": "Rounded (16pt)",
     "system": "System"
+  },
+  "day": {
+    "empty": "No events on this day."
   }
 }

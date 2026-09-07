@@ -188,5 +188,8 @@
     "proNote": "Eigene Designs und Hintergründe sind mit Pro verfügbar.",
     "rounded": "Abgerundet (16pt)",
     "system": "System"
+  },
+  "day": {
+    "empty": "Keine Ereignisse an diesem Tag."
   }
 }

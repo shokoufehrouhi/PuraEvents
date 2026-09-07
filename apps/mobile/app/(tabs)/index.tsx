@@ -221,12 +221,14 @@ export default function EventListScreen() {
           // Always a generic "Today" banner — never tied to a specific
           // event's title/countdown (a user explicitly asked why "their"
           // event had to sit on the banner instead of just showing as a
-          // normal record like everything else below it). Not pressable
-          // since it isn't linked to any one event anymore.
+          // normal record like everything else below it). Tapping it opens
+          // the Day view (app/day.tsx) — a browsable day-by-day agenda,
+          // defaulting to today, listing whatever events fall on the
+          // selected date.
           tab === 'upcoming' ? (
-            <View style={{ marginBottom: spacing.sm }}>
+            <Pressable onPress={() => router.push('/day')} style={{ marginBottom: spacing.sm }}>
               <EventHeroCard photoUri={heroPhotoUri ?? undefined} />
-            </View>
+            </Pressable>
           ) : null
         }
         ListEmptyComponent={

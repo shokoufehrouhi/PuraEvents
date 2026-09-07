@@ -188,5 +188,8 @@
     "proNote": "Özel temalar ve arka planlar Pro ile kullanılabilir.",
     "rounded": "Yuvarlatılmış (16pt)",
     "system": "Sistem"
+  },
+  "day": {
+    "empty": "Bu günde etkinlik yok."
   }
 }

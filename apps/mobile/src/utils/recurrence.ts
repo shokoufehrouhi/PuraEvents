@@ -36,3 +36,27 @@ export function getNextOccurrence(dateTimeISO: string, repeat: RepeatRule, from:
 export function getNextOccurrenceISO(dateTimeISO: string, repeat: RepeatRule): string {
   return getNextOccurrence(dateTimeISO, repeat).toISOString();
 }
+
+/**
+ * Whether this event has an occurrence falling on `targetDate` (compared by
+ * calendar day only, time-of-day ignored) — used by the Day view to list
+ * every event scheduled for a given date, repeating or not. An event never
+ * "occurs" before its own original date.
+ */
+export function doesEventOccurOnDate(dateTimeISO: string, repeat: RepeatRule, targetDate: Dayjs | Date): boolean {
+  const start = dayjs(dateTimeISO);
+  const target = dayjs(targetDate);
+  if (target.isBefore(start, 'day')) return false;
+
+  switch (repeat) {
+    case 'weekly':
+      return target.day() === start.day();
+    case 'monthly':
+      return target.date() === start.date();
+    case 'yearly':
+      return target.month() === start.month() && target.date() === start.date();
+    case 'none':
+    default:
+      return target.isSame(start, 'day');
+  }
+}

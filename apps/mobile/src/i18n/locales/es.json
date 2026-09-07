@@ -188,5 +188,8 @@
     "proNote": "Los temas personalizados y fondos están disponibles con Pro.",
     "rounded": "Redondeado (16pt)",
     "system": "Sistema"
+  },
+  "day": {
+    "empty": "No hay eventos este día."
   }
 }
