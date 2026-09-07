@@ -131,7 +131,9 @@
     "autoTimezone": "منطقه‌ی زمانی خودکار",
     "autoTimezoneHint": "استفاده از منطقه‌ی زمانی دستگاه در صورت امکان",
     "currentTimezone": "منطقه‌ی زمانی فعلی",
-    "saturday": "شنبه"
+    "saturday": "شنبه",
+    "searchTimezone": "جستجوی منطقه زمانی",
+    "noTimezoneMatch": "هیچ منطقه زمانی مطابق جستجوی شما یافت نشد."
   },
   "paywall": {
     "title": "هر لحظه را به‌یادماندنی کن",

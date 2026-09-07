@@ -13,6 +13,7 @@ import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
 import type { PurEvent } from '../src/types/event';
 import { fetchLocationPhotoUrl } from '../src/utils/locationPhoto';
+import { awaitPick } from '../src/utils/pickerBridge';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
@@ -45,6 +46,19 @@ export default function PreferencesScreen() {
   const { colors, spacing, typography } = useTheme();
   const { prefs, setPrefs } = usePreferences();
   const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
+  const deviceTimezone = Localization.getCalendars()[0]?.timeZone ?? '—';
+  // When automatic is on, this always reflects the device — matches the
+  // toggle's own meaning and can't be edited. When it's off, it's whatever
+  // was last manually picked (falling back to the device zone the first
+  // time, before any manual pick has ever been made).
+  const currentTimezone = prefs.autoTimezone ? deviceTimezone : prefs.manualTimezone ?? deviceTimezone;
+
+  async function openTimezonePicker() {
+    if (prefs.autoTimezone) return;
+    router.push({ pathname: '/timezone-picker', params: { current: currentTimezone } });
+    const picked = await awaitPick();
+    setPrefs({ manualTimezone: picked });
+  }
 
   // Same photo the Events tab's own "Today" banner uses (same helper, same
   // per-launch fetch) — this Preview card should look like that banner's
@@ -133,7 +147,12 @@ export default function PreferencesScreen() {
           value={prefs.autoTimezone}
           onValueChange={(v) => setPrefs({ autoTimezone: v })}
         />
-        <Row icon="location-outline" label={t('preferences.currentTimezone')} value={Localization.getCalendars()[0]?.timeZone ?? '—'} onPress={() => {}} />
+        <Row
+          icon="location-outline"
+          label={t('preferences.currentTimezone')}
+          value={currentTimezone}
+          onPress={prefs.autoTimezone ? undefined : openTimezonePicker}
+        />
       </Section>
 
       <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>Preview</Text>

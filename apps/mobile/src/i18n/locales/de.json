@@ -131,7 +131,9 @@
     "autoTimezone": "Automatische Zeitzone",
     "autoTimezoneHint": "Geräte-Zeitzone verwenden, falls verfügbar",
     "currentTimezone": "Aktuelle Zeitzone",
-    "saturday": "Samstag"
+    "saturday": "Samstag",
+    "searchTimezone": "Zeitzone suchen",
+    "noTimezoneMatch": "Keine Zeitzone entspricht deiner Suche."
   },
   "paywall": {
     "title": "Mach jeden Moment zählen",

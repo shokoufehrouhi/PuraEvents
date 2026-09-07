@@ -89,7 +89,7 @@ export default function SettingsScreen() {
             icon="time-outline"
             badgeColor={rowBadgeColors.green}
             label={t('settings.timezone')}
-            value={Localization.getCalendars()[0]?.timeZone ?? t('settings.automatic')}
+            value={prefs.autoTimezone ? Localization.getCalendars()[0]?.timeZone ?? t('settings.automatic') : prefs.manualTimezone ?? t('settings.automatic')}
             onPress={() => router.push('/preferences')}
           />
         </Section>

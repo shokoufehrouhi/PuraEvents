@@ -54,6 +54,10 @@ function Navigation() {
           options={{ ...headerOptions, title: t('preferences.language'), headerBackTitle: t('preferences.title') }}
         />
         <Stack.Screen
+          name="timezone-picker"
+          options={{ ...headerOptions, title: t('preferences.currentTimezone'), headerBackTitle: t('preferences.title') }}
+        />
+        <Stack.Screen
           name="upgrade"
           options={{ ...headerOptions, title: t('compare.title'), headerBackTitle: t('settings.title') }}
         />

@@ -131,7 +131,9 @@
     "autoTimezone": "Automatic time zone",
     "autoTimezoneHint": "Use device time zone when available",
     "currentTimezone": "Current time zone",
-    "saturday": "Saturday"
+    "saturday": "Saturday",
+    "searchTimezone": "Search timezone",
+    "noTimezoneMatch": "No timezones match your search."
   },
   "paywall": {
     "title": "Make every moment count",

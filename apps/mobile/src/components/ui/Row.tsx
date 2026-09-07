@@ -18,7 +18,10 @@ interface BaseProps {
 interface NavRowProps extends BaseProps {
   type?: 'nav';
   value?: string;
-  onPress: () => void;
+  // Optional so a row can show a value read-only (no chevron, not
+  // tappable) — e.g. Preferences' "Current timezone" row while "Automatic
+  // timezone" is on.
+  onPress?: () => void;
 }
 
 interface SwitchRowProps extends BaseProps {
@@ -54,13 +57,14 @@ export function Row(props: Props) {
           {props.value ? (
             <Text style={[typography.body, { color: colors.secondary, marginRight: spacing.xs }]}>{props.value}</Text>
           ) : null}
-          <Ionicons name="chevron-forward" size={18} color={colors.outline} />
+          {props.onPress ? <Ionicons name="chevron-forward" size={18} color={colors.outline} /> : null}
         </>
       )}
     </View>
   );
 
   if (props.type === 'switch') return content;
+  if (!props.onPress) return content;
 
   return (
     <Pressable

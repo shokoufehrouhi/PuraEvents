@@ -131,7 +131,9 @@
     "autoTimezone": "Otomatik saat dilimi",
     "autoTimezoneHint": "Mümkün olduğunda cihaz saat dilimini kullan",
     "currentTimezone": "Geçerli saat dilimi",
-    "saturday": "Cumartesi"
+    "saturday": "Cumartesi",
+    "searchTimezone": "Saat dilimi ara",
+    "noTimezoneMatch": "Aramanızla eşleşen saat dilimi yok."
   },
   "paywall": {
     "title": "Her anı değerli kıl",

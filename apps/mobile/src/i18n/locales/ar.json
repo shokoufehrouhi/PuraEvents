@@ -131,7 +131,9 @@
     "autoTimezone": "منطقة زمنية تلقائية",
     "autoTimezoneHint": "استخدام المنطقة الزمنية للجهاز عند توفرها",
     "currentTimezone": "المنطقة الزمنية الحالية",
-    "saturday": "السبت"
+    "saturday": "السبت",
+    "searchTimezone": "بحث عن المنطقة الزمنية",
+    "noTimezoneMatch": "لا توجد مناطق زمنية تطابق بحثك."
   },
   "paywall": {
     "title": "اجعل كل لحظة مهمة",
