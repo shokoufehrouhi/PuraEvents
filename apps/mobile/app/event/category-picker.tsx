@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CATEGORY_BADGE_IMAGES } from '../../src/theme/categoryBadges';
 import { getCategoryIcon } from '../../src/theme/icons';
 import { useTheme } from '../../src/theme/PreferencesContext';
 import type { EventCategory } from '../../src/types/event';
@@ -40,7 +39,7 @@ export default function CategoryPickerScreen() {
         <View style={styles.list}>
           {CATEGORIES.map((c) => {
             const selected = current === c;
-            const { color } = getCategoryIcon(c);
+            const { color, image } = getCategoryIcon(c);
             return (
               <Pressable
                 key={c}
@@ -50,7 +49,7 @@ export default function CategoryPickerScreen() {
                   { backgroundColor: selected ? colors.primary : `${color}1F`, borderRadius: radius.lg, opacity: pressed ? 0.8 : 1 },
                 ]}
               >
-                <Image source={CATEGORY_BADGE_IMAGES[c]} style={styles.badge} resizeMode="contain" />
+                <Image source={image} style={styles.badge} resizeMode="contain" />
                 <Text style={[typography.bodyStrong, { color: selected ? colors.onPrimary : colors.text, flex: 1, marginLeft: 14, fontSize: 17 }]}>
                   {t(`events.category.${c}`)}
                 </Text>
