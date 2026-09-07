@@ -116,7 +116,7 @@ export default function EventDetailScreen() {
             hitSlop={12}
             style={[styles.headerButton, { backgroundColor: colors.surfaceAlt, marginLeft: 12 }]}
           >
-            <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+            <Ionicons name="trash-outline" size={20} color={colors.danger} />
           </Pressable>
         </View>
       </View>
@@ -141,7 +141,12 @@ export default function EventDetailScreen() {
             { backgroundColor: colors.surfaceAlt, borderRadius: radius.lg, borderLeftColor: categoryColor, padding: spacing.md },
           ]}
         >
-          <HeroCountdown targetISO={nextOccurrence.toISOString()} textColor={colors.text} labelColor={colors.secondary} />
+          <HeroCountdown
+            targetISO={nextOccurrence.toISOString()}
+            textColor={colors.text}
+            labelColor={colors.secondary}
+            dividerColor={colors.outline}
+          />
           <View style={[styles.reminderPill, { borderColor: colors.outline, marginTop: spacing.md }]}>
             <Ionicons name="notifications-outline" size={14} color={colors.text} />
             <Text style={[typography.caption, { color: colors.text, marginLeft: 6 }]}>
@@ -197,11 +202,10 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   categoryImage: { width: 56, height: 56 },
   categoryLabel: { fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
-  countdownCard: { marginTop: 20, borderLeftWidth: 4, overflow: 'hidden' },
+  countdownCard: { marginTop: 20, borderLeftWidth: 4, overflow: 'hidden', alignItems: 'center' },
   reminderPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     borderWidth: 1,
     borderRadius: 999,
     paddingHorizontal: 12,

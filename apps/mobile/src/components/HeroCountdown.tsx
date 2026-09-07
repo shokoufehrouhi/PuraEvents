@@ -13,6 +13,9 @@ interface Props {
   // preview) — leave unset for the standard size.
   numberSize?: number;
   labelSize?: number;
+  // Thin vertical rule between columns (event detail's bordered countdown
+  // card) — off by default so every other spot is unaffected.
+  dividerColor?: string;
 }
 
 // Big three-column D/H/M countdown used on hero cards (event list + detail),
@@ -24,6 +27,7 @@ export function HeroCountdown({
   labelColor = 'rgba(255,255,255,0.75)',
   numberSize = 44,
   labelSize = 12,
+  dividerColor,
 }: Props) {
   const { t } = useTranslation();
   const [now, setNow] = useState(() => dayjs());
@@ -50,10 +54,15 @@ export function HeroCountdown({
 
   return (
     <View style={styles.row}>
-      {columns.map(([value, label]) => (
-        <View key={label} style={styles.col}>
-          <Text style={[styles.number, { color: textColor, fontSize: numberSize, lineHeight: numberSize + 4 }]}>{value}</Text>
-          <Text style={[styles.label, { color: labelColor, fontSize: labelSize }]}>{label}</Text>
+      {columns.map(([value, label], i) => (
+        <View key={label} style={styles.colWrap}>
+          {i > 0 && dividerColor ? (
+            <View style={[styles.divider, { backgroundColor: dividerColor, height: numberSize }]} />
+          ) : null}
+          <View style={styles.col}>
+            <Text style={[styles.number, { color: textColor, fontSize: numberSize, lineHeight: numberSize + 4 }]}>{value}</Text>
+            <Text style={[styles.label, { color: labelColor, fontSize: labelSize }]}>{label}</Text>
+          </View>
         </View>
       ))}
     </View>
@@ -62,7 +71,9 @@ export function HeroCountdown({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 22 },
+  colWrap: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   col: { alignItems: 'center' },
+  divider: { width: 1 },
   number: { fontWeight: '900', fontVariant: ['tabular-nums'] },
   label: { fontWeight: '800', letterSpacing: 0.5, marginTop: 2 },
   past: { fontSize: 20, fontWeight: '700' },
