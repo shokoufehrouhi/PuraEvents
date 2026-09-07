@@ -110,29 +110,31 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
         { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.sm + 4, opacity: pressed ? 0.7 : 1 },
       ]}
     >
-      <EventIcon category={event.category} size={52} />
+      <EventIcon category={event.category} size={58} />
       <View style={styles.rowMiddle}>
-        <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[typography.bodyStrong, styles.rowTitle, { color: colors.text }]} numberOfLines={1}>
           {event.title}
         </Text>
-        <Text style={[typography.caption, { color: colors.secondary }]}>
+        <Text style={[typography.caption, styles.rowDate, { color: colors.secondary }]}>
           {formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, shouldUseFarsiDigits(i18n.language))}
         </Text>
       </View>
       <View style={styles.rowRight}>
         <View style={styles.rowIcons}>
-          {event.reminders.length > 0 ? <Ionicons name="notifications" size={20} color={colors.secondary} /> : null}
+          {event.reminders.length > 0 ? <Ionicons name="notifications" size={24} color={colors.secondary} /> : null}
           {event.repeat !== 'none' ? (
             <Ionicons
               name={REPEAT_STYLES[event.repeat].icon}
-              size={20}
+              size={24}
               color={REPEAT_STYLES[event.repeat].color}
               style={{ marginLeft: 8 }}
             />
           ) : null}
         </View>
-        <Text style={[typography.headline, { color: colors.text }]}>{Math.max(days, 0)}</Text>
-        <Text style={[typography.caption, { color: colors.secondary }]}>DAYS</Text>
+        <View style={styles.rowDays}>
+          <Text style={[typography.headline, styles.rowDaysNumber, { color: colors.text }]}>{Math.max(days, 0)}</Text>
+          <Text style={[typography.caption, styles.rowDate, { color: colors.secondary }]}>DAYS</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -259,8 +261,12 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
-  rowRight: { alignItems: 'flex-end' },
-  rowIcons: { flexDirection: 'row', marginBottom: 4 },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rowIcons: { flexDirection: 'row', alignItems: 'center' },
+  rowDays: { alignItems: 'flex-end' },
+  rowTitle: { fontSize: 19 },
+  rowDate: { fontSize: 15 },
+  rowDaysNumber: { fontSize: 24 },
   emptyBox: { alignItems: 'center', borderWidth: 1, marginTop: 32 },
   emptyIllustration: { marginBottom: 16 },
   emptyIconCircle: { width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center' },
