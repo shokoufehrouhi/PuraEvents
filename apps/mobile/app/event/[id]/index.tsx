@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -109,7 +109,7 @@ export default function EventDetailScreen() {
         </Pressable>
         <View style={styles.headerRight}>
           <Pressable onPress={goEdit} hitSlop={12} style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}>
-            <Ionicons name="pencil-outline" size={20} color={colors.text} />
+            <Feather name="edit-2" size={18} color={colors.text} />
           </Pressable>
           <Pressable
             onPress={handleDelete}
