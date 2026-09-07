@@ -467,6 +467,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 12,
+    // Fixed so this row, the Accent Color row, and the Repeat row (all
+    // share this style) stay the same height regardless of their content
+    // — the bigger 32px category icon was otherwise stretching just this
+    // one row taller than its neighbors.
+    minHeight: 56,
   },
   dot: { width: 14, height: 14, borderRadius: 7 },
   accordionHeader: { flexDirection: 'row', alignItems: 'center' },
