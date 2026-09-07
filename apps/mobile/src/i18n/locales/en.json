@@ -75,7 +75,12 @@
     "repeatWeeklyDesc": "Every week on {{day}}",
     "repeatMonthlyDesc": "Every month on the {{day}}",
     "repeatYearlyDesc": "Every year on {{date}}",
-    "done": "Done"
+    "done": "Done",
+    "eventDetails": "Event Details",
+    "dateTimeLabel": "Date & time",
+    "timezoneLabel": "Time zone",
+    "reminderOn": "Reminder on",
+    "reminderSectionTitle": "Reminder"
   },
   "countdown": {
     "days": "{{count}}d",

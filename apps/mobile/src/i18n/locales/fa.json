@@ -75,7 +75,12 @@
     "repeatWeeklyDesc": "هر هفته، روز {{day}}",
     "repeatMonthlyDesc": "هر ماه، روز {{day}}",
     "repeatYearlyDesc": "هر سال، تاریخ {{date}}",
-    "done": "تمام"
+    "done": "تمام",
+    "eventDetails": "جزئیات رویداد",
+    "dateTimeLabel": "تاریخ و ساعت",
+    "timezoneLabel": "منطقه زمانی",
+    "reminderOn": "یادآور فعال",
+    "reminderSectionTitle": "یادآور"
   },
   "countdown": {
     "days": "{{count}} روز",

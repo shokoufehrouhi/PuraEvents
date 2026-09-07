@@ -75,7 +75,12 @@
     "repeatWeeklyDesc": "Her hafta {{day}} günü",
     "repeatMonthlyDesc": "Her ayın {{day}}",
     "repeatYearlyDesc": "Her yıl {{date}}",
-    "done": "Bitti"
+    "done": "Bitti",
+    "eventDetails": "Etkinlik Ayrıntıları",
+    "dateTimeLabel": "Tarih ve saat",
+    "timezoneLabel": "Saat dilimi",
+    "reminderOn": "Hatırlatıcı açık",
+    "reminderSectionTitle": "Hatırlatıcı"
   },
   "countdown": {
     "days": "{{count}}g",

@@ -75,7 +75,12 @@
     "repeatWeeklyDesc": "كل أسبوع يوم {{day}}",
     "repeatMonthlyDesc": "كل شهر في يوم {{day}}",
     "repeatYearlyDesc": "كل سنة في {{date}}",
-    "done": "تم"
+    "done": "تم",
+    "eventDetails": "تفاصيل الحدث",
+    "dateTimeLabel": "التاريخ والوقت",
+    "timezoneLabel": "المنطقة الزمنية",
+    "reminderOn": "التذكير مفعّل",
+    "reminderSectionTitle": "التذكير"
   },
   "countdown": {
     "days": "{{count}} يوم",
