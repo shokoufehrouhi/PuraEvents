@@ -190,8 +190,8 @@
     "system": "Sistema"
   },
   "day": {
-    "emptyTitle": "Sin eventos",
-    "emptySubtitle": "Los eventos programados para este día aparecerán aquí.",
-    "backTitle": "Inicio"
+    "empty": "No hay eventos para este día.",
+    "backTitle": "Inicio",
+    "at": "a las"
   }
 }

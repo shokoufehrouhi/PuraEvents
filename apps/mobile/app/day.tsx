@@ -1,20 +1,60 @@
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CivilCalendarPicker } from '../src/components/CivilCalendarPicker';
 import { EventHeroCard } from '../src/components/EventHeroCard';
-import { EventIcon } from '../src/components/EventIcon';
-import { EmptyState } from '../src/components/ui/EmptyState';
 import { listEvents } from '../src/storage/events';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
+import { accents, rowBadgeColors } from '../src/theme/tokens';
 import type { PurEvent } from '../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../src/utils/locationPhoto';
 import { doesEventOccurOnDate } from '../src/utils/recurrence';
+
+// One row inside the "Events" timeline card below — a colored dot (the
+// event's own accent color) connected by a thin vertical line to the next
+// row's dot, name + "date at time", chevron to open the detail screen.
+function DayEventRow({
+  event,
+  isLast,
+  onPress,
+}: {
+  event: PurEvent;
+  isLast: boolean;
+  onPress: () => void;
+}) {
+  const { colors, spacing, typography } = useTheme();
+  const { i18n, t } = useTranslation();
+  const { prefs } = usePreferences();
+  const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
+  const dotColor = accents[event.accentColor] ?? accents.violet;
+  const time = dayjs(event.dateTimeISO).format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm');
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.timelineRow, { paddingHorizontal: spacing.md, opacity: pressed ? 0.6 : 1 }]}
+    >
+      <View style={styles.timelineGutter}>
+        <View style={[styles.timelineDot, { backgroundColor: dotColor }]} />
+        {!isLast ? <View style={[styles.timelineLine, { backgroundColor: colors.outline }]} /> : null}
+      </View>
+      <View style={[styles.timelineContent, { paddingVertical: spacing.sm + 4 }]}>
+        <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
+          {event.title}
+        </Text>
+        <Text style={[typography.caption, { color: colors.secondary }]}>
+          {formatCivilDateFull(event.dateTimeISO, prefs.calendar, useFarsiDigits)} {t('day.at')} {time}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.outline} style={{ marginTop: spacing.sm + 4 }} />
+    </Pressable>
+  );
+}
 
 // Opened by tapping the Events tab's "Today" hero banner. Title/back button
 // are the native Stack header (see app/_layout.tsx's "day" screen options),
@@ -109,41 +149,50 @@ export default function DayScreen() {
         </Text>
       </View>
 
-      {dayEvents.length === 0 ? (
-        <EmptyState
-          icon="calendar-outline"
-          badgeIcon="time"
-          badgeColor={colors.primary}
-          title={t('day.emptyTitle')}
-          subtitle={t('day.emptySubtitle')}
-        />
-      ) : (
-        dayEvents.map((event) => (
-          <Pressable
-            key={event.id}
-            onPress={() => router.push(`/event/${event.id}`)}
-            style={({ pressed }) => [
-              styles.eventRow,
-              { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.sm + 4, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <EventIcon category={event.category} size={44} />
-            <View style={styles.eventRowMiddle}>
-              <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
-                {event.title}
-              </Text>
-              <Text style={[typography.caption, { color: colors.secondary }]}>{dayjs(event.dateTimeISO).format('HH:mm')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+      {/* "Events" timeline card — bell-badge header (+ a persistent "+ Add"
+          shortcut) followed by every event on the selected date as a
+          colored-dot/name/date-time row connected by a thin vertical line,
+          hairline dividers between rows, chevron to open that event's
+          detail. Per the supplied component spec (light/dark + empty
+          variant), not the earlier per-event separate-card style. */}
+      <View style={[styles.timelineCard, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
+        <View style={[styles.timelineHeader, { padding: spacing.md }]}>
+          <View style={[styles.timelineHeaderBadge, { backgroundColor: rowBadgeColors.pink, borderRadius: radius.md }]}>
+            <Ionicons name="notifications" size={18} color="#FFFFFF" />
+          </View>
+          <Text style={[typography.bodyStrong, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t('tabs.events')}</Text>
+          <Pressable onPress={() => router.push('/event/new')} hitSlop={8}>
+            <Text style={[typography.bodyStrong, { color: colors.primary }]}>+ {t('events.add')}</Text>
           </Pressable>
-        ))
-      )}
+        </View>
+        {dayEvents.length === 0 ? (
+          <Text style={[typography.body, styles.timelineEmpty, { color: colors.secondary }]}>{t('day.empty')}</Text>
+        ) : (
+          <>
+            <View style={[styles.divider, { backgroundColor: colors.outline }]} />
+            {dayEvents.map((event, i) => (
+              <Fragment key={event.id}>
+                <DayEventRow event={event} isLast={i === dayEvents.length - 1} onPress={() => router.push(`/event/${event.id}`)} />
+                {i < dayEvents.length - 1 ? <View style={[styles.divider, { backgroundColor: colors.outline }]} /> : null}
+              </Fragment>
+            ))}
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  eventRow: { flexDirection: 'row', alignItems: 'center' },
-  eventRowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
+  timelineCard: { overflow: 'hidden' },
+  timelineHeader: { flexDirection: 'row', alignItems: 'center' },
+  timelineHeaderBadge: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  timelineEmpty: { textAlign: 'center', paddingHorizontal: 16, paddingBottom: 20 },
+  timelineRow: { flexDirection: 'row' },
+  timelineGutter: { width: 20, alignItems: 'center', marginRight: 12 },
+  timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 18 },
+  timelineLine: { flex: 1, width: 2, marginTop: 4 },
+  timelineContent: { flex: 1 },
+  divider: { height: StyleSheet.hairlineWidth },
 });

@@ -190,8 +190,8 @@
     "system": "System"
   },
   "day": {
-    "emptyTitle": "No events",
-    "emptySubtitle": "Events scheduled for this day will appear here.",
-    "backTitle": "Home"
+    "empty": "No events for this day.",
+    "backTitle": "Home",
+    "at": "at"
   }
 }
