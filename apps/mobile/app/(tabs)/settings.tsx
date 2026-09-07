@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import * as Localization from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
@@ -88,7 +89,7 @@ export default function SettingsScreen() {
             icon="time-outline"
             badgeColor={rowBadgeColors.green}
             label={t('settings.timezone')}
-            value={t('settings.automatic')}
+            value={Localization.getCalendars()[0]?.timeZone ?? t('settings.automatic')}
             onPress={() => router.push('/preferences')}
           />
         </Section>
