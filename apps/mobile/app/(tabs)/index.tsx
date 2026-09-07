@@ -110,7 +110,7 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
         { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.sm + 4, opacity: pressed ? 0.7 : 1 },
       ]}
     >
-      <EventIcon category={event.category} size={44} />
+      <EventIcon category={event.category} size={52} />
       <View style={styles.rowMiddle}>
         <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
           {event.title}
@@ -121,13 +121,13 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
       </View>
       <View style={styles.rowRight}>
         <View style={styles.rowIcons}>
-          {event.reminders.length > 0 ? <Ionicons name="notifications" size={14} color={colors.secondary} /> : null}
+          {event.reminders.length > 0 ? <Ionicons name="notifications" size={20} color={colors.secondary} /> : null}
           {event.repeat !== 'none' ? (
             <Ionicons
               name={REPEAT_STYLES[event.repeat].icon}
-              size={14}
+              size={20}
               color={REPEAT_STYLES[event.repeat].color}
-              style={{ marginLeft: 6 }}
+              style={{ marginLeft: 8 }}
             />
           ) : null}
         </View>
