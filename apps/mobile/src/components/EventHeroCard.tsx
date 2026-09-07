@@ -24,12 +24,18 @@ interface Props {
   event?: PurEvent;
   height?: number;
   // A fetched photo of the user's own current city/country, shown with a
-  // dark scrim for text legibility. Only meaningful when `event` is unset
-  // (the generic "Today" banner) — that banner always gets photo-style
-  // treatment, falling back to FALLBACK_HERO_IMAGE below when this is
-  // unset/fetch failed, rather than ever showing a flat color. Leave unset
-  // for real event-based cards (event detail, wizard preview, etc.).
+  // dark scrim for text legibility. The generic "Today" banner (no `event`)
+  // always gets photo-style treatment regardless of this prop, falling
+  // back to FALLBACK_HERO_IMAGE when unset/fetch failed. An `event` card
+  // stays flat-themed unless `showPhoto` is also set — leave both unset for
+  // the normal flat-CARD_THEMES look (event detail, wizard preview, etc.).
   photoUri?: string;
+  // Forces the same photo treatment as the generic banner onto an `event`
+  // card too (falling back to FALLBACK_HERO_IMAGE if `photoUri` didn't
+  // resolve) — for spots that want an event-styled card to always have a
+  // photo background regardless of fetch success, e.g. the Preferences
+  // screen's live preview.
+  showPhoto?: boolean;
 }
 
 // Hero card for an event — one of three flat presets (Clean/Color/Dark, see
@@ -37,7 +43,7 @@ interface Props {
 // fills with the event's own accentColor; the other two are fixed colors
 // independent of accent/category. MVP has no cover-photo picker yet — see
 // docs/PROJECT.md follow-ups.
-export function EventHeroCard({ event, height = 170, photoUri }: Props) {
+export function EventHeroCard({ event, height = 170, photoUri, showPhoto }: Props) {
   const { t, i18n } = useTranslation();
   const { radius, spacing, prefs } = usePreferences();
   const preset = event ? CARD_THEMES[event.cardTheme] ?? CARD_THEMES.color : CARD_THEMES.color;
@@ -47,18 +53,21 @@ export function EventHeroCard({ event, height = 170, photoUri }: Props) {
   // The generic "Today" banner always gets the photo treatment (real photo
   // or the local fallback image below) — a photo's own brightness varies,
   // so force legible white-on-scrim text instead of trusting whatever the
-  // event's own theme picked. Event-based cards elsewhere (wizard preview,
-  // etc.) never set photoUri and keep their flat CARD_THEMES look.
-  const isPhotoBanner = !event;
-  const textColor = isPhotoBanner ? '#FFFFFF' : preset.text;
-  const secondaryColor = isPhotoBanner ? 'rgba(255,255,255,0.85)' : preset.secondary;
+  // event's own theme picked. An event card only gets the same treatment
+  // when a caller explicitly passes photoUri too (e.g. the Preferences
+  // screen's live preview) — event cards without it keep their flat
+  // CARD_THEMES look, unchanged from before.
+  const isGenericBanner = !event;
+  const hasPhoto = isGenericBanner || Boolean(photoUri) || Boolean(showPhoto);
+  const textColor = hasPhoto ? '#FFFFFF' : preset.text;
+  const secondaryColor = hasPhoto ? 'rgba(255,255,255,0.85)' : preset.secondary;
 
   // "Today Trips" is about this being the generic no-event banner, not
   // about whether the photo happened to load — keep it (and the rest of
   // the layout) exactly the same on the fallback background so a
   // failed/slow photo fetch doesn't change the card's format, only its
   // background image.
-  const caption = isPhotoBanner ? (
+  const caption = isGenericBanner ? (
     <Text style={styles.heroCaption} numberOfLines={1}>
       {t('events.heroCaption')}
     </Text>
@@ -70,7 +79,7 @@ export function EventHeroCard({ event, height = 170, photoUri }: Props) {
         {caption}
         <View style={styles.metaRow}>
           <View style={styles.categoryRow}>
-            <EventIcon category={event.category} size={22} variant={photoUri ? 'white' : preset.iconVariant} />
+            <EventIcon category={event.category} size={22} />
             <Text style={[styles.categoryText, { color: textColor }]} numberOfLines={1}>
               {t(`events.category.${event.category}`)}
             </Text>
@@ -107,7 +116,7 @@ export function EventHeroCard({ event, height = 170, photoUri }: Props) {
       </>
     );
 
-  if (isPhotoBanner) {
+  if (hasPhoto) {
     return (
       <ImageBackground
         source={photoUri ? { uri: photoUri } : FALLBACK_HERO_IMAGE}

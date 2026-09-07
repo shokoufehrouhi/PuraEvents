@@ -1,5 +1,6 @@
 import * as Localization from 'expo-localization';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
@@ -11,6 +12,7 @@ import i18n from '../src/i18n';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
 import type { PurEvent } from '../src/types/event';
+import { fetchLocationPhotoUrl } from '../src/utils/locationPhoto';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
@@ -42,6 +44,21 @@ export default function PreferencesScreen() {
   const router = useRouter();
   const { colors, spacing, typography } = useTheme();
   const { prefs, setPrefs } = usePreferences();
+  const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
+
+  // Same photo the Events tab's own "Today" banner uses (same helper, same
+  // per-launch fetch) — this Preview card should look like that banner's
+  // default appearance (photo background, white text) rather than a flat
+  // color, per the user's request.
+  useEffect(() => {
+    let cancelled = false;
+    fetchLocationPhotoUrl().then((url) => {
+      if (!cancelled) setPreviewPhotoUri(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
@@ -120,7 +137,7 @@ export default function PreferencesScreen() {
       </Section>
 
       <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>Preview</Text>
-      <EventHeroCard event={PREVIEW_EVENT} height={140} />
+      <EventHeroCard event={PREVIEW_EVENT} height={140} photoUri={previewPhotoUri ?? undefined} showPhoto />
     </ScrollView>
   );
 }
