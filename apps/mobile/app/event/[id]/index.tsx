@@ -109,7 +109,7 @@ export default function EventDetailScreen() {
         </Pressable>
         <View style={styles.headerRight}>
           <Pressable onPress={goEdit} hitSlop={12} style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}>
-            <Ionicons name="create-outline" size={20} color={colors.text} />
+            <Ionicons name="pencil-outline" size={20} color={colors.text} />
           </Pressable>
           <Pressable
             onPress={handleDelete}
