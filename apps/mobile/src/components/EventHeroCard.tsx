@@ -41,6 +41,9 @@ interface Props {
   // shares HeroCountdown's default size.
   countdownNumberSize?: number;
   countdownLabelSize?: number;
+  // Same idea for the event title, which otherwise always uses the fixed
+  // 34px hero-card size below — a compact preview card needs it smaller too.
+  titleSize?: number;
 }
 
 // Hero card for an event — one of three flat presets (Clean/Color/Dark, see
@@ -48,7 +51,7 @@ interface Props {
 // fills with the event's own accentColor; the other two are fixed colors
 // independent of accent/category. MVP has no cover-photo picker yet — see
 // docs/PROJECT.md follow-ups.
-export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countdownNumberSize, countdownLabelSize }: Props) {
+export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countdownNumberSize, countdownLabelSize, titleSize }: Props) {
   const { t, i18n } = useTranslation();
   const { radius, spacing, prefs } = usePreferences();
   const preset = event ? CARD_THEMES[event.cardTheme] ?? CARD_THEMES.color : CARD_THEMES.color;
@@ -95,7 +98,7 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
         </View>
 
         <View style={styles.bottom}>
-          <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
+          <Text style={[styles.title, { color: textColor }, titleSize ? { fontSize: titleSize } : null]} numberOfLines={1}>
             {event.title}
           </Text>
           <Text style={[styles.dateLine, { color: secondaryColor }]} numberOfLines={1}>
@@ -117,7 +120,7 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
       <>
         {caption}
         <View style={styles.bottom}>
-          <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
+          <Text style={[styles.title, { color: textColor }, titleSize ? { fontSize: titleSize } : null]} numberOfLines={1}>
             {t('events.todayTitle')}
           </Text>
           <Text style={[styles.dateLine, { color: secondaryColor }]} numberOfLines={1}>

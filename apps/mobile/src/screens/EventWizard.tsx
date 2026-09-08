@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CivilCalendarPicker } from '../components/CivilCalendarPicker';
 import { EventHeroCard } from '../components/EventHeroCard';
 import { EventIcon } from '../components/EventIcon';
+import { MiniWidget } from '../components/MiniWidget';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
@@ -445,6 +446,15 @@ export function EventWizard({ mode, eventId }: Props) {
               />
             </AccordionRow>
           </Section>
+        </View>
+
+        {/* Live widget preview — reflects Appearance's cardTheme/accentColor
+            choice as the user edits, so they can see the actual home-screen
+            widget without leaving the form (not gated behind the Appearance
+            accordion being expanded). */}
+        <View style={{ marginTop: spacing.lg }}>
+          <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>{t('widgets.widgetPreview')}</Text>
+          <MiniWidget event={draftEvent} size="full" />
         </View>
       </ScrollView>
 

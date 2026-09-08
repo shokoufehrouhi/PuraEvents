@@ -7,6 +7,7 @@ import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } fr
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
+import { MiniWidget } from '../../../src/components/MiniWidget';
 import { Button } from '../../../src/components/ui/Button';
 import { Section } from '../../../src/components/ui/Section';
 import { cancelRemindersForEvent } from '../../../src/notifications';
@@ -71,8 +72,8 @@ export default function EventDetailScreen() {
   if (!event) return null;
 
   async function handleDelete() {
-    Alert.alert(t('events.delete'), event!.title, [
-      { text: t('events.back'), style: 'cancel' },
+    Alert.alert(t('events.deleteConfirmTitle'), t('events.deleteConfirmMessage', { title: event!.title }), [
+      { text: t('events.cancel'), style: 'cancel' },
       {
         text: t('events.delete'),
         style: 'destructive',
@@ -111,6 +112,7 @@ export default function EventDetailScreen() {
         >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
+        <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.eventDetails')}</Text>
         <View style={styles.headerRight}>
           <Pressable onPress={goEdit} hitSlop={12} style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}>
             <Feather name="edit-2" size={18} color={colors.text} />
@@ -196,6 +198,13 @@ export default function EventDetailScreen() {
             }
           />
         </Section>
+
+        {/* Live widget preview — same MiniWidget the wizard's Appearance
+            step shows, reflecting this event's saved cardTheme/accentColor. */}
+        <View style={{ marginTop: spacing.lg }}>
+          <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>{t('widgets.widgetPreview')}</Text>
+          <MiniWidget event={event} size="full" />
+        </View>
       </ScrollView>
 
       <View

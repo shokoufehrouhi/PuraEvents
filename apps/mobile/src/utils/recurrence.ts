@@ -38,6 +38,26 @@ export function getNextOccurrenceISO(dateTimeISO: string, repeat: RepeatRule): s
 }
 
 /**
+ * For a repeating event, the most recent occurrence that has already
+ * happened before `from` (default now) — null if it's one-time (repeat:
+ * 'none', no recurring "previous cycle" concept) or if even its first
+ * occurrence hasn't happened yet. Used to surface a "this occurrence
+ * happened" record in the Past tab for events that otherwise never leave
+ * Upcoming (see getNextOccurrence's own doc comment) — the live event keeps
+ * counting down to its next occurrence in Upcoming; this is just the
+ * completed one.
+ */
+export function getPreviousOccurrence(dateTimeISO: string, repeat: RepeatRule, from: Dayjs = dayjs()): Dayjs | null {
+  if (repeat === 'none') return null;
+  const original = dayjs(dateTimeISO);
+  const next = getNextOccurrence(dateTimeISO, repeat, from);
+  // next === original means the first occurrence hasn't happened yet —
+  // nothing has completed, so there's no previous cycle to show.
+  if (!next.isAfter(original)) return null;
+  return next.subtract(1, UNIT_BY_REPEAT[repeat]);
+}
+
+/**
  * Whether this event has an occurrence falling on `targetDate` (compared by
  * calendar day only, time-of-day ignored) — used by the Day view to list
  * every event scheduled for a given date, repeating or not. An event never

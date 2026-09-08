@@ -1,5 +1,5 @@
 {
-  "appName": "PurEvents",
+  "appName": "PuraEvents",
   "tabs": {
     "events": "Events",
     "widgets": "Widgets",
@@ -16,6 +16,9 @@
     "emptyPastTitle": "No past events",
     "emptyPastSubtitle": "Completed countdowns will appear here.",
     "viewUpcoming": "View upcoming events",
+    "limitReachedTitle": "Free plan limit reached",
+    "limitReachedSubtitle": "Upgrade to Pro to create more events.",
+    "viewPro": "View Pro",
     "add": "Add Event",
     "titleLabel": "Title",
     "eventNameLabel": "Event Name",
@@ -37,6 +40,9 @@
     "createEvent": "Create Event",
     "share": "Share",
     "delete": "Delete",
+    "deleteConfirmTitle": "Delete Event?",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{title}}\"? This can't be undone.",
+    "cancel": "Cancel",
     "addWidget": "Add Widget",
     "next": "Next",
     "back": "Back",
@@ -94,7 +100,7 @@
   },
   "settings": {
     "title": "Settings",
-    "proPlan": "PurEvents Pro",
+    "proPlan": "PuraEvents Pro",
     "freePlan": "Free plan",
     "viewPlans": "View plans",
     "preferences": "Preferences",
@@ -115,7 +121,7 @@
     "privacy": "Privacy",
     "about": "About",
     "helpFeedback": "Help & feedback",
-    "rateApp": "Rate PurEvents",
+    "rateApp": "Rate PuraEvents",
     "version": "Version"
   },
   "preferences": {
@@ -170,8 +176,8 @@
     "autoRenewNote": "Your subscription renews automatically. Manage or cancel anytime in your account settings."
   },
   "compare": {
-    "title": "PurEvents Pro",
-    "subtitle": "Everything you love about PurEvents. Supercharged.",
+    "title": "PuraEvents Pro",
+    "subtitle": "Everything you love about PuraEvents. Supercharged.",
     "free": "Free",
     "pro": "Pro",
     "activeEvents": "Active events",

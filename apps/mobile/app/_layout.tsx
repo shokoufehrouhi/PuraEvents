@@ -40,11 +40,13 @@ function Navigation() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="day" options={{ ...headerOptions, title: t('tabs.events'), headerBackTitle: t('day.backTitle') }} />
-        <Stack.Screen name="event/new" options={{ presentation: 'fullScreenModal' }} />
+        {/* Push, not modal — opens the same way event/[id]/index (Details)
+            does, per explicit request to match that navigation feel. */}
+        <Stack.Screen name="event/new" />
         <Stack.Screen name="event/category-picker" />
         <Stack.Screen name="event/repeat-picker" />
         <Stack.Screen name="event/[id]/index" />
-        <Stack.Screen name="event/[id]/edit" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="event/[id]/edit" />
         <Stack.Screen
           name="preferences"
           options={{ ...headerOptions, title: t('preferences.title'), headerBackTitle: t('settings.title') }}

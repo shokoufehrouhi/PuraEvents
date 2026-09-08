@@ -1,5 +1,5 @@
 {
-  "appName": "PurEvents",
+  "appName": "PuraEvents",
   "tabs": {
     "events": "Eventos",
     "widgets": "Widgets",
@@ -16,6 +16,9 @@
     "emptyPastTitle": "No hay eventos pasados",
     "emptyPastSubtitle": "Las cuentas regresivas completadas aparecerán aquí.",
     "viewUpcoming": "Ver próximos eventos",
+    "limitReachedTitle": "Límite del plan gratuito alcanzado",
+    "limitReachedSubtitle": "Actualiza a Pro para crear más eventos.",
+    "viewPro": "Ver Pro",
     "add": "Agregar evento",
     "titleLabel": "Título",
     "eventNameLabel": "Nombre del evento",
@@ -37,6 +40,9 @@
     "createEvent": "Crear evento",
     "share": "Compartir",
     "delete": "Eliminar",
+    "deleteConfirmTitle": "¿Eliminar evento?",
+    "deleteConfirmMessage": "¿Seguro que quieres eliminar \"{{title}}\"? Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
     "addWidget": "Agregar widget",
     "next": "Siguiente",
     "back": "Atrás",
@@ -94,7 +100,7 @@
   },
   "settings": {
     "title": "Ajustes",
-    "proPlan": "PurEvents Pro",
+    "proPlan": "PuraEvents Pro",
     "freePlan": "Plan gratuito",
     "viewPlans": "Ver planes",
     "preferences": "Preferencias",
@@ -115,7 +121,7 @@
     "privacy": "Privacidad",
     "about": "Acerca de",
     "helpFeedback": "Ayuda y comentarios",
-    "rateApp": "Calificar PurEvents",
+    "rateApp": "Calificar PuraEvents",
     "version": "Versión"
   },
   "preferences": {
@@ -170,8 +176,8 @@
     "autoRenewNote": "Tu suscripción se renueva automáticamente. Puedes gestionarla o cancelarla cuando quieras desde los ajustes de tu cuenta."
   },
   "compare": {
-    "title": "PurEvents Pro",
-    "subtitle": "Todo lo que amas de PurEvents. Potenciado.",
+    "title": "PuraEvents Pro",
+    "subtitle": "Todo lo que amas de PuraEvents. Potenciado.",
     "free": "Gratis",
     "pro": "Pro",
     "activeEvents": "Eventos activos",

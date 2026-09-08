@@ -1,5 +1,5 @@
 {
-  "appName": "PurEvents",
+  "appName": "PuraEvents",
   "tabs": {
     "events": "Ereignisse",
     "widgets": "Widgets",
@@ -16,6 +16,9 @@
     "emptyPastTitle": "Keine vergangenen Ereignisse",
     "emptyPastSubtitle": "Abgeschlossene Countdowns erscheinen hier.",
     "viewUpcoming": "Bevorstehende Ereignisse anzeigen",
+    "limitReachedTitle": "Limit des kostenlosen Plans erreicht",
+    "limitReachedSubtitle": "Upgrade auf Pro, um mehr Ereignisse zu erstellen.",
+    "viewPro": "Pro ansehen",
     "add": "Ereignis hinzufügen",
     "titleLabel": "Titel",
     "eventNameLabel": "Ereignisname",
@@ -37,6 +40,9 @@
     "createEvent": "Ereignis erstellen",
     "share": "Teilen",
     "delete": "Löschen",
+    "deleteConfirmTitle": "Ereignis löschen?",
+    "deleteConfirmMessage": "Möchtest du \"{{title}}\" wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+    "cancel": "Abbrechen",
     "addWidget": "Widget hinzufügen",
     "next": "Weiter",
     "back": "Zurück",
@@ -94,7 +100,7 @@
   },
   "settings": {
     "title": "Einstellungen",
-    "proPlan": "PurEvents Pro",
+    "proPlan": "PuraEvents Pro",
     "freePlan": "Kostenloser Plan",
     "viewPlans": "Pläne ansehen",
     "preferences": "Einstellungen",
@@ -115,7 +121,7 @@
     "privacy": "Datenschutz",
     "about": "Über",
     "helpFeedback": "Hilfe & Feedback",
-    "rateApp": "PurEvents bewerten",
+    "rateApp": "PuraEvents bewerten",
     "version": "Version"
   },
   "preferences": {
@@ -170,8 +176,8 @@
     "autoRenewNote": "Dein Abo verlängert sich automatisch. Du kannst es jederzeit in den Kontoeinstellungen verwalten oder kündigen."
   },
   "compare": {
-    "title": "PurEvents Pro",
-    "subtitle": "Alles, was du an PurEvents liebst. Aufgeladen.",
+    "title": "PuraEvents Pro",
+    "subtitle": "Alles, was du an PuraEvents liebst. Aufgeladen.",
     "free": "Kostenlos",
     "pro": "Pro",
     "activeEvents": "Aktive Ereignisse",

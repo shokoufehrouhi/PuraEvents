@@ -16,6 +16,11 @@ interface Props {
   // Thin vertical rule between columns (event detail's bordered countdown
   // card) — off by default so every other spot is unaffected.
   dividerColor?: string;
+  // Tighter column/inner gaps for small inline uses (e.g. the Events list
+  // row) — the default gaps are sized for a full-width hero card and look
+  // sparse at list-row scale. Off by default so every other spot is
+  // unaffected.
+  compact?: boolean;
 }
 
 // Big three-column D/H/M countdown used on hero cards (event list + detail),
@@ -28,6 +33,7 @@ export function HeroCountdown({
   numberSize = 44,
   labelSize = 12,
   dividerColor,
+  compact,
 }: Props) {
   const { t } = useTranslation();
   const [now, setNow] = useState(() => dayjs());
@@ -53,9 +59,9 @@ export function HeroCountdown({
   ];
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
       {columns.map(([value, label], i) => (
-        <View key={label} style={styles.colWrap}>
+        <View key={label} style={[styles.colWrap, compact && styles.colWrapCompact]}>
           {i > 0 && dividerColor ? (
             <View style={[styles.divider, { backgroundColor: dividerColor, height: numberSize }]} />
           ) : null}
@@ -71,7 +77,9 @@ export function HeroCountdown({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 22 },
+  rowCompact: { gap: 10 },
   colWrap: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  colWrapCompact: { gap: 6 },
   col: { alignItems: 'center' },
   divider: { width: 1 },
   number: { fontWeight: '900', fontVariant: ['tabular-nums'] },

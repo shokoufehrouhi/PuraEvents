@@ -1,5 +1,5 @@
 {
-  "appName": "PurEvents",
+  "appName": "PuraEvents",
   "tabs": {
     "events": "Etkinlikler",
     "widgets": "Widget'lar",
@@ -16,6 +16,9 @@
     "emptyPastTitle": "Geçmiş etkinlik yok",
     "emptyPastSubtitle": "Tamamlanan geri sayımlar burada görünecek.",
     "viewUpcoming": "Yaklaşan etkinlikleri görüntüle",
+    "limitReachedTitle": "Ücretsiz plan sınırına ulaşıldı",
+    "limitReachedSubtitle": "Daha fazla etkinlik oluşturmak için Pro'ya yükselt.",
+    "viewPro": "Pro'yu görüntüle",
     "add": "Etkinlik Ekle",
     "titleLabel": "Başlık",
     "eventNameLabel": "Etkinlik Adı",
@@ -37,6 +40,9 @@
     "createEvent": "Etkinlik Oluştur",
     "share": "Paylaş",
     "delete": "Sil",
+    "deleteConfirmTitle": "Etkinlik silinsin mi?",
+    "deleteConfirmMessage": "\"{{title}}\" etkinliğini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "cancel": "İptal",
     "addWidget": "Widget Ekle",
     "next": "İleri",
     "back": "Geri",
@@ -94,7 +100,7 @@
   },
   "settings": {
     "title": "Ayarlar",
-    "proPlan": "PurEvents Pro",
+    "proPlan": "PuraEvents Pro",
     "freePlan": "Ücretsiz plan",
     "viewPlans": "Planları görüntüle",
     "preferences": "Tercihler",
@@ -115,7 +121,7 @@
     "privacy": "Gizlilik",
     "about": "Hakkında",
     "helpFeedback": "Yardım ve geri bildirim",
-    "rateApp": "PurEvents'i değerlendir",
+    "rateApp": "PuraEvents'i değerlendir",
     "version": "Sürüm"
   },
   "preferences": {
@@ -170,8 +176,8 @@
     "autoRenewNote": "Aboneliğin otomatik olarak yenilenir. Hesap ayarlarından istediğin zaman yönetebilir veya iptal edebilirsin."
   },
   "compare": {
-    "title": "PurEvents Pro",
-    "subtitle": "PurEvents'te sevdiğin her şey. Güçlendirilmiş.",
+    "title": "PuraEvents Pro",
+    "subtitle": "PuraEvents'te sevdiğin her şey. Güçlendirilmiş.",
     "free": "Ücretsiz",
     "pro": "Pro",
     "activeEvents": "Aktif etkinlikler",

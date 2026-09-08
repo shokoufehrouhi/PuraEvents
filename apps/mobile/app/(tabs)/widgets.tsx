@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { MiniWidget } from '../../src/components/MiniWidget';
 import { Row } from '../../src/components/ui/Row';
 import { Section } from '../../src/components/ui/Section';
 import { listEvents } from '../../src/storage/events';
@@ -15,7 +16,6 @@ import { useTheme } from '../../src/theme/PreferencesContext';
 import { accents } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
 import { darken } from '../../src/utils/color';
-import { getNextOccurrence } from '../../src/utils/recurrence';
 
 const SAMPLE_EVENT: PurEvent = {
   id: 'sample',
@@ -37,24 +37,6 @@ const THEME_SWATCHES: { key: string; colors: [string, string]; locked: boolean }
   { key: 'forest', colors: [accents.mint, darken(accents.mint, 0.4)], locked: true },
   { key: 'midnight', colors: ['#171821', '#05050a'], locked: true },
 ];
-
-function MiniWidget({ event, size }: { event: PurEvent; size: 'small' | 'medium' | 'large' }) {
-  const { radius } = useTheme();
-  const base = accents[event.accentColor] ?? accents.violet;
-  const nextOccurrence = getNextOccurrence(event.dateTimeISO, event.repeat);
-  const days = Math.max(0, Math.ceil(nextOccurrence.diff(dayjs(), 'hour') / 24));
-  const dims = size === 'small' ? { width: 84, height: 84 } : size === 'medium' ? { width: 170, height: 84 } : { width: 170, height: 170 };
-
-  return (
-    <LinearGradient colors={[base, darken(base, 0.35)]} style={[dims, { borderRadius: radius.md, padding: 10, justifyContent: 'space-between' }]}>
-      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }} numberOfLines={1}>
-        {event.title}
-      </Text>
-      <Text style={{ color: '#fff', fontSize: size === 'small' ? 20 : 26, fontWeight: '700' }}>{days}</Text>
-      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>DAYS</Text>
-    </LinearGradient>
-  );
-}
 
 export default function WidgetsScreen() {
   const { t } = useTranslation();

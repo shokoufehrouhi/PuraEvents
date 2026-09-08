@@ -164,8 +164,9 @@ export default function PreferencesScreen() {
         height={140}
         photoUri={previewPhotoUri ?? undefined}
         showPhoto
-        countdownNumberSize={36}
-        countdownLabelSize={9}
+        countdownNumberSize={24}
+        countdownLabelSize={8}
+        titleSize={20}
       />
     </ScrollView>
   );
