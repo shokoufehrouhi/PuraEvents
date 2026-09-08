@@ -29,11 +29,13 @@ export const responsiveContent = { width: '100%', maxWidth: maxContentWidth, ali
 
 // Event accent colors (used on hero cards, widgets, chips). Shared across
 // light/dark — only the neutrals (background/surface/text/...) flip.
+// Softened ~18% toward white from the original, more saturated set (per
+// user request — the New Event picker's swatches felt too intense).
 export const accents = {
-  coral: '#FF6B6B',
-  amber: '#FFB020',
-  mint: '#22C58E',
-  violet: '#6558D9',
+  coral: '#FF8686',
+  amber: '#FFBE48',
+  mint: '#4ACFA2',
+  violet: '#8176E0',
 } as const;
 
 export type AccentKey = keyof typeof accents;

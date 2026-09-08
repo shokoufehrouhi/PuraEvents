@@ -16,6 +16,7 @@ import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext'
 import { accents } from '../../../src/theme/tokens';
 import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
+import { darken } from '../../../src/utils/color';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { reminderLabel } from '../../../src/utils/reminders';
 
@@ -187,7 +188,7 @@ export default function EventDetailScreen() {
             value={`${event.accentColor.charAt(0).toUpperCase()}${event.accentColor.slice(1)} · ${t(`events.category.${event.category}`)}`}
             badge={
               <LinearGradient
-                colors={[accents[event.accentColor], accents.violet]}
+                colors={[accents[event.accentColor], darken(accents[event.accentColor], 0.35)]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.detailBadge, { borderRadius: radius.md }]}
