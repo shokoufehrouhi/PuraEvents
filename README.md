@@ -1,4 +1,4 @@
-# PurEvents
+# PuraEvents
 
 Cross-platform (iOS/Android) smart countdown app. Full product spec: [`docs/PROJECT.md`](docs/PROJECT.md).
 

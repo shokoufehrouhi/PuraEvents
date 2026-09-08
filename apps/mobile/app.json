@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "PurEvents",
-    "slug": "purevents",
-    "scheme": "purevents",
+    "name": "PuraEvents",
+    "slug": "puraevents",
+    "scheme": "puraevents",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.purevents"
+      "bundleIdentifier": "com.anonymous.puraevents"
     },
     "android": {
       "adaptiveIcon": {

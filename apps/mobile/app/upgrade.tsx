@@ -34,7 +34,7 @@ function ComparisonRow({ label, free, pro }: { label: string; free: string; pro:
   );
 }
 
-// PurEvents Pro comparison + purchase screen. RevenueCat isn't wired yet
+// PuraEvents Pro comparison + purchase screen. RevenueCat isn't wired yet
 // (Phase 3, docs/PROJECT.md §5.1/§9) — Continue is a real, honest placeholder.
 export default function UpgradeScreen() {
   const { t } = useTranslation();

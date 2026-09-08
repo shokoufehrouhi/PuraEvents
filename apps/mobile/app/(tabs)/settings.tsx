@@ -142,7 +142,7 @@ export default function SettingsScreen() {
             icon="help-circle-outline"
             badgeColor={rowBadgeColors.blue}
             label={t('settings.helpFeedback')}
-            onPress={() => Linking.openURL('mailto:support@purevents.app')}
+            onPress={() => Linking.openURL('mailto:support@puraevents.app')}
           />
           <Row icon="star-outline" badgeColor={rowBadgeColors.orange} label={t('settings.rateApp')} onPress={() => comingSoon()} />
           <Row

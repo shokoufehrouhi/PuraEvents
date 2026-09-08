@@ -10,7 +10,7 @@ export default function PrivacyScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
       <Text style={[typography.body, { color: colors.text, lineHeight: 24 }]}>
-        PurEvents stores your events on this device by default. Cloud sync is optional and only used for Pro features
+        PuraEvents stores your events on this device by default. Cloud sync is optional and only used for Pro features
         like group events and cross-device backup.{'\n\n'}
         This placeholder will be replaced with a reviewed Privacy Policy (including GDPR/CCPA data export & delete
         flows) before the app is submitted to the App Store or Google Play.
