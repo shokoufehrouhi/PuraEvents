@@ -473,7 +473,9 @@ const styles = StyleSheet.create({
     // one row taller than its neighbors.
     minHeight: 56,
   },
-  dot: { width: 14, height: 14, borderRadius: 7 },
+  // Bigger than the original 14px but not as large as the Category row's
+  // 32px EventIcon — 32 read as too big, this is the midpoint.
+  dot: { width: 22, height: 22, borderRadius: 11 },
   accordionHeader: { flexDirection: 'row', alignItems: 'center' },
   reminderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   addReminder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, padding: 12, borderStyle: 'dashed' },
