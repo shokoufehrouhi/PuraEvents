@@ -8,8 +8,8 @@ import { ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Te
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CivilCalendarPicker } from '../components/CivilCalendarPicker';
-import { EventHeroCard } from '../components/EventHeroCard';
 import { EventIcon } from '../components/EventIcon';
+import { MiniWidget } from '../components/MiniWidget';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
@@ -20,7 +20,7 @@ import { CARD_THEME_KEYS, CARD_THEMES } from '../theme/cardThemes';
 import { REPEAT_STYLES } from '../theme/repeatStyles';
 import { usePreferences, useTheme } from '../theme/PreferencesContext';
 import { ACCENT_KEYS, accents, elevation, responsiveContent, type AccentKey } from '../theme/tokens';
-import type { CardTheme, EventCategory, PurEvent, RepeatRule, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../types/event';
+import type { CardTheme, EventCategory, PurEvent, RepeatRule, WidgetCornerStyle, WidgetSelection, WidgetSize, WidgetTextStyle } from '../types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../utils/calendars';
 import { awaitPick } from '../utils/pickerBridge';
 import { PRESET_REMINDER_OFFSETS, reminderLabel } from '../utils/reminders';
@@ -83,6 +83,9 @@ export function EventWizard({ mode, eventId }: Props) {
   const [customOverlayOpacity, setCustomOverlayOpacity] = useState<number | undefined>(undefined);
   const [customCornerStyle, setCustomCornerStyle] = useState<WidgetCornerStyle | undefined>(undefined);
   const [customTextStyle, setCustomTextStyle] = useState<WidgetTextStyle | undefined>(undefined);
+  // Independent of cardTheme/customPhotoUri — a Categories photo at Small
+  // is just as valid as Built-in Clean at Large.
+  const [widgetSize, setWidgetSize] = useState<WidgetSize>('medium');
   const [repeat, setRepeat] = useState<RepeatRule>('none');
   const [reminders, setReminders] = useState<number[]>(prefs.defaultReminderOffsets);
   const [note, setNote] = useState('');
@@ -102,6 +105,7 @@ export function EventWizard({ mode, eventId }: Props) {
         setCustomOverlayOpacity(e.customOverlayOpacity);
         setCustomCornerStyle(e.customCornerStyle);
         setCustomTextStyle(e.customTextStyle);
+        setWidgetSize(e.widgetSize ?? 'medium');
         setRepeat(e.repeat);
         setReminders(e.reminders);
         setNote(e.note ?? '');
@@ -111,12 +115,17 @@ export function EventWizard({ mode, eventId }: Props) {
 
   const canSave = title.trim().length > 0 && !saving;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Nothing entered yet (title still blank) — the Appearance preview shows
+  // this placeholder trip instead of the literal empty/just-created draft,
+  // same fixed content as custom-widget.tsx's own DEFAULT_SAMPLE, so a
+  // brand-new event's widget preview always reads as a real-looking card.
+  const isDraftEmpty = title.trim().length === 0;
   const draftEvent: PurEvent = {
     id: 'draft',
-    title: title.trim() || 'Event',
-    dateTimeISO: date.toISOString(),
+    title: isDraftEmpty ? 'New York' : title.trim(),
+    dateTimeISO: isDraftEmpty ? dayjs().add(15, 'day').toISOString() : date.toISOString(),
     timezone,
-    category,
+    category: isDraftEmpty ? 'travel' : category,
     accentColor,
     cardTheme,
     customPhotoUri,
@@ -124,9 +133,10 @@ export function EventWizard({ mode, eventId }: Props) {
     customOverlayOpacity,
     customCornerStyle,
     customTextStyle,
-    repeat,
+    widgetSize,
+    repeat: isDraftEmpty ? 'none' : repeat,
     reminders,
-    note: note.trim() || undefined,
+    note: isDraftEmpty ? "Don't forget your passport" : note.trim() || undefined,
     createdAt: '',
     updatedAt: '',
   };
@@ -184,6 +194,15 @@ export function EventWizard({ mode, eventId }: Props) {
     if (result.accentColor) setAccentColor(result.accentColor);
   }
 
+  // Full push screen, same simple list+checkmark pattern as language-picker
+  // — independent of openWidgetPicker above, since size doesn't change what
+  // style/photo the widget shows.
+  async function pickWidgetSize() {
+    router.push({ pathname: '/widget-size-picker', params: { current: widgetSize } });
+    const picked = await awaitPick();
+    setWidgetSize(picked as WidgetSize);
+  }
+
   function addReminder() {
     if (!isPro && reminders.length >= FREE_LIMITS.maxRemindersPerEvent) {
       router.push('/paywall');
@@ -221,6 +240,7 @@ export function EventWizard({ mode, eventId }: Props) {
       customOverlayOpacity,
       customCornerStyle,
       customTextStyle,
+      widgetSize,
       repeat,
       reminders,
       note: note.trim() || undefined,
@@ -412,7 +432,13 @@ export function EventWizard({ mode, eventId }: Props) {
               expanded={expanded === 'appearance'}
               onPress={() => toggle('appearance')}
             >
-              <EventHeroCard event={draftEvent} height={140} titleSize={20} countdownNumberSize={24} countdownLabelSize={10} />
+              {/* MiniWidget, not EventHeroCard — this is a preview of the
+                  actual home-screen widget, so it needs to reflect Widget
+                  Size below (small/medium/large render very differently,
+                  not just a smaller version of the same banner). */}
+              <View style={{ alignItems: 'center', marginBottom: spacing.sm }}>
+                <MiniWidget event={draftEvent} size={widgetSize} />
+              </View>
 
               <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>
                 {t('events.cardThemeLabel')}
@@ -494,6 +520,18 @@ export function EventWizard({ mode, eventId }: Props) {
                   </Text>
                 </Pressable>
               </View>
+
+              {/* Independent of the style/photo above — a Categories photo
+                  at Small is just as valid as Built-in Clean at Large. */}
+              <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>{t('widgets.widgetSize')}</Text>
+              <Pressable
+                onPress={pickWidgetSize}
+                style={[styles.dropdownField, { borderColor: colors.outline, borderRadius: radius.md }]}
+              >
+                <Ionicons name="resize-outline" size={18} color={colors.secondary} />
+                <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t(`widgets.${widgetSize}`)}</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+              </Pressable>
 
               {!isPro ? (
                 <Pressable

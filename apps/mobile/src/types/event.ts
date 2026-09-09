@@ -16,6 +16,13 @@ export type WidgetCornerStyle = 'sharp' | 'rounded' | 'extraRounded';
  *  No new font files are involved, just a fontWeight swap. */
 export type WidgetTextStyle = 'system' | 'bold' | 'black';
 
+/** Home-screen widget size — independent of cardTheme/customPhotoUri (the
+ *  *look*): you can use a Categories photo at Small just as easily as
+ *  Built-in Clean at Large. Picked in New/Edit Event's Appearance section
+ *  and in the standalone custom-widget.tsx editor; defaults to 'medium'
+ *  when unset. */
+export type WidgetSize = 'small' | 'medium' | 'large';
+
 export interface PurEvent {
   id: string;
   title: string;
@@ -42,6 +49,9 @@ export interface PurEvent {
   customCornerStyle?: WidgetCornerStyle;
   /** Title-text weight preset for a 'custom' widget — defaults to 'system'. */
   customTextStyle?: WidgetTextStyle;
+  /** Home-screen widget size — independent of cardTheme/customPhotoUri, see
+   *  WidgetSize. Defaults to 'medium' when unset. */
+  widgetSize?: WidgetSize;
   note?: string;
   repeat: RepeatRule;
   /** Minutes-before-event offsets; [0] = "at time of event". */

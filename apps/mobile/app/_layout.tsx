@@ -87,6 +87,10 @@ function Navigation() {
           options={{ ...headerOptions, title: t('widgets.customWidgetTitle'), headerBackTitle: t('widgets.title') }}
         />
         <Stack.Screen
+          name="widget-size-picker"
+          options={{ ...headerOptions, title: t('widgets.widgetSize'), headerBackTitle: t('widgets.customWidgetTitle') }}
+        />
+        <Stack.Screen
           name="widget-overlay-picker"
           options={{ ...headerOptions, title: t('widgets.overlay'), headerBackTitle: t('widgets.customWidgetTitle') }}
         />

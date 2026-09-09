@@ -33,16 +33,16 @@ interface Props {
   size: 'small' | 'medium' | 'large' | 'full';
 }
 
-// large/full use minHeight, not height — they show the full field set
-// (header, title, date line, D/H/M, an optional 2-line note) and a note's
-// length varies, so the card needs to grow with its content instead of
-// clipping/overflowing a fixed box.
+// A fixed frame per size, not a minimum — same as how a real WidgetKit
+// widget renders (content fits or truncates, the box itself never grows).
+// 'large' matches iOS's own systemMedium width (338pt) so it lines up with
+// a real home-screen widget; 'small'/'medium' step down from there.
+// 'full' is unrelated to this size class — it's the Preferences/Detail
+// screens' own full-width banner.
 const DIMS: Record<Props['size'], { width: number | '100%'; height?: number; minHeight?: number }> = {
-  small: { width: 84, height: 84 },
-  medium: { width: 170, height: 84 },
-  // Wider than tall (not a square) — the date line needs the extra width
-  // to fit on one line without truncating.
-  large: { width: 260, minHeight: 170 },
+  small: { width: 100, height: 100 },
+  medium: { width: 220, height: 130 },
+  large: { width: 338, height: 158 },
   full: { width: '100%', minHeight: 140 },
 };
 
@@ -135,6 +135,11 @@ export function MiniWidget({ event, size }: Props) {
         <Text style={{ color: textColor, fontSize: 13, fontWeight: titleWeight }} numberOfLines={1}>
           {event.title}
         </Text>
+        {/* Medium's own extra room (see DIMS) fits the same date+time
+            line 'big' shows, not just the short header-row date above. */}
+        <Text style={{ color: secondaryColor, fontSize: 10, fontWeight: '700', marginTop: 1 }} numberOfLines={1}>
+          {dayjs(nextOccurrence).format('ddd, MMM D · HH:mm')}
+        </Text>
         <HeroCountdown
           targetISO={nextOccurrence.toISOString()}
           textColor={textColor}
@@ -143,6 +148,11 @@ export function MiniWidget({ event, size }: Props) {
           labelSize={7}
           compact
         />
+        {event.note ? (
+          <Text style={{ color: secondaryColor, fontSize: 9, fontWeight: '600', marginTop: 3 }} numberOfLines={1}>
+            {event.note}
+          </Text>
+        ) : null}
       </View>
     </>
   ) : (

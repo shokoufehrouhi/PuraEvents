@@ -94,6 +94,25 @@ export default function WidgetsScreen() {
   const quotaFull =
     !isPro && myWidgets.filter((e) => e.customPhotoUri && e.id !== (isRealSample ? sample.id : undefined)).length >= FREE_LIMITS.maxWidgets;
 
+  // Reusing a saved widget on a *different* event still spends the same
+  // free-tier slot as picking a brand-new photo — only exempt from the
+  // gate when it's the one this event already has (a no-op reselect).
+  function selectSavedWidget(widget: PurEvent) {
+    if (quotaFull && widget.customPhotoUri !== sample.customPhotoUri) {
+      router.push('/paywall');
+      return;
+    }
+    applySelection({
+      cardTheme: 'custom',
+      customPhotoUri: widget.customPhotoUri,
+      customWidgetName: widget.customWidgetName,
+      customOverlayOpacity: widget.customOverlayOpacity,
+      customCornerStyle: widget.customCornerStyle,
+      customTextStyle: widget.customTextStyle,
+      accentColor: widget.accentColor,
+    });
+  }
+
   // Opens the full New Widget editor (Widget Name, Size, Overlay, Accent,
   // Corner Style, Text Style — draft mode, see custom-widget.tsx) and
   // applies the result straight to the previewed event once it resolves.
@@ -198,7 +217,7 @@ export default function WidgetsScreen() {
                   >
                     {selected ? <Ionicons name="checkmark-circle" size={22} color={preset.text} /> : null}
                   </View>
-                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6 }]}>{t(`events.cardTheme.${key}`)}</Text>
+                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]}>{t(`events.cardTheme.${key}`)}</Text>
                 </Pressable>
               );
             })}
@@ -213,21 +232,7 @@ export default function WidgetsScreen() {
               const nextOccurrence = getNextOccurrence(widget.dateTimeISO, widget.repeat);
               const days = Math.max(0, Math.ceil(nextOccurrence.diff(dayjs(), 'hour') / 24));
               return (
-                <Pressable
-                  key={widget.id}
-                  style={styles.card}
-                  onPress={() =>
-                    applySelection({
-                      cardTheme: 'custom',
-                      customPhotoUri: widget.customPhotoUri,
-                      customWidgetName: widget.customWidgetName,
-                      customOverlayOpacity: widget.customOverlayOpacity,
-                      customCornerStyle: widget.customCornerStyle,
-                      customTextStyle: widget.customTextStyle,
-                      accentColor: widget.accentColor,
-                    })
-                  }
-                >
+                <Pressable key={widget.id} style={styles.card} onPress={() => selectSavedWidget(widget)}>
                   <ImageBackground
                     source={{ uri: widget.customPhotoUri }}
                     style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}
@@ -246,7 +251,7 @@ export default function WidgetsScreen() {
                       <Text style={styles.cardDate}>{dayjs(nextOccurrence).format('MMM D, YYYY')}</Text>
                     </View>
                   </ImageBackground>
-                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6 }]} numberOfLines={1}>
+                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
                     {widget.customWidgetName || widget.title}
                   </Text>
                 </Pressable>
@@ -261,7 +266,7 @@ export default function WidgetsScreen() {
                   </View>
                 ) : null}
               </View>
-              <Text style={[typography.bodyStrong, { color: colors.secondary, marginTop: 6 }]}>{t('widgets.newCustom')}</Text>
+              <Text style={[typography.bodyStrong, { color: colors.secondary, marginTop: 6, textAlign: 'center' }]}>{t('widgets.newCustom')}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -283,21 +288,7 @@ export default function WidgetsScreen() {
                     {widgetsInCategory.map((widget) => {
                       const selected = sample.cardTheme === 'custom' && sample.customPhotoUri === widget.customPhotoUri;
                       return (
-                        <Pressable
-                          key={widget.id}
-                          style={styles.card}
-                          onPress={() =>
-                            applySelection({
-                              cardTheme: 'custom',
-                              customPhotoUri: widget.customPhotoUri,
-                              customWidgetName: widget.customWidgetName,
-                              customOverlayOpacity: widget.customOverlayOpacity,
-                              customCornerStyle: widget.customCornerStyle,
-                              customTextStyle: widget.customTextStyle,
-                              accentColor: widget.accentColor,
-                            })
-                          }
-                        >
+                        <Pressable key={widget.id} style={styles.card} onPress={() => selectSavedWidget(widget)}>
                           <ImageBackground
                             source={{ uri: widget.customPhotoUri }}
                             style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}
@@ -308,7 +299,7 @@ export default function WidgetsScreen() {
                               <Ionicons name={selected ? 'checkmark-circle' : 'chevron-down-circle'} size={20} color="#fff" />
                             </View>
                           </ImageBackground>
-                          <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6 }]} numberOfLines={1}>
+                          <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
                             {widget.customWidgetName || widget.title}
                           </Text>
                         </Pressable>
@@ -352,7 +343,7 @@ const styles = StyleSheet.create({
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { width: '47%' },
+  card: { width: '47%', alignItems: 'center' },
   cardSwatch: { width: '100%', aspectRatio: 1.15, alignItems: 'center', justifyContent: 'center' },
   cardPhoto: { width: '100%', aspectRatio: 1.15, padding: 10, justifyContent: 'space-between', overflow: 'hidden' },
   dashedTile: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed' },

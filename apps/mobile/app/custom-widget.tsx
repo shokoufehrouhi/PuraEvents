@@ -8,7 +8,6 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { MiniWidget } from '../src/components/MiniWidget';
 import { Row } from '../src/components/ui/Row';
-import { SegmentedControl } from '../src/components/ui/SegmentedControl';
 import { Section } from '../src/components/ui/Section';
 import { Button } from '../src/components/ui/Button';
 import { listEvents, updateEvent } from '../src/storage/events';
@@ -17,6 +16,7 @@ import { useTheme } from '../src/theme/PreferencesContext';
 import { accents, type AccentKey } from '../src/theme/tokens';
 import type { PurEvent, WidgetCornerStyle, WidgetTextStyle } from '../src/types/event';
 import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
+import { persistPickedImage } from '../src/utils/persistImage';
 
 type PreviewSize = 'small' | 'medium' | 'large';
 
@@ -99,7 +99,7 @@ export default function CustomWidgetScreen() {
   // each one's cardTheme is *currently* pointed at 'custom' or something
   // else (Free Styles lets you switch away without losing the saved photo).
   const [otherUsedCount, setOtherUsedCount] = useState(0);
-  const [previewSize, setPreviewSize] = useState<PreviewSize>('large');
+  const [previewSize, setPreviewSize] = useState<PreviewSize>('medium');
   const [widgetName, setWidgetName] = useState(() => (isDraft ? initWidgetName ?? '' : ''));
 
   // Mount-only, not useFocusEffect — the photo picker (pickPhoto below)
@@ -149,8 +149,18 @@ export default function CustomWidgetScreen() {
     if (!permission.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [4, 3] });
     if (!result.canceled && result.assets[0]) {
-      setSample((s) => ({ ...s, cardTheme: 'custom', customPhotoUri: result.assets[0].uri }));
+      // Copy out of ImagePicker's own (OS-purgeable) cache location into
+      // permanent storage — otherwise a later rebuild/reinstall silently
+      // turns this into a broken image (see persistImage.ts).
+      const persistedUri = await persistPickedImage(result.assets[0].uri);
+      setSample((s) => ({ ...s, cardTheme: 'custom', customPhotoUri: persistedUri }));
     }
+  }
+
+  async function pickSize() {
+    router.push({ pathname: '/widget-size-picker', params: { current: previewSize } });
+    const picked = await awaitPick();
+    setPreviewSize(picked as PreviewSize);
   }
 
   async function pickOverlay() {
@@ -244,24 +254,12 @@ export default function CustomWidgetScreen() {
         </Text>
       </View>
 
-      <Text style={[typography.label, { color: colors.secondary, marginTop: spacing.md, marginBottom: spacing.sm }]}>
-        {t('widgets.widgetSize')}
-      </Text>
-      <SegmentedControl
-        value={previewSize}
-        onChange={setPreviewSize}
-        options={[
-          { value: 'small' as PreviewSize, label: t('widgets.small') },
-          { value: 'medium' as PreviewSize, label: t('widgets.medium') },
-          { value: 'large' as PreviewSize, label: t('widgets.large') },
-        ]}
-      />
-
       <View style={{ alignItems: 'center', marginVertical: spacing.lg }}>
         <MiniWidget event={sample} size={previewSize} />
       </View>
 
       <Section>
+        <Row icon="resize-outline" label={t('widgets.widgetSize')} value={t(`widgets.${previewSize}`)} onPress={pickSize} />
         <Row icon="image-outline" label={t('widgets.choosePhoto')} onPress={pickPhoto} />
         <Row icon="contrast-outline" label={t('widgets.overlay')} value={`${sample.customOverlayOpacity ?? 35}%`} onPress={pickOverlay} />
         <Row
