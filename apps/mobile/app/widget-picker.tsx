@@ -1,71 +1,65 @@
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { EventIcon } from '../../src/components/EventIcon';
-import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
-import { listEvents, updateEvent } from '../../src/storage/events';
-import { FREE_LIMITS, usePro } from '../../src/subscription';
-import { useTheme } from '../../src/theme/PreferencesContext';
-import { CARD_THEME_KEYS, CARD_THEMES } from '../../src/theme/cardThemes';
-import { accents } from '../../src/theme/tokens';
-import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../../src/types/event';
-import { fetchCategoryPhotos } from '../../src/utils/categoryPhoto';
-import { awaitPick } from '../../src/utils/pickerBridge';
-import { getNextOccurrence } from '../../src/utils/recurrence';
-
-const SAMPLE_EVENT: PurEvent = {
-  id: 'sample',
-  title: 'Tokyo Trip',
-  dateTimeISO: new Date(Date.now() + 18 * 86400000 + 6 * 3600000 + 24 * 60000).toISOString(),
-  timezone: 'Asia/Tokyo',
-  category: 'travel',
-  accentColor: 'coral',
-  cardTheme: 'color',
-  repeat: 'none',
-  reminders: [],
-  createdAt: '',
-  updatedAt: '',
-};
+import { EventIcon } from '../src/components/EventIcon';
+import { Button } from '../src/components/ui/Button';
+import { SegmentedControl } from '../src/components/ui/SegmentedControl';
+import { listEvents } from '../src/storage/events';
+import { FREE_LIMITS, usePro } from '../src/subscription';
+import { useTheme } from '../src/theme/PreferencesContext';
+import { CARD_THEME_KEYS, CARD_THEMES } from '../src/theme/cardThemes';
+import { accents } from '../src/theme/tokens';
+import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../src/types/event';
+import { fetchCategoryPhotos } from '../src/utils/categoryPhoto';
+import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
+import { getNextOccurrence } from '../src/utils/recurrence';
 
 type Tab = 'builtin' | 'mine' | 'categories';
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
 
-// This IS the Choose Widget experience (Built-in / My Widgets / Categories,
-// search, "+ New custom") — a dedicated tab has room to embed it directly,
-// applying every pick immediately to the previewed event (see
-// applySelection), unlike the New/Edit Event wizard's Appearance section
-// (a small part of a bigger form), which instead opens the same 3 tabs as
-// their own screen (app/widget-picker.tsx) with a stage-then-confirm flow.
-export default function WidgetsScreen() {
+// Full-screen "gallery" replacement for the old inline swatch row — Pro can
+// hold more than 1 custom widget, so browsing/searching/picking one needs
+// its own screen instead of a handful of tiles squeezed into an accordion.
+// Opened from both the New/Edit Event wizard's Appearance section and the
+// Widgets tab (see openWidgetPicker in each) with the event's current
+// look, category, and id (so quota/self-exclusion work); resolves a
+// WidgetSelection back via the pickerBridge on "Use selected widget".
+export default function WidgetPickerScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { isPro } = usePro();
-  const [sample, setSample] = useState<PurEvent>(SAMPLE_EVENT);
+  const { eventId, cardTheme: currentCardTheme, photoUri: currentPhotoUri } = useLocalSearchParams<{
+    eventId?: string;
+    cardTheme?: string;
+    photoUri?: string;
+  }>();
+
   const [tab, setTab] = useState<Tab>('mine');
   const [query, setQuery] = useState('');
   const [myWidgets, setMyWidgets] = useState<PurEvent[]>([]);
   const [categoryPhotos, setCategoryPhotos] = useState<Partial<Record<EventCategory, string[]>>>({});
 
-  useFocusEffect(
-    useCallback(() => {
-      listEvents().then((events) => {
-        const upcoming = events.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
-        if (upcoming) setSample(upcoming);
-        setMyWidgets(events.filter((e) => e.customPhotoUri));
-      });
-    }, [])
-  );
+  // Staged in this screen's own local state, confirmed via "Use selected
+  // widget" below — browsing tabs/searching doesn't apply anything until
+  // then, matching the supplied mockup's own confirm-button flow.
+  const [staged, setStaged] = useState<WidgetSelection>(() => ({
+    cardTheme: (currentCardTheme as CardTheme) || 'color',
+    customPhotoUri: currentPhotoUri || undefined,
+  }));
 
-  // All 6 categories' curated photos fetched once up front (same as
-  // category-themes.tsx) — the Categories tab lists every category as its
-  // own section, not just one selected at a time, per the supplied design.
+  useEffect(() => {
+    listEvents().then((events) => setMyWidgets(events.filter((e) => e.customPhotoUri)));
+  }, []);
+
+  // All 6 categories' curated photos fetched once up front — the
+  // Categories tab lists every category as its own section, not just one
+  // selected at a time, filterable via the search bar above.
   useEffect(() => {
     let cancelled = false;
     Promise.all(CATEGORIES.map((c) => fetchCategoryPhotos(c, 2))).then((results) => {
@@ -81,28 +75,55 @@ export default function WidgetsScreen() {
     };
   }, []);
 
-  const isRealSample = sample.id !== 'sample';
+  // Free plan: 1 custom-photo widget total across all events (this event's
+  // own existing pick doesn't count against itself). Pro: unlimited.
+  const quotaFull = !isPro && myWidgets.filter((e) => e.customPhotoUri && e.id !== eventId).length >= FREE_LIMITS.maxWidgets;
 
-  async function applySelection(selection: WidgetSelection) {
-    setSample((s) => ({ ...s, ...selection }));
-    if (isRealSample) await updateEvent(sample.id, selection);
+  const filteredMyWidgets = useMemo(() => {
+    if (!query.trim()) return myWidgets;
+    const q = query.trim().toLowerCase();
+    return myWidgets.filter((w) => (w.customWidgetName || w.title).toLowerCase().includes(q));
+  }, [myWidgets, query]);
+
+  // Searchable by category name/type — typing "trav" narrows the sections
+  // below to just Travel, for example.
+  const visibleCategories = useMemo(() => {
+    if (!query.trim()) return CATEGORIES;
+    const q = query.trim().toLowerCase();
+    return CATEGORIES.filter((c) => t(`events.category.${c}`).toLowerCase().includes(q));
+  }, [query, t]);
+
+  function confirm(selection: WidgetSelection) {
+    resolvePick(JSON.stringify(selection));
+    router.back();
   }
 
-  // Free plan: 1 custom-photo widget total across all events (the
-  // previewed event's own existing pick doesn't count against itself).
-  // Pro: unlimited.
-  const quotaFull =
-    !isPro && myWidgets.filter((e) => e.customPhotoUri && e.id !== (isRealSample ? sample.id : undefined)).length >= FREE_LIMITS.maxWidgets;
+  function selectBuiltIn(key: Exclude<CardTheme, 'custom'>) {
+    setStaged({ cardTheme: key });
+  }
 
-  // Opens the full New Widget editor (Widget Name, Size, Overlay, Accent,
-  // Corner Style, Text Style — draft mode, see custom-widget.tsx) and
-  // applies the result straight to the previewed event once it resolves.
+  function selectWidget(widget: PurEvent) {
+    setStaged({
+      cardTheme: 'custom',
+      customPhotoUri: widget.customPhotoUri,
+      customWidgetName: widget.customWidgetName,
+      customOverlayOpacity: widget.customOverlayOpacity,
+      customCornerStyle: widget.customCornerStyle,
+      customTextStyle: widget.customTextStyle,
+      accentColor: widget.accentColor,
+    });
+  }
+
+  // Opens the full New Widget editor (draft mode — see custom-widget.tsx)
+  // and, once it resolves a photo, confirms immediately instead of just
+  // staging it: the editor already has its own explicit Save, so a second
+  // "Use selected widget" tap right after would be redundant.
   async function openNewCustom() {
     if (quotaFull) {
       router.push('/paywall');
       return;
     }
-    router.push({ pathname: '/custom-widget', params: { draft: '1', eventId: isRealSample ? sample.id : '' } });
+    router.push({ pathname: '/custom-widget', params: { draft: '1', eventId: eventId || '' } });
     const picked = await awaitPick();
     const result = JSON.parse(picked) as {
       photoUri?: string;
@@ -113,7 +134,7 @@ export default function WidgetsScreen() {
       accentColor?: string;
     };
     if (!result.photoUri) return;
-    await applySelection({
+    confirm({
       cardTheme: 'custom',
       customPhotoUri: result.photoUri,
       customWidgetName: result.widgetName || undefined,
@@ -129,37 +150,13 @@ export default function WidgetsScreen() {
       router.push('/paywall');
       return;
     }
-    applySelection({ cardTheme: 'custom', customPhotoUri: url });
+    setStaged({ cardTheme: 'custom', customPhotoUri: url });
   }
 
-  const filteredMyWidgets = useMemo(() => {
-    if (!query.trim()) return myWidgets;
-    const q = query.trim().toLowerCase();
-    return myWidgets.filter((w) => (w.customWidgetName || w.title).toLowerCase().includes(q));
-  }, [myWidgets, query]);
-
-  // Searchable by category name/type, per the supplied design — typing
-  // "trav" narrows the sections below to just Travel, for example.
-  const visibleCategories = useMemo(() => {
-    if (!query.trim()) return CATEGORIES;
-    const q = query.trim().toLowerCase();
-    return CATEGORIES.filter((c) => t(`events.category.${c}`).toLowerCase().includes(q));
-  }, [query, t]);
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}>
-        <View style={styles.headerRow}>
-          <Text style={[typography.title, { color: colors.text }]}>{t('widgets.title')}</Text>
-          <View style={[styles.planBadge, { backgroundColor: colors.surfaceAlt, borderRadius: 999 }]}>
-            <Ionicons name={isPro ? 'diamond-outline' : 'lock-closed-outline'} size={12} color={colors.secondary} />
-            <Text style={[typography.caption, { color: colors.secondary, marginLeft: 4 }]}>
-              {isPro ? t('compare.pro') : t('settings.freePlan')}
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.searchBar, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, marginTop: spacing.lg }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md }]}>
           <Ionicons name="search" size={16} color={colors.secondary} />
           <TextInput
             style={[typography.body, styles.searchInput, { color: colors.text }]}
@@ -182,18 +179,22 @@ export default function WidgetsScreen() {
           />
         </View>
 
-        {/* Built-in — just the 3 flat presets. */}
         {tab === 'builtin' ? (
           <View style={styles.grid}>
             {CARD_THEME_KEYS.map((key) => {
               const preset = CARD_THEMES[key];
-              const selected = sample.cardTheme === key;
+              const selected = staged.cardTheme === key;
               return (
-                <Pressable key={key} style={styles.card} onPress={() => applySelection({ cardTheme: key as CardTheme })}>
+                <Pressable key={key} style={styles.card} onPress={() => selectBuiltIn(key)}>
                   <View
                     style={[
                       styles.cardSwatch,
-                      { backgroundColor: preset.background ?? accents[sample.accentColor], borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary },
+                      {
+                        backgroundColor: preset.background ?? accents.violet,
+                        borderRadius: radius.md,
+                        borderWidth: selected ? 2 : 0,
+                        borderColor: colors.primary,
+                      },
                     ]}
                   >
                     {selected ? <Ionicons name="checkmark-circle" size={22} color={preset.text} /> : null}
@@ -205,29 +206,14 @@ export default function WidgetsScreen() {
           </View>
         ) : null}
 
-        {/* My Widgets — every saved custom (photo) widget + "+ New custom". */}
         {tab === 'mine' ? (
           <View style={styles.grid}>
             {filteredMyWidgets.map((widget) => {
-              const selected = sample.cardTheme === 'custom' && sample.customPhotoUri === widget.customPhotoUri;
+              const selected = staged.customPhotoUri === widget.customPhotoUri;
               const nextOccurrence = getNextOccurrence(widget.dateTimeISO, widget.repeat);
               const days = Math.max(0, Math.ceil(nextOccurrence.diff(dayjs(), 'hour') / 24));
               return (
-                <Pressable
-                  key={widget.id}
-                  style={styles.card}
-                  onPress={() =>
-                    applySelection({
-                      cardTheme: 'custom',
-                      customPhotoUri: widget.customPhotoUri,
-                      customWidgetName: widget.customWidgetName,
-                      customOverlayOpacity: widget.customOverlayOpacity,
-                      customCornerStyle: widget.customCornerStyle,
-                      customTextStyle: widget.customTextStyle,
-                      accentColor: widget.accentColor,
-                    })
-                  }
-                >
+                <Pressable key={widget.id} style={styles.card} onPress={() => selectWidget(widget)}>
                   <ImageBackground
                     source={{ uri: widget.customPhotoUri }}
                     style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}
@@ -253,7 +239,13 @@ export default function WidgetsScreen() {
               );
             })}
             <Pressable style={styles.card} onPress={openNewCustom}>
-              <View style={[styles.cardPhoto, styles.dashedTile, { borderRadius: radius.md, borderColor: colors.outline, backgroundColor: colors.surfaceAlt }]}>
+              <View
+                style={[
+                  styles.cardPhoto,
+                  styles.dashedTile,
+                  { borderRadius: radius.md, borderColor: colors.outline, backgroundColor: colors.surfaceAlt },
+                ]}
+              >
                 <Ionicons name="add" size={28} color={colors.secondary} />
                 {quotaFull ? (
                   <View style={[styles.lockBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
@@ -266,9 +258,9 @@ export default function WidgetsScreen() {
           </View>
         ) : null}
 
-        {/* Categories — every category as its own section (my widgets in
-            it, then Pro curated photos), filterable via the search bar
-            above instead of a single-select chip row. */}
+        {/* Every category as its own section (my widgets in it, then Pro
+            curated photos), filterable via the search bar above instead of
+            a single-select chip row. */}
         {tab === 'categories'
           ? visibleCategories.map((category) => {
               const widgetsInCategory = myWidgets.filter((w) => w.category === category);
@@ -281,23 +273,9 @@ export default function WidgetsScreen() {
                   </View>
                   <View style={styles.grid}>
                     {widgetsInCategory.map((widget) => {
-                      const selected = sample.cardTheme === 'custom' && sample.customPhotoUri === widget.customPhotoUri;
+                      const selected = staged.customPhotoUri === widget.customPhotoUri;
                       return (
-                        <Pressable
-                          key={widget.id}
-                          style={styles.card}
-                          onPress={() =>
-                            applySelection({
-                              cardTheme: 'custom',
-                              customPhotoUri: widget.customPhotoUri,
-                              customWidgetName: widget.customWidgetName,
-                              customOverlayOpacity: widget.customOverlayOpacity,
-                              customCornerStyle: widget.customCornerStyle,
-                              customTextStyle: widget.customTextStyle,
-                              accentColor: widget.accentColor,
-                            })
-                          }
-                        >
+                        <Pressable key={widget.id} style={styles.card} onPress={() => selectWidget(widget)}>
                           <ImageBackground
                             source={{ uri: widget.customPhotoUri }}
                             style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}
@@ -318,7 +296,7 @@ export default function WidgetsScreen() {
                       <Pressable key={url} style={styles.card} onPress={() => pickCategoryPhoto(url)}>
                         <ImageBackground
                           source={{ uri: url }}
-                          style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}
+                          style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}
                           imageStyle={{ borderRadius: radius.md }}
                         >
                           <View style={styles.cardScrim} />
@@ -342,13 +320,15 @@ export default function WidgetsScreen() {
           </Text>
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.outline }]}>
+        <Button label={t('widgets.useSelectedWidget')} onPress={() => confirm(staged)} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -374,4 +354,5 @@ const styles = StyleSheet.create({
   proBadge: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   proBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopWidth: StyleSheet.hairlineWidth, padding: 16 },
 });

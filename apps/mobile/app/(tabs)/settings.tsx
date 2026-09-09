@@ -1,18 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import * as Localization from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Row } from '../../src/components/ui/Row';
 import { Section } from '../../src/components/ui/Section';
-import { listEvents } from '../../src/storage/events';
-import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
+import { useTheme } from '../../src/theme/PreferencesContext';
 import { usePro } from '../../src/subscription';
 import { responsiveContent, rowBadgeColors } from '../../src/theme/tokens';
-import { reminderLabel } from '../../src/utils/reminders';
 
 function comingSoon() {
   Alert.alert('Coming soon', 'This will be available in a later release.');
@@ -22,13 +19,7 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
-  const { prefs, setPrefs } = usePreferences();
   const { isPro } = usePro();
-
-  async function handleExport() {
-    const events = await listEvents();
-    await Share.share({ message: JSON.stringify(events, null, 2) });
-  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
@@ -63,77 +54,28 @@ export default function SettingsScreen() {
           ) : null}
         </View>
 
-        <Section title={t('settings.preferences')}>
+        {/* Appearance/Notifications/Data & Privacy stay collapsed into one
+            menu row each, drilling into their own screen — but the "About"
+            group's 3 items came back out inline per explicit follow-up
+            request, instead of being behind their own /support row. */}
+        <Section>
           <Row
             icon="color-palette-outline"
             badgeColor={rowBadgeColors.pink}
             label={t('settings.appearance')}
-            value={t(`preferences.${prefs.appearance}`)}
             onPress={() => router.push('/preferences')}
           />
           <Row
-            icon="globe-outline"
-            badgeColor={rowBadgeColors.blue}
-            label={t('settings.language')}
-            value={t('preferences.system')}
-            onPress={() => router.push('/preferences')}
-          />
-          <Row
-            icon="calendar-outline"
-            badgeColor={rowBadgeColors.orange}
-            label={t('settings.calendar')}
-            value={t(`preferences.${prefs.calendar}`)}
-            onPress={() => router.push('/preferences')}
-          />
-          <Row
-            icon="time-outline"
-            badgeColor={rowBadgeColors.green}
-            label={t('settings.timezone')}
-            value={prefs.autoTimezone ? Localization.getCalendars()[0]?.timeZone ?? t('settings.automatic') : prefs.manualTimezone ?? t('settings.automatic')}
-            onPress={() => router.push('/preferences')}
-          />
-        </Section>
-
-        <Section title={t('settings.notifications')}>
-          <Row
-            type="switch"
             icon="notifications-outline"
             badgeColor={rowBadgeColors.red}
             label={t('settings.notifications')}
-            value={prefs.notificationsEnabled}
-            onValueChange={(v) => setPrefs({ notificationsEnabled: v })}
+            onPress={() => router.push('/notification-settings')}
           />
-          <Row
-            icon="alarm-outline"
-            badgeColor={rowBadgeColors.orange}
-            label={t('settings.defaultReminders')}
-            value={reminderLabel(prefs.defaultReminderOffsets[0] ?? 1440, t)}
-            onPress={() => router.push('/preferences')}
-          />
-          <Row
-            type="switch"
-            icon="volume-medium-outline"
-            badgeColor={rowBadgeColors.purple}
-            label={t('settings.soundsHaptics')}
-            value={prefs.soundsHapticsEnabled}
-            onValueChange={(v) => setPrefs({ soundsHapticsEnabled: v })}
-          />
-        </Section>
-
-        <Section title={t('settings.dataPrivacy')}>
-          <Row
-            icon="cloud-outline"
-            badgeColor={rowBadgeColors.blue}
-            label={t('settings.backupSync')}
-            value={t('settings.onThisDevice')}
-            onPress={() => comingSoon()}
-          />
-          <Row icon="share-outline" badgeColor={rowBadgeColors.purple} label={t('settings.importExport')} onPress={handleExport} />
           <Row
             icon="shield-checkmark-outline"
             badgeColor={rowBadgeColors.green}
-            label={t('settings.privacy')}
-            onPress={() => router.push('/privacy')}
+            label={t('settings.dataPrivacy')}
+            onPress={() => router.push('/data-privacy')}
           />
         </Section>
 

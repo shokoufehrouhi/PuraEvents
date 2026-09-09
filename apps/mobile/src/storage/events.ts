@@ -6,13 +6,29 @@ import { getNextOccurrenceISO } from '../utils/recurrence';
 // MVP is offline-first: everything lives on-device. Cloud sync (Pro) comes in
 // a later phase and will layer on top of this same read/write API rather
 // than replacing it, so keep the surface small and serializable.
-const STORAGE_KEY = 'purevents:events';
+const STORAGE_KEY = 'puraevents:events';
+// Pre-rename (PurEvents -> PuraEvents) key — readAll() migrates any
+// existing data forward once so installed users don't see their events
+// "disappear" under the new key.
+const LEGACY_STORAGE_KEY = 'purevents:events';
 
 async function readAll(): Promise<PurEvent[]> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
+  if (raw) {
+    try {
+      return JSON.parse(raw) as PurEvent[];
+    } catch {
+      return [];
+    }
+  }
+
+  const legacyRaw = await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
+  if (!legacyRaw) return [];
   try {
-    return JSON.parse(raw) as PurEvent[];
+    const migrated = JSON.parse(legacyRaw) as PurEvent[];
+    await AsyncStorage.setItem(STORAGE_KEY, legacyRaw);
+    await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
+    return migrated;
   } catch {
     return [];
   }

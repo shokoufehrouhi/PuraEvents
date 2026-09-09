@@ -34,6 +34,19 @@ export const CARD_THEMES: Record<
     secondary: 'rgba(255,255,255,0.7)',
     iconVariant: 'solid',
   },
+  // No fixed `background` — the photo itself (customPhotoUri) is the
+  // background, with a dark scrim under it for legibility, same treatment
+  // as EventHeroCard's own photo mode. Falls back to the 'color' look
+  // (below) if customPhotoUri isn't set yet, so this never renders broken.
+  custom: {
+    text: '#FFFFFF',
+    secondary: 'rgba(255,255,255,0.85)',
+    iconVariant: 'white',
+  },
 };
 
-export const CARD_THEME_KEYS: CardTheme[] = ['clean', 'color', 'dark'];
+// Free-tier presets shown as plain color swatches in Appearance — 'custom'
+// gets its own dedicated UI (photo picker) instead of a swatch, so it's
+// deliberately excluded from this list (and from its type, so callers don't
+// need an unreachable 'custom' branch when switching over these keys).
+export const CARD_THEME_KEYS: Exclude<CardTheme, 'custom'>[] = ['clean', 'color', 'dark'];

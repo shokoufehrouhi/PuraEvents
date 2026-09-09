@@ -18,13 +18,20 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   return requested.granted;
 }
 
+// Pre-rename (PurEvents -> PuraEvents) identifiers still floating around in
+// already-scheduled notifications use the old prefix — cancelRemindersForEvent
+// matches both so they still get cleaned up instead of becoming orphaned.
+const LEGACY_PREFIX = 'purevents';
+
 function identifierFor(eventId: string, offsetMin: number): string {
-  return `purevents:${eventId}:${offsetMin}`;
+  return `puraevents:${eventId}:${offsetMin}`;
 }
 
 export async function cancelRemindersForEvent(eventId: string): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  const toCancel = scheduled.filter((n) => n.identifier.startsWith(`purevents:${eventId}:`));
+  const toCancel = scheduled.filter(
+    (n) => n.identifier.startsWith(`puraevents:${eventId}:`) || n.identifier.startsWith(`${LEGACY_PREFIX}:${eventId}:`)
+  );
   await Promise.all(toCancel.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
 }
 

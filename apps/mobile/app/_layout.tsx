@@ -1,6 +1,8 @@
-import { Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { Pressable, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useTranslation } from 'react-i18next';
@@ -16,6 +18,7 @@ import '../src/i18n';
 
 function Navigation() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { colors, scheme } = useTheme();
 
   useEffect(() => {
@@ -56,12 +59,85 @@ function Navigation() {
           options={{ ...headerOptions, title: t('preferences.language'), headerBackTitle: t('preferences.title') }}
         />
         <Stack.Screen
+          name="theme-picker"
+          options={{ ...headerOptions, title: t('preferences.appearance'), headerBackTitle: t('preferences.title') }}
+        />
+        <Stack.Screen
+          name="calendar-picker"
+          options={{ ...headerOptions, title: t('preferences.calendar'), headerBackTitle: t('preferences.title') }}
+        />
+        <Stack.Screen
+          name="first-day-picker"
+          options={{ ...headerOptions, title: t('preferences.firstDayOfWeek'), headerBackTitle: t('preferences.title') }}
+        />
+        <Stack.Screen
+          name="time-format-picker"
+          options={{ ...headerOptions, title: t('preferences.timeFormat'), headerBackTitle: t('preferences.title') }}
+        />
+        <Stack.Screen
           name="timezone-picker"
           options={{ ...headerOptions, title: t('preferences.currentTimezone'), headerBackTitle: t('preferences.title') }}
         />
         <Stack.Screen
           name="upgrade"
           options={{ ...headerOptions, title: t('compare.title'), headerBackTitle: t('settings.title') }}
+        />
+        <Stack.Screen
+          name="custom-widget"
+          options={{ ...headerOptions, title: t('widgets.customWidgetTitle'), headerBackTitle: t('widgets.title') }}
+        />
+        <Stack.Screen
+          name="widget-overlay-picker"
+          options={{ ...headerOptions, title: t('widgets.overlay'), headerBackTitle: t('widgets.customWidgetTitle') }}
+        />
+        <Stack.Screen
+          name="widget-accent-picker"
+          options={{ ...headerOptions, title: t('widgets.accentColor'), headerBackTitle: t('widgets.customWidgetTitle') }}
+        />
+        <Stack.Screen
+          name="widget-corner-picker"
+          options={{ ...headerOptions, title: t('widgets.cornerStyle'), headerBackTitle: t('widgets.customWidgetTitle') }}
+        />
+        <Stack.Screen
+          name="widget-text-style-picker"
+          options={{ ...headerOptions, title: t('widgets.textStyle'), headerBackTitle: t('widgets.customWidgetTitle') }}
+        />
+        <Stack.Screen
+          name="category-themes"
+          options={{ ...headerOptions, title: t('widgets.categoryThemes'), headerBackTitle: t('widgets.title') }}
+        />
+        <Stack.Screen
+          name="widget-picker"
+          options={{
+            ...headerOptions,
+            title: t('widgets.chooseWidget'),
+            headerBackTitle: t('widgets.title'),
+            headerRight: () => (
+              <Pressable
+                onPress={() => router.push('/upgrade')}
+                hitSlop={8}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.primary,
+                  borderRadius: 999,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                }}
+              >
+                <Ionicons name="diamond" size={11} color="#fff" />
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', marginLeft: 4 }}>{t('compare.pro').toUpperCase()}</Text>
+              </Pressable>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="notification-settings"
+          options={{ ...headerOptions, title: t('settings.notifications'), headerBackTitle: t('settings.title') }}
+        />
+        <Stack.Screen
+          name="data-privacy"
+          options={{ ...headerOptions, title: t('settings.dataPrivacy'), headerBackTitle: t('settings.title') }}
         />
         <Stack.Screen
           name="privacy"

@@ -31,13 +31,29 @@ export const DEFAULT_PREFERENCES: Preferences = {
   defaultReminderOffsets: [1440], // 1 day before
 };
 
-const STORAGE_KEY = 'purevents:preferences';
+const STORAGE_KEY = 'puraevents:preferences';
+// Pre-rename (PurEvents -> PuraEvents) key — loadPreferences() migrates any
+// existing data forward once so installed users don't lose their settings
+// under the new key.
+const LEGACY_STORAGE_KEY = 'purevents:preferences';
 
 export async function loadPreferences(): Promise<Preferences> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  if (!raw) return DEFAULT_PREFERENCES;
+  if (raw) {
+    try {
+      return { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) };
+    } catch {
+      return DEFAULT_PREFERENCES;
+    }
+  }
+
+  const legacyRaw = await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
+  if (!legacyRaw) return DEFAULT_PREFERENCES;
   try {
-    return { ...DEFAULT_PREFERENCES, ...JSON.parse(raw) };
+    const migrated = { ...DEFAULT_PREFERENCES, ...JSON.parse(legacyRaw) };
+    await AsyncStorage.setItem(STORAGE_KEY, legacyRaw);
+    await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
+    return migrated;
   } catch {
     return DEFAULT_PREFERENCES;
   }

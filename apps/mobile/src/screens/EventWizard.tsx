@@ -4,13 +4,12 @@ import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CivilCalendarPicker } from '../components/CivilCalendarPicker';
 import { EventHeroCard } from '../components/EventHeroCard';
 import { EventIcon } from '../components/EventIcon';
-import { MiniWidget } from '../components/MiniWidget';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
@@ -21,7 +20,7 @@ import { CARD_THEME_KEYS, CARD_THEMES } from '../theme/cardThemes';
 import { REPEAT_STYLES } from '../theme/repeatStyles';
 import { usePreferences, useTheme } from '../theme/PreferencesContext';
 import { ACCENT_KEYS, accents, elevation, responsiveContent, type AccentKey } from '../theme/tokens';
-import type { CardTheme, EventCategory, PurEvent, RepeatRule } from '../types/event';
+import type { CardTheme, EventCategory, PurEvent, RepeatRule, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../utils/calendars';
 import { awaitPick } from '../utils/pickerBridge';
 import { PRESET_REMINDER_OFFSETS, reminderLabel } from '../utils/reminders';
@@ -76,6 +75,14 @@ export function EventWizard({ mode, eventId }: Props) {
   const [category, setCategory] = useState<EventCategory>('personal');
   const [accentColor, setAccentColor] = useState<AccentKey>('coral');
   const [cardTheme, setCardTheme] = useState<CardTheme>('color');
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | undefined>(undefined);
+  // Set via the Choose Widget screen (openWidgetPicker) — carried along so
+  // reopening it later still shows the name, and so Save doesn't wipe one
+  // already assigned.
+  const [customWidgetName, setCustomWidgetName] = useState<string | undefined>(undefined);
+  const [customOverlayOpacity, setCustomOverlayOpacity] = useState<number | undefined>(undefined);
+  const [customCornerStyle, setCustomCornerStyle] = useState<WidgetCornerStyle | undefined>(undefined);
+  const [customTextStyle, setCustomTextStyle] = useState<WidgetTextStyle | undefined>(undefined);
   const [repeat, setRepeat] = useState<RepeatRule>('none');
   const [reminders, setReminders] = useState<number[]>(prefs.defaultReminderOffsets);
   const [note, setNote] = useState('');
@@ -90,6 +97,11 @@ export function EventWizard({ mode, eventId }: Props) {
         setCategory(e.category);
         setAccentColor(e.accentColor);
         setCardTheme(e.cardTheme);
+        setCustomPhotoUri(e.customPhotoUri);
+        setCustomWidgetName(e.customWidgetName);
+        setCustomOverlayOpacity(e.customOverlayOpacity);
+        setCustomCornerStyle(e.customCornerStyle);
+        setCustomTextStyle(e.customTextStyle);
         setRepeat(e.repeat);
         setReminders(e.reminders);
         setNote(e.note ?? '');
@@ -107,6 +119,11 @@ export function EventWizard({ mode, eventId }: Props) {
     category,
     accentColor,
     cardTheme,
+    customPhotoUri,
+    customWidgetName,
+    customOverlayOpacity,
+    customCornerStyle,
+    customTextStyle,
     repeat,
     reminders,
     note: note.trim() || undefined,
@@ -146,6 +163,27 @@ export function EventWizard({ mode, eventId }: Props) {
     setRepeat(picked as RepeatRule);
   }
 
+  // Full-screen gallery (Built-in / My Widgets / Categories, search, "+ New
+  // custom") — Pro can hold more than 1 custom widget, so browsing them
+  // needs its own screen instead of a handful of tiles squeezed in here.
+  // Resolves a WidgetSelection back via the pickerBridge; the picker
+  // screen itself owns the free (1)/Pro (unlimited) quota gate.
+  async function openWidgetPicker() {
+    router.push({
+      pathname: '/widget-picker',
+      params: { eventId: eventId ?? '', category, cardTheme, photoUri: customPhotoUri ?? '' },
+    });
+    const picked = await awaitPick();
+    const result = JSON.parse(picked) as WidgetSelection;
+    setCardTheme(result.cardTheme);
+    setCustomPhotoUri(result.customPhotoUri);
+    setCustomWidgetName(result.customWidgetName);
+    setCustomOverlayOpacity(result.customOverlayOpacity);
+    setCustomCornerStyle(result.customCornerStyle);
+    setCustomTextStyle(result.customTextStyle);
+    if (result.accentColor) setAccentColor(result.accentColor);
+  }
+
   function addReminder() {
     if (!isPro && reminders.length >= FREE_LIMITS.maxRemindersPerEvent) {
       router.push('/paywall');
@@ -178,6 +216,11 @@ export function EventWizard({ mode, eventId }: Props) {
       category,
       accentColor,
       cardTheme,
+      customPhotoUri,
+      customWidgetName,
+      customOverlayOpacity,
+      customCornerStyle,
+      customTextStyle,
       repeat,
       reminders,
       note: note.trim() || undefined,
@@ -369,43 +412,87 @@ export function EventWizard({ mode, eventId }: Props) {
               expanded={expanded === 'appearance'}
               onPress={() => toggle('appearance')}
             >
-              <EventHeroCard event={draftEvent} height={140} />
+              <EventHeroCard event={draftEvent} height={140} titleSize={20} countdownNumberSize={24} countdownLabelSize={10} />
 
               <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>
                 {t('events.cardThemeLabel')}
               </Text>
-              <View style={styles.themeRow}>
+
+              {/* Current selection — replaces the old inline swatch grid,
+                  which didn't scale once a Pro user could hold more than 1
+                  custom widget. "Change" opens the full Choose Widget
+                  gallery (Built-in/My Widgets/Categories, search, "+ New
+                  custom" — see openWidgetPicker). */}
+              <Pressable
+                onPress={openWidgetPicker}
+                style={[styles.currentWidgetRow, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md }]}
+              >
+                {cardTheme === 'custom' && customPhotoUri ? (
+                  <ImageBackground
+                    source={{ uri: customPhotoUri }}
+                    style={[styles.currentWidgetThumb, { borderRadius: radius.sm, overflow: 'hidden' }]}
+                    imageStyle={{ borderRadius: radius.sm }}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.currentWidgetThumb,
+                      styles.currentWidgetThumbCenter,
+                      { borderRadius: radius.sm, backgroundColor: CARD_THEMES[cardTheme === 'custom' ? 'color' : cardTheme].background ?? accents[accentColor] },
+                    ]}
+                  >
+                    <EventIcon category={category} size={20} variant={CARD_THEMES[cardTheme === 'custom' ? 'color' : cardTheme].iconVariant} />
+                  </View>
+                )}
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[typography.bodyStrong, { color: colors.text }]} numberOfLines={1}>
+                    {cardTheme === 'custom' ? customWidgetName || t('events.cardTheme.custom') : t(`events.cardTheme.${cardTheme}`)}
+                  </Text>
+                  <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>
+                    {cardTheme === 'custom' ? `${t('widgets.myWidgetLabel')} · ${t('widgets.customPhotoLabel')}` : t('widgets.builtInThemeLabel')}
+                  </Text>
+                </View>
+                <Text style={[typography.bodyStrong, { color: colors.primary }]}>{t('widgets.changeWidget')}</Text>
+              </Pressable>
+
+              {/* Quick styles — one tap for the 3 built-in flats, no need
+                  to open the full gallery for the common case; "Browse
+                  all" opens it for everything else. */}
+              <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>
+                {t('widgets.quickStyles')}
+              </Text>
+              <View style={styles.quickStylesRow}>
                 {CARD_THEME_KEYS.map((key) => {
                   const preset = CARD_THEMES[key];
                   const selected = cardTheme === key;
                   return (
-                    <Pressable key={key} style={styles.themeOption} onPress={() => setCardTheme(key)}>
+                    <Pressable key={key} style={styles.quickStyleOption} onPress={() => setCardTheme(key)}>
                       <View
                         style={[
-                          styles.themeSwatch,
-                          elevation.e1,
+                          styles.quickStyleSwatch,
                           {
                             backgroundColor: preset.background ?? accents[accentColor],
-                            borderRadius: radius.md,
                             borderWidth: selected ? 2 : 0,
                             borderColor: colors.primary,
                           },
                         ]}
                       >
-                        <EventIcon category={category} size={22} variant={preset.iconVariant} />
-                        <Text style={{ color: preset.text, fontSize: 11, fontWeight: '600', marginTop: 4 }} numberOfLines={1}>
-                          {title.trim() || 'Event'}
-                        </Text>
+                        {selected ? <Ionicons name="checkmark" size={16} color={preset.text} /> : null}
                       </View>
-                      <Text style={[typography.caption, { color: selected ? colors.primary : colors.secondary, marginTop: 6, fontWeight: selected ? '700' : '400' }]}>
+                      <Text style={[typography.caption, { color: selected ? colors.primary : colors.secondary, marginTop: 4 }]} numberOfLines={1}>
                         {t(`events.cardTheme.${key}`)}
                       </Text>
-                      <View style={[styles.radio, { borderColor: selected ? colors.primary : colors.outline }]}>
-                        {selected ? <View style={[styles.radioDot, { backgroundColor: colors.primary }]} /> : null}
-                      </View>
                     </Pressable>
                   );
                 })}
+                <Pressable style={styles.quickStyleOption} onPress={openWidgetPicker}>
+                  <View style={[styles.quickStyleSwatch, styles.browseAllSwatch, { borderColor: colors.outline, backgroundColor: colors.surfaceAlt }]}>
+                    <Ionicons name="grid-outline" size={16} color={colors.secondary} />
+                  </View>
+                  <Text style={[typography.caption, { color: colors.secondary, marginTop: 4 }]} numberOfLines={1}>
+                    {t('widgets.browseAll')}
+                  </Text>
+                </Pressable>
               </View>
 
               {!isPro ? (
@@ -447,15 +534,6 @@ export function EventWizard({ mode, eventId }: Props) {
             </AccordionRow>
           </Section>
         </View>
-
-        {/* Live widget preview — reflects Appearance's cardTheme/accentColor
-            choice as the user edits, so they can see the actual home-screen
-            widget without leaving the form (not gated behind the Appearance
-            accordion being expanded). */}
-        <View style={{ marginTop: spacing.lg }}>
-          <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>{t('widgets.widgetPreview')}</Text>
-          <MiniWidget event={draftEvent} size="full" />
-        </View>
       </ScrollView>
 
       <View style={{ padding: spacing.md }}>
@@ -490,19 +568,16 @@ const styles = StyleSheet.create({
   reminderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   addReminder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, padding: 12, borderStyle: 'dashed' },
   proNote: { flexDirection: 'row', alignItems: 'center', padding: 10, marginTop: 12 },
-  themeRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  themeOption: { flex: 1, alignItems: 'center' },
-  themeSwatch: { width: '100%', aspectRatio: 1.1, alignItems: 'center', justifyContent: 'center' },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    marginTop: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioDot: { width: 10, height: 10, borderRadius: 5 },
+  // Current selection row — thumbnail/swatch + name/subtitle + "Change".
+  currentWidgetRow: { flexDirection: 'row', alignItems: 'center', padding: 10 },
+  currentWidgetThumb: { width: 48, height: 48 },
+  currentWidgetThumbCenter: { alignItems: 'center', justifyContent: 'center' },
+  // Quick styles — small single-tap circular swatches, not the old full
+  // card-sized grid (that's the Choose Widget screen's job now).
+  quickStylesRow: { flexDirection: 'row', gap: 16 },
+  quickStyleOption: { alignItems: 'center' },
+  quickStyleSwatch: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  browseAllSwatch: { borderWidth: 1, borderStyle: 'dashed' },
   timeRow: { flexDirection: 'row', alignItems: 'center' },
   timeIconBadge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   timeSheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },

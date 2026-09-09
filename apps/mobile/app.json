@@ -30,6 +30,12 @@
       "expo-notifications",
       "@react-native-community/datetimepicker",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set a custom widget background."
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "ios": {
