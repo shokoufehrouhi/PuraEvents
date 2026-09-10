@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import dayjs from 'dayjs';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View, type TextStyle } from 'react-native';
 
@@ -58,6 +59,18 @@ const DIMS: Record<Props['size'], { width: number | '100%'; height?: number; min
 export function MiniWidget({ event, size }: Props) {
   const { t } = useTranslation();
   const { radius } = useTheme();
+  // A photo that fails to actually load (deleted local file, dead Pexels
+  // URL, offline, ...) falls back to the same accent-color gradient the
+  // 'color' preset itself uses below, rather than a broken/blank card.
+  // Reset during render (not an effect) when the photo itself changes, so
+  // a *new* photo gets its own chance — the "adjusting state while
+  // rendering" pattern, see https://react.dev/learn/you-might-not-need-an-effect.
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const [checkedUri, setCheckedUri] = useState(event.customPhotoUri);
+  if (event.customPhotoUri !== checkedUri) {
+    setCheckedUri(event.customPhotoUri);
+    setPhotoFailed(false);
+  }
   const preset = CARD_THEMES[event.cardTheme] ?? CARD_THEMES.color;
   const base = accents[event.accentColor] ?? accents.violet;
   const nextOccurrence = getNextOccurrence(event.dateTimeISO, event.repeat);
@@ -175,7 +188,7 @@ export function MiniWidget({ event, size }: Props) {
   // treatment as EventHeroCard's own photo mode. No photo yet falls through
   // to the accent-gradient branch below instead (custom has no fixed
   // `background` either, same as 'color').
-  if (event.cardTheme === 'custom' && event.customPhotoUri) {
+  if (event.cardTheme === 'custom' && event.customPhotoUri && !photoFailed) {
     return (
       // Plain View + absolutely-filled Image, not ImageBackground —
       // ImageBackground proxies its outer style's width/height onto the
@@ -184,7 +197,7 @@ export function MiniWidget({ event, size }: Props) {
       // image undersized/misaligned (same bug fixed for the Widgets tab's
       // grid cards — see app/(tabs)/widgets.tsx).
       <View style={[boxStyle, { overflow: 'hidden' }]}>
-        <Image source={{ uri: event.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image source={{ uri: event.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setPhotoFailed(true)} />
         <View style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${overlayOpacity})` }} />
         {inner}
       </View>

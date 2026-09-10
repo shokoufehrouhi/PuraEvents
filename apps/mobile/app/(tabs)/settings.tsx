@@ -62,7 +62,7 @@ export default function SettingsScreen() {
           <Row
             icon="color-palette-outline"
             badgeColor={rowBadgeColors.pink}
-            label={t('settings.appearance')}
+            label={t('settings.preferences')}
             onPress={() => router.push('/preferences')}
           />
           <Row

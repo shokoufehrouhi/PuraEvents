@@ -13,8 +13,9 @@ import { listEvents, updateEvent } from '../../src/storage/events';
 import { FREE_LIMITS, usePro } from '../../src/subscription';
 import { useTheme } from '../../src/theme/PreferencesContext';
 import { CARD_THEME_KEYS } from '../../src/theme/cardThemes';
+import { ACCENT_KEYS } from '../../src/theme/tokens';
 import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../../src/types/event';
-import { fetchCategoryPhotos } from '../../src/utils/categoryPhoto';
+import { getCategoryPhotos } from '../../src/utils/categoryPhoto';
 import { awaitPick } from '../../src/utils/pickerBridge';
 
 const SAMPLE_EVENT: PurEvent = {
@@ -35,6 +36,7 @@ type Tab = 'builtin' | 'mine' | 'categories';
 type SortBy = 'name' | 'modified' | 'added';
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
+const CATEGORY_PHOTO_COUNT = 4;
 
 // Categories' Pro photo tiles aren't tied to a real event yet, so they used
 // to show nothing but the photo + PRO badge — no day-count/title overlay at
@@ -81,14 +83,12 @@ export default function WidgetsScreen() {
   // All 6 categories' curated photos fetched once up front (same as
   // category-themes.tsx) — the Categories tab lists every category as its
   // own section, not just one selected at a time, per the supplied design.
+  // getCategoryPhotos caches the result for the whole day, so this only
+  // hits Pexels once per day, not once per mount.
   useEffect(() => {
     let cancelled = false;
-    Promise.all(CATEGORIES.map((c) => fetchCategoryPhotos(c, 4))).then((results) => {
+    getCategoryPhotos(CATEGORIES, CATEGORY_PHOTO_COUNT).then((map) => {
       if (cancelled) return;
-      const map: Partial<Record<EventCategory, string[]>> = {};
-      CATEGORIES.forEach((c, i) => {
-        map[c] = results[i];
-      });
       setCategoryPhotos(map);
     });
     return () => {
@@ -346,7 +346,15 @@ export default function WidgetsScreen() {
                     <Text style={[typography.bodyStrong, { color: colors.text, marginLeft: 8 }]}>{t(`events.category.${category}`)}</Text>
                   </View>
                   <View style={[styles.list, { gap: spacing.md }]}>
-                    {photos.map((url, i) => {
+                    {/* Fixed CATEGORY_PHOTO_COUNT slots, not photos.map —
+                        when Pexels returns nothing (no API key, offline, no
+                        results) or fewer than requested, the missing slots
+                        still render as a card (url undefined), which
+                        MiniWidget itself falls back to its own accent-color
+                        gradient for. Colors cycled per slot (ACCENT_KEYS)
+                        so a whole run of fallbacks isn't one flat color. */}
+                    {Array.from({ length: CATEGORY_PHOTO_COUNT }).map((_, i) => {
+                      const url = photos[i];
                       const preview = SAMPLE_WIDGET_PREVIEWS[i % SAMPLE_WIDGET_PREVIEWS.length];
                       const previewEvent: PurEvent = {
                         id: `preview-${category}-${i}`,
@@ -355,7 +363,7 @@ export default function WidgetsScreen() {
                         dateTimeISO: dayjs().add(preview.days, 'day').toISOString(),
                         timezone: 'UTC',
                         category,
-                        accentColor: sample.accentColor,
+                        accentColor: ACCENT_KEYS[i % ACCENT_KEYS.length],
                         cardTheme: 'custom',
                         customPhotoUri: url,
                         repeat: 'none',
@@ -364,10 +372,10 @@ export default function WidgetsScreen() {
                         updatedAt: '',
                       };
                       return (
-                        <Pressable key={url} onPress={() => pickCategoryPhoto(url)}>
-                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
+                        <Pressable key={`${category}-${i}`} disabled={!url} onPress={() => url && pickCategoryPhoto(url)}>
+                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
                             <MiniWidget event={previewEvent} size="full" />
-                            {!isPro ? (
+                            {!isPro && url ? (
                               <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
                                 <Ionicons name="lock-closed" size={11} color="#fff" />
                                 <Text style={styles.proBadgeText}>PRO</Text>
