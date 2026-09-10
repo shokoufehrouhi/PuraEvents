@@ -307,36 +307,11 @@ export default function WidgetPickerScreen() {
           </View>
         ) : null}
 
-        {/* One MiniWidget-format card per row — same canonical widget
-            layout (header/title/date+time/D-H-M countdown/note) used
-            everywhere else a "widget" is previewed, per explicit request
-            that widget format stay identical everywhere. */}
-        {tab === 'mine' ? (
-          <View style={[styles.list, { gap: spacing.md }]}>
-            {filteredMyWidgets.map(({ widget, linkedEvent }) => {
-              const selected = staged.widgetId === widget.id;
-              return (
-                <Pressable key={widget.id} onPress={() => selectWidget(widget)}>
-                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
-                    {widget.name || linkedEvent?.title}
-                  </Text>
-                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="full" />
-                    {selected ? (
-                      <View style={styles.selectedBadge}>
-                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
-                      </View>
-                    ) : null}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
-        {/* Own full-width row below the list, not a grid tile — same icon
-            badge + title/subtitle + trailing action grammar as the "New
-            custom" row in the Widgets tab (see app/(tabs)/widgets.tsx). */}
+        {/* Own full-width row above the list, not a grid tile below it —
+            same icon badge + title/subtitle + trailing action grammar as
+            the Widgets tab's own "New Custom widget" row (see
+            app/(tabs)/widgets.tsx) — same position too, so the two
+            screens match. */}
         {tab === 'mine' ? (
           <Pressable
             onPress={openNewCustom}
@@ -368,6 +343,33 @@ export default function WidgetPickerScreen() {
               <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
             )}
           </Pressable>
+        ) : null}
+
+        {/* One MiniWidget-format card per row — same canonical widget
+            layout (header/title/date+time/D-H-M countdown/note) used
+            everywhere else a "widget" is previewed, per explicit request
+            that widget format stay identical everywhere. */}
+        {tab === 'mine' ? (
+          <View style={[styles.list, { gap: spacing.md, marginTop: spacing.md }]}>
+            {filteredMyWidgets.map(({ widget, linkedEvent }) => {
+              const selected = staged.widgetId === widget.id;
+              return (
+                <Pressable key={widget.id} onPress={() => selectWidget(widget)}>
+                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
+                    {widget.name || linkedEvent?.title}
+                  </Text>
+                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="full" />
+                    {selected ? (
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         ) : null}
 
         {/* Every category as its own section of Pro curated photos only
