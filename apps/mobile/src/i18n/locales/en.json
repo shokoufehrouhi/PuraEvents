@@ -243,7 +243,11 @@
     "changeWidget": "Change",
     "myWidgetLabel": "My widget",
     "customPhotoLabel": "Custom photo",
-    "builtInThemeLabel": "Built-in theme"
+    "builtInThemeLabel": "Built-in theme",
+    "sort": "Sort",
+    "sortByName": "Name",
+    "sortByModified": "Last modified",
+    "sortByAdded": "Date added"
   },
   "day": {
     "emptyTitle": "No events",

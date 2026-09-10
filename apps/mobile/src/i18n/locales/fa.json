@@ -243,7 +243,11 @@
     "changeWidget": "تغییر",
     "myWidgetLabel": "ویجت من",
     "customPhotoLabel": "عکس سفارشی",
-    "builtInThemeLabel": "تم پیش‌فرض"
+    "builtInThemeLabel": "تم پیش‌فرض",
+    "sort": "مرتب‌سازی",
+    "sortByName": "نام",
+    "sortByModified": "آخرین تغییر",
+    "sortByAdded": "تاریخ افزودن"
   },
   "day": {
     "emptyTitle": "رویدادی نیست",

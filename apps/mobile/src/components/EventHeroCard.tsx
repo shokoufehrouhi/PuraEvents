@@ -169,6 +169,7 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
         source={photoUri ? { uri: photoUri } : customPhoto ? { uri: customPhoto } : FALLBACK_HERO_IMAGE}
         style={[styles.card, { borderRadius: cornerRadius, minHeight: height }]}
         imageStyle={{ borderRadius: cornerRadius }}
+        resizeMode="cover"
       >
         <View style={[styles.photoScrim, { backgroundColor: `rgba(0,0,0,${scrimOpacity})`, borderRadius: cornerRadius, padding: spacing.md }]}>
           {content}

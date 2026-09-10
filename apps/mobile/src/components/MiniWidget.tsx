@@ -177,7 +177,7 @@ export function MiniWidget({ event, size }: Props) {
   // `background` either, same as 'color').
   if (event.cardTheme === 'custom' && event.customPhotoUri) {
     return (
-      <ImageBackground source={{ uri: event.customPhotoUri }} style={boxStyle} imageStyle={{ borderRadius: cornerRadius }}>
+      <ImageBackground source={{ uri: event.customPhotoUri }} style={boxStyle} imageStyle={{ borderRadius: cornerRadius }} resizeMode="cover">
         <View style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${overlayOpacity})`, borderRadius: cornerRadius }} />
         {inner}
       </ImageBackground>

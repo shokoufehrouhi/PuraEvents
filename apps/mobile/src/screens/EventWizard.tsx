@@ -458,6 +458,7 @@ export function EventWizard({ mode, eventId }: Props) {
                     source={{ uri: customPhotoUri }}
                     style={[styles.currentWidgetThumb, { borderRadius: radius.sm, overflow: 'hidden' }]}
                     imageStyle={{ borderRadius: radius.sm }}
+                    resizeMode="cover"
                   />
                 ) : (
                   <View
@@ -536,10 +537,15 @@ export function EventWizard({ mode, eventId }: Props) {
               {!isPro ? (
                 <Pressable
                   onPress={() => router.push('/upgrade')}
-                  style={[styles.proNote, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, marginTop: 16 }]}
+                  style={[
+                    styles.proNote,
+                    { backgroundColor: `${colors.primary}14`, borderColor: `${colors.primary}33`, borderRadius: radius.md, marginTop: 16 },
+                  ]}
                 >
-                  <Ionicons name="lock-closed" size={14} color={colors.secondary} />
-                  <Text style={[typography.caption, { color: colors.secondary, marginLeft: 6 }]}>{t('widgets.proNote')}</Text>
+                  <Ionicons name="lock-closed" size={14} color={colors.primary} />
+                  <Text style={[typography.caption, { color: colors.text, flex: 1, marginLeft: 6 }]}>{t('widgets.proNote')}</Text>
+                  <Text style={[typography.bodyStrong, { color: colors.primary, marginLeft: 6 }]}>{t('events.viewPro')}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.primary} style={{ marginLeft: 2 }} />
                 </Pressable>
               ) : null}
             </AccordionRow>
@@ -605,7 +611,7 @@ const styles = StyleSheet.create({
   accordionHeader: { flexDirection: 'row', alignItems: 'center' },
   reminderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   addReminder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, padding: 12, borderStyle: 'dashed' },
-  proNote: { flexDirection: 'row', alignItems: 'center', padding: 10, marginTop: 12 },
+  proNote: { flexDirection: 'row', alignItems: 'center', padding: 10, marginTop: 12, borderWidth: 1 },
   // Current selection row — thumbnail/swatch + name/subtitle + "Change".
   currentWidgetRow: { flexDirection: 'row', alignItems: 'center', padding: 10 },
   currentWidgetThumb: { width: 48, height: 48 },

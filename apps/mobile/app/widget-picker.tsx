@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { EventIcon } from '../src/components/EventIcon';
 import { Button } from '../src/components/ui/Button';
@@ -75,9 +75,14 @@ export default function WidgetPickerScreen() {
     };
   }, []);
 
-  // Free plan: 1 custom-photo widget total across all events (this event's
-  // own existing pick doesn't count against itself). Pro: unlimited.
-  const quotaFull = !isPro && myWidgets.filter((e) => e.customPhotoUri && e.id !== eventId).length >= FREE_LIMITS.maxWidgets;
+  // Free plan: 1 custom-photo widget total across all events. Pro:
+  // unlimited. Deliberately NOT excluding this event's own widget — "+ New
+  // custom" means "something different from what's already here", so
+  // once the limit is hit anywhere it's gated, even while editing the one
+  // event that already owns it. Re-picking the exact widget already
+  // staged is still a no-op — see the customPhotoUri comparison in
+  // selectWidget below.
+  const quotaFull = !isPro && myWidgets.length >= FREE_LIMITS.maxWidgets;
 
   const filteredMyWidgets = useMemo(() => {
     if (!query.trim()) return myWidgets;
@@ -221,11 +226,14 @@ export default function WidgetPickerScreen() {
               const days = Math.max(0, Math.ceil(nextOccurrence.diff(dayjs(), 'hour') / 24));
               return (
                 <Pressable key={widget.id} style={styles.card} onPress={() => selectWidget(widget)}>
-                  <ImageBackground
-                    source={{ uri: widget.customPhotoUri }}
-                    style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}
-                    imageStyle={{ borderRadius: radius.md }}
-                  >
+                  <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    {/* Plain View + absolutely-filled Image, not
+                        ImageBackground — ImageBackground proxies its outer
+                        style's width/height onto the inner Image, and
+                        aspectRatio-only sizing (no explicit height, see
+                        cardPhoto) isn't reflected there, leaving the image
+                        undersized/misaligned (see its own source). */}
+                    <Image source={{ uri: widget.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
                     <View style={styles.cardScrim} />
                     {selected ? (
                       <View style={styles.checkBadge}>
@@ -238,7 +246,7 @@ export default function WidgetPickerScreen() {
                       </Text>
                       <Text style={styles.cardDate}>{dayjs(nextOccurrence).format('MMM D, YYYY')}</Text>
                     </View>
-                  </ImageBackground>
+                  </View>
                   <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
                     {widget.customWidgetName || widget.title}
                   </Text>
@@ -283,16 +291,13 @@ export default function WidgetPickerScreen() {
                       const selected = staged.customPhotoUri === widget.customPhotoUri;
                       return (
                         <Pressable key={widget.id} style={styles.card} onPress={() => selectWidget(widget)}>
-                          <ImageBackground
-                            source={{ uri: widget.customPhotoUri }}
-                            style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}
-                            imageStyle={{ borderRadius: radius.md }}
-                          >
+                          <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                            <Image source={{ uri: widget.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
                             <View style={styles.cardScrim} />
                             <View style={styles.checkBadge}>
                               <Ionicons name={selected ? 'checkmark-circle' : 'chevron-down-circle'} size={20} color="#fff" />
                             </View>
-                          </ImageBackground>
+                          </View>
                           <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
                             {widget.customWidgetName || widget.title}
                           </Text>
@@ -301,11 +306,8 @@ export default function WidgetPickerScreen() {
                     })}
                     {photos.map((url) => (
                       <Pressable key={url} style={styles.card} onPress={() => pickCategoryPhoto(url)}>
-                        <ImageBackground
-                          source={{ uri: url }}
-                          style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}
-                          imageStyle={{ borderRadius: radius.md }}
-                        >
+                        <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
+                          <Image source={{ uri: url }} style={StyleSheet.absoluteFill} resizeMode="cover" />
                           <View style={styles.cardScrim} />
                           {!isPro ? (
                             <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
@@ -313,7 +315,7 @@ export default function WidgetPickerScreen() {
                               <Text style={styles.proBadgeText}>PRO</Text>
                             </View>
                           ) : null}
-                        </ImageBackground>
+                        </View>
                       </Pressable>
                     ))}
                   </View>

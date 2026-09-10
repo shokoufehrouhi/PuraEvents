@@ -200,10 +200,14 @@ export default function EventDetailScreen() {
         </Section>
 
         {/* Live widget preview — same MiniWidget the wizard's Appearance
-            step shows, reflecting this event's saved cardTheme/accentColor. */}
-        <View style={{ marginTop: spacing.lg }}>
-          <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>{t('widgets.widgetPreview')}</Text>
-          <MiniWidget event={event} size="full" />
+            step shows, reflecting this event's saved cardTheme/accentColor
+            *and* its own widgetSize, not always "full" — this is what
+            adding it to the home screen at that size will look like. */}
+        <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
+          <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm, alignSelf: 'flex-start' }]}>
+            {t('widgets.widgetPreview')}
+          </Text>
+          <MiniWidget event={event} size={event.widgetSize ?? 'medium'} />
         </View>
       </ScrollView>
 

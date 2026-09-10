@@ -243,7 +243,11 @@
     "changeWidget": "Ändern",
     "myWidgetLabel": "Mein Widget",
     "customPhotoLabel": "Eigenes Foto",
-    "builtInThemeLabel": "Integriertes Design"
+    "builtInThemeLabel": "Integriertes Design",
+    "sort": "Sortieren",
+    "sortByName": "Name",
+    "sortByModified": "Zuletzt geändert",
+    "sortByAdded": "Hinzugefügt am"
   },
   "day": {
     "emptyTitle": "Keine Ereignisse",

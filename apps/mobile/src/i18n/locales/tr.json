@@ -243,7 +243,11 @@
     "changeWidget": "Değiştir",
     "myWidgetLabel": "Widget'ım",
     "customPhotoLabel": "Özel fotoğraf",
-    "builtInThemeLabel": "Hazır tema"
+    "builtInThemeLabel": "Hazır tema",
+    "sort": "Sırala",
+    "sortByName": "Ad",
+    "sortByModified": "Son değişiklik",
+    "sortByAdded": "Eklenme tarihi"
   },
   "day": {
     "emptyTitle": "Etkinlik yok",

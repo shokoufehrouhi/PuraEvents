@@ -243,7 +243,11 @@
     "changeWidget": "تغيير",
     "myWidgetLabel": "ودجتي",
     "customPhotoLabel": "صورة مخصصة",
-    "builtInThemeLabel": "سمة مدمجة"
+    "builtInThemeLabel": "سمة مدمجة",
+    "sort": "فرز",
+    "sortByName": "الاسم",
+    "sortByModified": "آخر تعديل",
+    "sortByAdded": "تاريخ الإضافة"
   },
   "day": {
     "emptyTitle": "لا توجد أحداث",
