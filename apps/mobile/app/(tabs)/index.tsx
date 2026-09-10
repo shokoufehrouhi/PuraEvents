@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventHeroCard } from '../../src/components/EventHeroCard';
@@ -21,6 +21,18 @@ import type { PurEvent } from '../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence, getPreviousOccurrence } from '../../src/utils/recurrence';
+
+type PastFilter = '3m' | '6m' | '1y' | 'all';
+
+// Months back each filter cuts off at — 'all' has no cutoff (handled
+// separately below rather than an artificial huge number).
+const PAST_FILTER_MONTHS: Partial<Record<PastFilter, number>> = { '3m': 3, '6m': 6, '1y': 12 };
+const PAST_FILTER_LABEL_KEYS: Record<PastFilter, string> = {
+  '3m': 'events.pastFilter3m',
+  '6m': 'events.pastFilter6m',
+  '1y': 'events.pastFilter1y',
+  all: 'events.pastFilterAll',
+};
 
 function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) {
   const { colors, spacing, radius, typography } = useTheme();
@@ -106,10 +118,12 @@ function LimitBanner({ onPress }: { onPress: () => void }) {
 export default function EventListScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { colors, spacing, typography } = useTheme();
+  const { colors, spacing, radius, typography } = useTheme();
   const { isPro } = usePro();
   const [events, setEvents] = useState<PurEvent[]>([]);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [pastFilter, setPastFilter] = useState<PastFilter>('all');
+  const [pastFilterMenuOpen, setPastFilterMenuOpen] = useState(false);
   const [heroPhotoUri, setHeroPhotoUri] = useState<string | null>(null);
   // Ticks the Upcoming/Past split live (see the useMemo below) so an event
   // moves to Past on its own once its time passes, without the user having
@@ -182,7 +196,14 @@ export default function EventListScreen() {
     };
   }, [events, now]);
 
-  const listData = tab === 'upcoming' ? upcoming : pastList;
+  const filteredPastList = useMemo(() => {
+    const months = PAST_FILTER_MONTHS[pastFilter];
+    if (!months) return pastList;
+    const cutoff = now.subtract(months, 'month');
+    return pastList.filter((e) => dayjs(e.dateTimeISO).isAfter(cutoff));
+  }, [pastList, pastFilter, now]);
+
+  const listData = tab === 'upcoming' ? upcoming : filteredPastList;
   // "Active events" mirrors EventWizard's own create-time gate (total
   // stored count, not just Upcoming) — see FREE_LIMITS.maxActiveEvents.
   const limitReached = !isPro && events.length >= FREE_LIMITS.maxActiveEvents;
@@ -218,6 +239,22 @@ export default function EventListScreen() {
           ]}
         />
       </View>
+
+      {/* Past-only date-range filter — a "Filtered by: <value>" label
+          opening a bottom-sheet picker (same pattern as the Widgets tab's
+          own Sort menu), not a row of chips/another SegmentedControl. */}
+      {tab === 'past' ? (
+        <View style={[styles.pastFilterRow, { paddingHorizontal: spacing.md, marginTop: spacing.lg, marginBottom: spacing.xs }]}>
+          <Text style={[typography.body, { color: colors.secondary }]}>{t('events.filteredBy')}</Text>
+          <Pressable
+            onPress={() => setPastFilterMenuOpen(true)}
+            style={[styles.pastFilterValue, { backgroundColor: colors.surfaceAlt, borderRadius: 999 }]}
+          >
+            <Text style={[typography.bodyStrong, { color: colors.text }]}>{t(PAST_FILTER_LABEL_KEYS[pastFilter])}</Text>
+            <Ionicons name="chevron-down" size={16} color={colors.secondary} style={{ marginLeft: 4 }} />
+          </Pressable>
+        </View>
+      ) : null}
 
       <FlatList
         data={listData}
@@ -267,15 +304,52 @@ export default function EventListScreen() {
               subtitle={t('events.emptyPastSubtitle')}
               action={{ kind: 'link', label: t('events.viewUpcoming'), onPress: () => setTab('upcoming') }}
             />
+          ) : filteredPastList.length === 0 ? (
+            // Past has events, they're just all outside the selected
+            // range — a different empty state than "no past events ever",
+            // with an action that clears the filter instead of jumping
+            // to Upcoming.
+            <EmptyState
+              icon="mail-open-outline"
+              badgeIcon="checkmark"
+              badgeColor={accents.mint}
+              title={t('events.emptyPastFilterTitle')}
+              subtitle={t('events.emptyPastFilterSubtitle')}
+              action={{ kind: 'link', label: t('events.clearPastFilter'), onPress: () => setPastFilter('all') }}
+            />
           ) : null
         }
         renderItem={({ item }) => <EventRow event={item} onPress={() => router.push(`/event/${item.id}`)} />}
       />
+
+      <Modal visible={pastFilterMenuOpen} transparent animationType="fade" onRequestClose={() => setPastFilterMenuOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setPastFilterMenuOpen(false)}>
+          <View style={[styles.filterSheet, { backgroundColor: colors.surface, borderRadius: radius.lg }]}>
+            {(['3m', '6m', '1y', 'all'] as PastFilter[]).map((key) => (
+              <Pressable
+                key={key}
+                onPress={() => {
+                  setPastFilter(key);
+                  setPastFilterMenuOpen(false);
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}
+              >
+                <Text style={[typography.body, { color: colors.text, flex: 1 }]}>{t(PAST_FILTER_LABEL_KEYS[key])}</Text>
+                {pastFilter === key ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  pastFilterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pastFilterValue: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  filterSheet: { paddingVertical: 8, marginHorizontal: 16, marginBottom: 24 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
   headerTitle: { fontSize: 28, fontWeight: '700' },
   headerAddButton: {
