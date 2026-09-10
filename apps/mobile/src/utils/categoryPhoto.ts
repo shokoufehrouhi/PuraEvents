@@ -4,13 +4,18 @@
 // locationPhoto.ts), just keyed by category instead of place name.
 import type { EventCategory } from '../types/event';
 
+// Prefixed with "minimal" on purpose — these photos sit behind a widget
+// card's title/countdown/note text (see MiniWidget.tsx), so a busy photo
+// (the old 'celebration confetti' for personal, for instance) actively
+// hurts legibility, not just looks cluttered. Simpler/calmer subjects per
+// category, not just "confetti"/"desk"/etc.
 const CATEGORY_SEARCH_TERMS: Record<EventCategory, string> = {
-  personal: 'celebration confetti',
-  work: 'office desk workspace',
-  travel: 'travel landscape',
-  finance: 'finance money',
-  health: 'wellness health',
-  other: 'abstract pattern',
+  personal: 'minimal balloons pastel',
+  work: 'minimal desk workspace',
+  travel: 'minimal landscape',
+  finance: 'minimal money savings',
+  health: 'minimal wellness',
+  other: 'minimal abstract pattern',
 };
 
 // Returns up to `count` distinct photo URLs for a category, or [] on any

@@ -3,24 +3,34 @@ import dayjs from 'dayjs';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { EventIcon } from '../src/components/EventIcon';
+import { MiniWidget } from '../src/components/MiniWidget';
 import { Button } from '../src/components/ui/Button';
 import { SegmentedControl } from '../src/components/ui/SegmentedControl';
-import { listEvents } from '../src/storage/events';
+import { listEvents, updateEvent } from '../src/storage/events';
 import { FREE_LIMITS, usePro } from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
-import { CARD_THEME_KEYS, CARD_THEMES } from '../src/theme/cardThemes';
-import { accents } from '../src/theme/tokens';
+import { CARD_THEME_KEYS } from '../src/theme/cardThemes';
 import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../src/types/event';
 import { fetchCategoryPhotos } from '../src/utils/categoryPhoto';
 import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
-import { getNextOccurrence } from '../src/utils/recurrence';
 
 type Tab = 'builtin' | 'mine' | 'categories';
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
+
+// Same demo overlay as the Widgets tab's own Categories section (see
+// app/(tabs)/widgets.tsx) — Pro photo tiles aren't tied to a real event, so
+// cycle a small set of varied sample title/day-count pairs across each
+// category's photos purely for a realistic look, not persisted/real data.
+const SAMPLE_WIDGET_PREVIEWS: { title: string; days: number; note: string }[] = [
+  { title: 'Birthday', days: 2, note: 'Order the cake' },
+  { title: 'Meeting', days: 1, note: 'Bring the laptop' },
+  { title: 'Trip', days: 5, note: 'Pack the passport' },
+  { title: 'Reminder', days: 3, note: 'Check the guest list' },
+];
 
 // Full-screen "gallery" replacement for the old inline swatch row — Pro can
 // hold more than 1 custom widget, so browsing/searching/picking one needs
@@ -34,16 +44,22 @@ export default function WidgetPickerScreen() {
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { isPro } = usePro();
-  const { eventId, cardTheme: currentCardTheme, photoUri: currentPhotoUri } = useLocalSearchParams<{
+  const { eventId, cardTheme: currentCardTheme, photoUri: currentPhotoUri, category: currentCategory } = useLocalSearchParams<{
     eventId?: string;
     cardTheme?: string;
     photoUri?: string;
+    category?: string;
   }>();
 
   const [tab, setTab] = useState<Tab>('mine');
   const [query, setQuery] = useState('');
   const [myWidgets, setMyWidgets] = useState<PurEvent[]>([]);
   const [categoryPhotos, setCategoryPhotos] = useState<Partial<Record<EventCategory, string[]>>>({});
+  // The event actually being edited (eventId), when it already exists —
+  // gives the Built-in tab's preview cards the real title/date/note
+  // instead of made-up placeholder text. Null for a brand-new event
+  // (still being created, no id yet) or while still loading.
+  const [targetEvent, setTargetEvent] = useState<PurEvent | null>(null);
 
   // Staged in this screen's own local state, confirmed via "Use selected
   // widget" below — browsing tabs/searching doesn't apply anything until
@@ -54,8 +70,30 @@ export default function WidgetPickerScreen() {
   }));
 
   useEffect(() => {
-    listEvents().then((events) => setMyWidgets(events.filter((e) => e.customPhotoUri)));
-  }, []);
+    listEvents().then((events) => {
+      setMyWidgets(events.filter((e) => e.customPhotoUri));
+      if (eventId) setTargetEvent(events.find((e) => e.id === eventId) ?? null);
+    });
+  }, [eventId]);
+
+  // Placeholder content for the Built-in tab's preview cards when there's
+  // no real event yet (still creating one) — same "New York" placeholder
+  // convention as custom-widget.tsx's own DEFAULT_SAMPLE, for consistency.
+  const previewBase: PurEvent =
+    targetEvent ?? {
+      id: 'preview',
+      title: 'New York',
+      note: "Don't forget your passport",
+      dateTimeISO: dayjs().add(15, 'day').toISOString(),
+      timezone: 'UTC',
+      category: (currentCategory as EventCategory) || 'travel',
+      accentColor: 'coral',
+      cardTheme: 'color',
+      repeat: 'none',
+      reminders: [],
+      createdAt: '',
+      updatedAt: '',
+    };
 
   // All 6 categories' curated photos fetched once up front — the
   // Categories tab lists every category as its own section, not just one
@@ -107,13 +145,28 @@ export default function WidgetPickerScreen() {
     setStaged({ cardTheme: key });
   }
 
-  // Reusing a saved widget on a *different* event still spends the same
-  // free-tier slot as picking a brand-new photo — only exempt from the
-  // gate when it's the one already staged (a no-op reselect).
-  function selectWidget(widget: PurEvent) {
-    if (quotaFull && widget.customPhotoUri !== staged.customPhotoUri) {
-      router.push('/paywall');
-      return;
+  // Picking a widget you *already* made and applying it here is never
+  // gated, even on the free plan at its 1-widget cap — it doesn't create
+  // another one, just reuses the one you have. Only "+ New custom" (an
+  // actually new photo) spends the quota (see openNewCustom below).
+  //
+  // On free, though, the widget still needs to stay singular: `widget`'s
+  // custom fields are copied onto *this* event by value below, not moved
+  // by reference, so without clearing them off the event that currently
+  // owns it, both events would end up with customPhotoUri set and "My
+  // Widgets" would count two. Pro has no cap, so genuinely reusing the
+  // same photo on several events is fine there — only free moves it.
+  async function selectWidget(widget: PurEvent) {
+    if (!isPro && widget.id !== eventId) {
+      await updateEvent(widget.id, {
+        cardTheme: 'color',
+        customPhotoUri: undefined,
+        customWidgetName: undefined,
+        customOverlayOpacity: undefined,
+        customCornerStyle: undefined,
+        customTextStyle: undefined,
+      });
+      setMyWidgets((prev) => prev.filter((w) => w.id !== widget.id));
     }
     setStaged({
       cardTheme: 'custom',
@@ -191,86 +244,98 @@ export default function WidgetPickerScreen() {
           />
         </View>
 
+        {/* Same canonical MiniWidget-format card as My Widgets/Categories
+            (not a small color swatch), per explicit request that widget
+            format stay identical everywhere — previewed against the real
+            event being edited when there is one, a placeholder otherwise. */}
         {tab === 'builtin' ? (
-          <View style={styles.grid}>
+          <View style={[styles.list, { gap: spacing.md }]}>
             {CARD_THEME_KEYS.map((key) => {
-              const preset = CARD_THEMES[key];
               const selected = staged.cardTheme === key;
               return (
-                <Pressable key={key} style={styles.card} onPress={() => selectBuiltIn(key)}>
-                  <View
-                    style={[
-                      styles.cardSwatch,
-                      {
-                        backgroundColor: preset.background ?? accents.violet,
-                        borderRadius: radius.md,
-                        borderWidth: selected ? 2 : 0,
-                        borderColor: colors.primary,
-                      },
-                    ]}
-                  >
-                    {selected ? <Ionicons name="checkmark-circle" size={22} color={preset.text} /> : null}
+                <Pressable key={key} onPress={() => selectBuiltIn(key)}>
+                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]}>{t(`events.cardTheme.${key}`)}</Text>
+                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    <MiniWidget event={{ ...previewBase, cardTheme: key }} size="full" />
+                    {selected ? (
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
                   </View>
-                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]}>{t(`events.cardTheme.${key}`)}</Text>
                 </Pressable>
               );
             })}
           </View>
         ) : null}
 
+        {/* One MiniWidget-format card per row — same canonical widget
+            layout (header/title/date+time/D-H-M countdown/note) used
+            everywhere else a "widget" is previewed, per explicit request
+            that widget format stay identical everywhere. */}
         {tab === 'mine' ? (
-          <View style={styles.grid}>
+          <View style={[styles.list, { gap: spacing.md }]}>
             {filteredMyWidgets.map((widget) => {
               const selected = staged.customPhotoUri === widget.customPhotoUri;
-              const nextOccurrence = getNextOccurrence(widget.dateTimeISO, widget.repeat);
-              const days = Math.max(0, Math.ceil(nextOccurrence.diff(dayjs(), 'hour') / 24));
               return (
-                <Pressable key={widget.id} style={styles.card} onPress={() => selectWidget(widget)}>
-                  <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    {/* Plain View + absolutely-filled Image, not
-                        ImageBackground — ImageBackground proxies its outer
-                        style's width/height onto the inner Image, and
-                        aspectRatio-only sizing (no explicit height, see
-                        cardPhoto) isn't reflected there, leaving the image
-                        undersized/misaligned (see its own source). */}
-                    <Image source={{ uri: widget.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                    <View style={styles.cardScrim} />
-                    {selected ? (
-                      <View style={styles.checkBadge}>
-                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                      </View>
-                    ) : null}
-                    <View>
-                      <Text style={styles.cardDays}>
-                        {days} {t('widgets.daysShort')}
-                      </Text>
-                      <Text style={styles.cardDate}>{dayjs(nextOccurrence).format('MMM D, YYYY')}</Text>
-                    </View>
-                  </View>
-                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
+                <Pressable key={widget.id} onPress={() => selectWidget(widget)}>
+                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
                     {widget.customWidgetName || widget.title}
                   </Text>
+                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    {/* Force cardTheme 'custom' for this preview — "My
+                        Widgets" means "your saved custom-photo widgets",
+                        which should always show that photo here even
+                        though Free Styles lets the event's own *active*
+                        cardTheme currently point elsewhere without losing
+                        the saved photo (see custom-widget.tsx). */}
+                    <MiniWidget event={{ ...widget, cardTheme: 'custom' }} size="full" />
+                    {selected ? (
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
+                  </View>
                 </Pressable>
               );
             })}
-            <Pressable style={styles.card} onPress={openNewCustom}>
-              <View
-                style={[
-                  styles.cardPhoto,
-                  styles.dashedTile,
-                  { borderRadius: radius.md, borderColor: colors.outline, backgroundColor: colors.surfaceAlt },
-                ]}
-              >
-                <Ionicons name="add" size={28} color={colors.secondary} />
-                {quotaFull ? (
-                  <View style={[styles.lockBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-                    <Ionicons name="lock-closed" size={9} color="#fff" />
-                  </View>
-                ) : null}
-              </View>
-              <Text style={[typography.bodyStrong, { color: colors.secondary, marginTop: 6, textAlign: 'center' }]}>{t('widgets.newCustom')}</Text>
-            </Pressable>
           </View>
+        ) : null}
+
+        {/* Own full-width row below the list, not a grid tile — same icon
+            badge + title/subtitle + trailing action grammar as the "New
+            custom" row in the Widgets tab (see app/(tabs)/widgets.tsx). */}
+        {tab === 'mine' ? (
+          <Pressable
+            onPress={openNewCustom}
+            style={[
+              styles.newCustomRow,
+              { borderRadius: radius.lg },
+              quotaFull
+                ? { backgroundColor: `${colors.primary}14`, borderColor: `${colors.primary}33`, borderWidth: 1 }
+                : { backgroundColor: colors.surfaceAlt, borderColor: colors.outline, borderWidth: 1, borderStyle: 'dashed' },
+            ]}
+          >
+            <View
+              style={[
+                styles.newCustomIconBadge,
+                { backgroundColor: quotaFull ? `${colors.primary}22` : colors.surface, borderRadius: 999 },
+              ]}
+            >
+              <Ionicons name={quotaFull ? 'lock-closed' : 'add'} size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('widgets.newCustom')}</Text>
+              {quotaFull ? (
+                <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{t('widgets.availableWithPro')}</Text>
+              ) : null}
+            </View>
+            {quotaFull ? (
+              <Text style={[typography.bodyStrong, { color: colors.primary }]}>{t('events.viewPro')}</Text>
+            ) : (
+              <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+            )}
+          </Pressable>
         ) : null}
 
         {/* Every category as its own section of Pro curated photos only
@@ -286,21 +351,38 @@ export default function WidgetPickerScreen() {
                     <EventIcon category={category} size={22} />
                     <Text style={[typography.bodyStrong, { color: colors.text, marginLeft: 8 }]}>{t(`events.category.${category}`)}</Text>
                   </View>
-                  <View style={styles.grid}>
-                    {photos.map((url) => (
-                      <Pressable key={url} style={styles.card} onPress={() => pickCategoryPhoto(url)}>
-                        <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
-                          <Image source={{ uri: url }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                          <View style={styles.cardScrim} />
-                          {!isPro ? (
-                            <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
-                              <Ionicons name="lock-closed" size={11} color="#fff" />
-                              <Text style={styles.proBadgeText}>PRO</Text>
-                            </View>
-                          ) : null}
-                        </View>
-                      </Pressable>
-                    ))}
+                  <View style={[styles.list, { gap: spacing.md }]}>
+                    {photos.map((url, i) => {
+                      const preview = SAMPLE_WIDGET_PREVIEWS[i % SAMPLE_WIDGET_PREVIEWS.length];
+                      const previewEvent: PurEvent = {
+                        id: `preview-${category}-${i}`,
+                        title: preview.title,
+                        note: preview.note,
+                        dateTimeISO: dayjs().add(preview.days, 'day').toISOString(),
+                        timezone: 'UTC',
+                        category,
+                        accentColor: (staged.accentColor as PurEvent['accentColor']) || 'violet',
+                        cardTheme: 'custom',
+                        customPhotoUri: url,
+                        repeat: 'none',
+                        reminders: [],
+                        createdAt: '',
+                        updatedAt: '',
+                      };
+                      return (
+                        <Pressable key={url} onPress={() => pickCategoryPhoto(url)}>
+                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
+                            <MiniWidget event={previewEvent} size="full" />
+                            {!isPro ? (
+                              <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
+                                <Ionicons name="lock-closed" size={11} color="#fff" />
+                                <Text style={styles.proBadgeText}>PRO</Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        </Pressable>
+                      );
+                    })}
                   </View>
                 </View>
               );
@@ -323,27 +405,21 @@ export default function WidgetPickerScreen() {
 const styles = StyleSheet.create({
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { width: '47%', alignItems: 'center' },
-  cardSwatch: { width: '100%', aspectRatio: 1.15, alignItems: 'center', justifyContent: 'center' },
-  cardPhoto: { width: '100%', aspectRatio: 1.15, padding: 10, justifyContent: 'space-between', overflow: 'hidden' },
-  dashedTile: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed' },
-  cardScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.25)' },
-  checkBadge: { alignSelf: 'flex-end' },
-  cardDays: { color: '#fff', fontSize: 22, fontWeight: '800' },
-  cardDate: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '700', marginTop: 2 },
-  lockBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  proBadge: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
+  // One full-width MiniWidget card per row — see "My Widgets"/Categories
+  // rendering above. overflow:'hidden' clips MiniWidget's own corner
+  // radius to this frame's selection-border radius.
+  list: { flexDirection: 'column' },
+  widgetCardFrame: { overflow: 'hidden' },
+  newCustomRow: { width: '100%', flexDirection: 'row', alignItems: 'center', padding: 14, marginTop: 12 },
+  newCustomIconBadge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  // Float on top of the MiniWidget card, not a flex sibling pushed into
+  // place — MiniWidget owns its own internal layout now.
+  selectedBadge: { position: 'absolute', bottom: 10, right: 10 },
+  // Bottom-right, not top-right — MiniWidget's own header row already
+  // fills that corner with the repeat label ("Does not repeat" etc.), so
+  // top-right collides with it. Bottom-right stays clear of that plus the
+  // countdown numbers and the (short, left-aligned) note.
+  proBadge: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   proBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopWidth: StyleSheet.hairlineWidth, padding: 16 },

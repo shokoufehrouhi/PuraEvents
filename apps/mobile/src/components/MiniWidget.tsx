@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Text, View, type TextStyle } from 'react-native';
+import { Image, StyleSheet, Text, View, type TextStyle } from 'react-native';
 
 import { useTheme } from '../theme/PreferencesContext';
 import { CARD_THEMES } from '../theme/cardThemes';
@@ -113,7 +113,7 @@ export function MiniWidget({ event, size }: Props) {
           compact
         />
         {event.note ? (
-          <Text style={{ color: secondaryColor, fontSize: 12, fontWeight: '600', marginTop: 8 }} numberOfLines={2}>
+          <Text style={{ color: secondaryColor, fontSize: 14, fontWeight: '600', marginTop: 8 }} numberOfLines={2}>
             {event.note}
           </Text>
         ) : null}
@@ -177,10 +177,17 @@ export function MiniWidget({ event, size }: Props) {
   // `background` either, same as 'color').
   if (event.cardTheme === 'custom' && event.customPhotoUri) {
     return (
-      <ImageBackground source={{ uri: event.customPhotoUri }} style={boxStyle} imageStyle={{ borderRadius: cornerRadius }} resizeMode="cover">
-        <View style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${overlayOpacity})`, borderRadius: cornerRadius }} />
+      // Plain View + absolutely-filled Image, not ImageBackground —
+      // ImageBackground proxies its outer style's width/height onto the
+      // inner Image (see its own source), and 'full' size uses minHeight
+      // (no explicit height, see DIMS) isn't reflected there, leaving the
+      // image undersized/misaligned (same bug fixed for the Widgets tab's
+      // grid cards — see app/(tabs)/widgets.tsx).
+      <View style={[boxStyle, { overflow: 'hidden' }]}>
+        <Image source={{ uri: event.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <View style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${overlayOpacity})` }} />
         {inner}
-      </ImageBackground>
+      </View>
     );
   }
 

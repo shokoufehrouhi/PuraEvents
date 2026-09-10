@@ -3,20 +3,19 @@ import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventIcon } from '../../src/components/EventIcon';
+import { MiniWidget } from '../../src/components/MiniWidget';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents, updateEvent } from '../../src/storage/events';
 import { FREE_LIMITS, usePro } from '../../src/subscription';
 import { useTheme } from '../../src/theme/PreferencesContext';
-import { CARD_THEME_KEYS, CARD_THEMES } from '../../src/theme/cardThemes';
-import { accents } from '../../src/theme/tokens';
+import { CARD_THEME_KEYS } from '../../src/theme/cardThemes';
 import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../../src/types/event';
 import { fetchCategoryPhotos } from '../../src/utils/categoryPhoto';
 import { awaitPick } from '../../src/utils/pickerBridge';
-import { getNextOccurrence } from '../../src/utils/recurrence';
 
 const SAMPLE_EVENT: PurEvent = {
   id: 'sample',
@@ -36,6 +35,18 @@ type Tab = 'builtin' | 'mine' | 'categories';
 type SortBy = 'name' | 'modified' | 'added';
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
+
+// Categories' Pro photo tiles aren't tied to a real event yet, so they used
+// to show nothing but the photo + PRO badge — no day-count/title overlay at
+// all, unlike "My Widgets" cards right above them. Cycled across each
+// category's photos (4 per category, see fetchCategoryPhotos) purely for a
+// realistic, varied demo look — not persisted/real data.
+const SAMPLE_WIDGET_PREVIEWS: { title: string; days: number; note: string }[] = [
+  { title: 'Birthday', days: 2, note: 'Order the cake' },
+  { title: 'Meeting', days: 1, note: 'Bring the laptop' },
+  { title: 'Trip', days: 5, note: 'Pack the passport' },
+  { title: 'Reminder', days: 3, note: 'Check the guest list' },
+];
 
 // This IS the Choose Widget experience (Built-in / My Widgets / Categories,
 // search, "+ New custom") — a dedicated tab has room to embed it directly.
@@ -208,23 +219,24 @@ export default function WidgetsScreen() {
           />
         </View>
 
-        {/* Built-in — just the 3 flat presets. */}
+        {/* Built-in — the 3 flat presets, same canonical MiniWidget-format
+            card as My Widgets/Categories (not a small color swatch), per
+            explicit request that widget format stay identical everywhere. */}
         {tab === 'builtin' ? (
-          <View style={styles.grid}>
+          <View style={[styles.list, { gap: spacing.md }]}>
             {CARD_THEME_KEYS.map((key) => {
-              const preset = CARD_THEMES[key];
               const selected = sample.cardTheme === key;
               return (
-                <Pressable key={key} style={styles.card} onPress={() => applySelection({ cardTheme: key as CardTheme })}>
-                  <View
-                    style={[
-                      styles.cardSwatch,
-                      { backgroundColor: preset.background ?? accents[sample.accentColor], borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary },
-                    ]}
-                  >
-                    {selected ? <Ionicons name="checkmark-circle" size={22} color={preset.text} /> : null}
+                <Pressable key={key} onPress={() => applySelection({ cardTheme: key as CardTheme })}>
+                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]}>{t(`events.cardTheme.${key}`)}</Text>
+                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    <MiniWidget event={{ ...sample, cardTheme: key }} size="full" />
+                    {selected ? (
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
                   </View>
-                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]}>{t(`events.cardTheme.${key}`)}</Text>
                 </Pressable>
               );
             })}
@@ -247,38 +259,35 @@ export default function WidgetsScreen() {
           </View>
         ) : null}
 
+        {/* One MiniWidget-format card per row — same canonical widget
+            layout (header/title/date+time/D-H-M countdown/note) used
+            everywhere else a "widget" is previewed, not a bespoke
+            simplified overlay, per explicit request that widget format
+            stay identical everywhere. A photo grid tile can't fit that
+            much content, so this is a list, not a grid. */}
         {tab === 'mine' ? (
-          <View style={styles.grid}>
+          <View style={[styles.list, { gap: spacing.md }]}>
             {sortedMyWidgets.map((widget) => {
               const selected = sample.cardTheme === 'custom' && sample.customPhotoUri === widget.customPhotoUri;
-              const nextOccurrence = getNextOccurrence(widget.dateTimeISO, widget.repeat);
-              const days = Math.max(0, Math.ceil(nextOccurrence.diff(dayjs(), 'hour') / 24));
               return (
-                <Pressable key={widget.id} style={styles.card} onPress={() => editSavedWidget(widget)}>
-                  <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    {/* Plain View + absolutely-filled Image, not
-                        ImageBackground — ImageBackground proxies its outer
-                        style's width/height onto the inner Image (see its
-                        own source), and aspectRatio-only sizing (no
-                        explicit height, see cardPhoto) isn't reflected
-                        there, leaving the image undersized/misaligned. */}
-                    <Image source={{ uri: widget.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                    <View style={styles.cardScrim} />
-                    {selected ? (
-                      <View style={styles.checkBadge}>
-                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                      </View>
-                    ) : null}
-                    <View>
-                      <Text style={styles.cardDays}>
-                        {days} {t('widgets.daysShort')}
-                      </Text>
-                      <Text style={styles.cardDate}>{dayjs(nextOccurrence).format('MMM D, YYYY')}</Text>
-                    </View>
-                  </View>
-                  <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
+                <Pressable key={widget.id} onPress={() => editSavedWidget(widget)}>
+                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
                     {widget.customWidgetName || widget.title}
                   </Text>
+                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    {/* Force cardTheme 'custom' for this preview — "My
+                        Widgets" means "your saved custom-photo widgets",
+                        which should always show that photo here even
+                        though Free Styles lets the event's own *active*
+                        cardTheme currently point elsewhere without losing
+                        the saved photo (see custom-widget.tsx). */}
+                    <MiniWidget event={{ ...widget, cardTheme: 'custom' }} size="full" />
+                    {selected ? (
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
+                  </View>
                 </Pressable>
               );
             })}
@@ -336,21 +345,38 @@ export default function WidgetsScreen() {
                     <EventIcon category={category} size={22} />
                     <Text style={[typography.bodyStrong, { color: colors.text, marginLeft: 8 }]}>{t(`events.category.${category}`)}</Text>
                   </View>
-                  <View style={styles.grid}>
-                    {photos.map((url) => (
-                      <Pressable key={url} style={styles.card} onPress={() => pickCategoryPhoto(url)}>
-                        <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
-                          <Image source={{ uri: url }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                          <View style={styles.cardScrim} />
-                          {!isPro ? (
-                            <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
-                              <Ionicons name="lock-closed" size={11} color="#fff" />
-                              <Text style={styles.proBadgeText}>PRO</Text>
-                            </View>
-                          ) : null}
-                        </View>
-                      </Pressable>
-                    ))}
+                  <View style={[styles.list, { gap: spacing.md }]}>
+                    {photos.map((url, i) => {
+                      const preview = SAMPLE_WIDGET_PREVIEWS[i % SAMPLE_WIDGET_PREVIEWS.length];
+                      const previewEvent: PurEvent = {
+                        id: `preview-${category}-${i}`,
+                        title: preview.title,
+                        note: preview.note,
+                        dateTimeISO: dayjs().add(preview.days, 'day').toISOString(),
+                        timezone: 'UTC',
+                        category,
+                        accentColor: sample.accentColor,
+                        cardTheme: 'custom',
+                        customPhotoUri: url,
+                        repeat: 'none',
+                        reminders: [],
+                        createdAt: '',
+                        updatedAt: '',
+                      };
+                      return (
+                        <Pressable key={url} onPress={() => pickCategoryPhoto(url)}>
+                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
+                            <MiniWidget event={previewEvent} size="full" />
+                            {!isPro ? (
+                              <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
+                                <Ionicons name="lock-closed" size={11} color="#fff" />
+                                <Text style={styles.proBadgeText}>PRO</Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        </Pressable>
+                      );
+                    })}
                   </View>
                 </View>
               );
@@ -391,17 +417,21 @@ const styles = StyleSheet.create({
   planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { width: '47%', alignItems: 'center' },
-  cardSwatch: { width: '100%', aspectRatio: 1.15, alignItems: 'center', justifyContent: 'center' },
-  cardPhoto: { width: '100%', aspectRatio: 1.15, padding: 10, justifyContent: 'space-between', overflow: 'hidden' },
+  // One full-width MiniWidget card per row — see "My Widgets"/Categories
+  // rendering above. overflow:'hidden' clips MiniWidget's own corner
+  // radius to this frame's selection-border radius.
+  list: { flexDirection: 'column' },
+  widgetCardFrame: { overflow: 'hidden' },
   newCustomRow: { width: '100%', flexDirection: 'row', alignItems: 'center', padding: 14, marginTop: 12 },
   newCustomIconBadge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  cardScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.25)' },
-  checkBadge: { alignSelf: 'flex-end' },
-  cardDays: { color: '#fff', fontSize: 22, fontWeight: '800' },
-  cardDate: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '700', marginTop: 2 },
-  proBadge: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
+  // Float on top of the MiniWidget card, not a flex sibling pushed into
+  // place — MiniWidget owns its own internal layout now.
+  selectedBadge: { position: 'absolute', bottom: 10, right: 10 },
+  // Bottom-right, not top-right — MiniWidget's own header row already
+  // fills that corner with the repeat label ("Does not repeat" etc.), so
+  // top-right collides with it. Bottom-right stays clear of that plus the
+  // countdown numbers and the (short, left-aligned) note.
+  proBadge: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   proBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   myWidgetsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
