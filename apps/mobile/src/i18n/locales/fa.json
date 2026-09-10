@@ -112,6 +112,7 @@
     "title": "تنظیمات",
     "proPlan": "پیوراویدنتس پرو",
     "freePlan": "پلن رایگان",
+    "renewsOn": "تمدید در {{date}}",
     "viewPlans": "مشاهده‌ی پلن‌ها",
     "preferences": "ترجیحات",
     "appearance": "ظاهر",

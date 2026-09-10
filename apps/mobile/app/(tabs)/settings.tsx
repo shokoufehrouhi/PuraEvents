@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import dayjs from 'dayjs';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,7 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
-  const { isPro } = usePro();
+  const { isPro, planType, expiresAt } = usePro();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
@@ -38,7 +39,20 @@ export default function SettingsScreen() {
           <View style={{ flex: 1, marginLeft: spacing.sm }}>
             <Text style={[typography.bodyStrong, { color: '#FFFFFF' }]}>{t('settings.proPlan')}</Text>
             <Text style={[typography.caption, { color: 'rgba(255,255,255,0.8)' }]}>
-              {isPro ? t('compare.pro') : t('settings.freePlan')}
+              {isPro
+                ? // Free just says "Pro"/"Free plan" as before — Pro adds
+                  // which plan (Monthly/Yearly/Lifetime) and, for the two
+                  // auto-renewing ones, when it next renews. Lifetime never
+                  // expires, so it's just the plan name on its own.
+                  [
+                    planType ? t(`paywall.${planType}`) : t('compare.pro'),
+                    planType && planType !== 'lifetime' && expiresAt
+                      ? t('settings.renewsOn', { date: dayjs(expiresAt).format('MMM D, YYYY') })
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                : t('settings.freePlan')}
             </Text>
           </View>
           {!isPro ? (

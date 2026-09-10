@@ -112,6 +112,7 @@
     "title": "الإعدادات",
     "proPlan": "بيورا إيفنتس برو",
     "freePlan": "الخطة المجانية",
+    "renewsOn": "يتجدد في {{date}}",
     "viewPlans": "عرض الخطط",
     "preferences": "التفضيلات",
     "appearance": "المظهر",

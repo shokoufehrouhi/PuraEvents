@@ -112,6 +112,7 @@
     "title": "Ayarlar",
     "proPlan": "PuraEvents Pro",
     "freePlan": "Ücretsiz plan",
+    "renewsOn": "{{date}} tarihinde yenilenir",
     "viewPlans": "Planları görüntüle",
     "preferences": "Tercihler",
     "appearance": "Görünüm",

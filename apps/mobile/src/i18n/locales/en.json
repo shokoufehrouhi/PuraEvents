@@ -112,6 +112,7 @@
     "title": "Settings",
     "proPlan": "PuraEvents Pro",
     "freePlan": "Free plan",
+    "renewsOn": "Renews {{date}}",
     "viewPlans": "View plans",
     "preferences": "Preferences",
     "appearance": "Appearance",
