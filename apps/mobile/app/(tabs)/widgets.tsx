@@ -10,13 +10,14 @@ import { EventIcon } from '../../src/components/EventIcon';
 import { MiniWidget } from '../../src/components/MiniWidget';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents, updateEvent } from '../../src/storage/events';
+import { listWidgets } from '../../src/storage/widgets';
 import { FREE_LIMITS, usePro } from '../../src/subscription';
 import { useTheme } from '../../src/theme/PreferencesContext';
 import { CARD_THEME_KEYS } from '../../src/theme/cardThemes';
 import { ACCENT_KEYS } from '../../src/theme/tokens';
-import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../../src/types/event';
+import type { CardTheme, EventCategory, PurEvent, Widget, WidgetSelection } from '../../src/types/event';
 import { getCategoryPhotos } from '../../src/utils/categoryPhoto';
-import { awaitPick } from '../../src/utils/pickerBridge';
+import { persistRemoteImage } from '../../src/utils/persistImage';
 
 const SAMPLE_EVENT: PurEvent = {
   id: 'sample',
@@ -65,20 +66,61 @@ export default function WidgetsScreen() {
   const [sample, setSample] = useState<PurEvent>(SAMPLE_EVENT);
   const [tab, setTab] = useState<Tab>('mine');
   const [query, setQuery] = useState('');
-  const [myWidgets, setMyWidgets] = useState<PurEvent[]>([]);
+  const [events, setEvents] = useState<PurEvent[]>([]);
+  const [widgets, setWidgets] = useState<Widget[]>([]);
   const [categoryPhotos, setCategoryPhotos] = useState<Partial<Record<EventCategory, string[]>>>({});
   const [sortBy, setSortBy] = useState<SortBy>('added');
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      listEvents().then((events) => {
-        const upcoming = events.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
+      listEvents().then((loaded) => {
+        setEvents(loaded);
+        const upcoming = loaded.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
         if (upcoming) setSample(upcoming);
-        setMyWidgets(events.filter((e) => e.customPhotoUri));
       });
+      listWidgets().then(setWidgets);
     }, [])
   );
+
+  // Each saved widget (see storage/widgets.ts) paired with whichever real
+  // event, if any, currently links to it (event.widgetId) — used for a
+  // realistic title/date/category/note in its preview card instead of the
+  // widget's own bare style fields, which don't include any of that. A
+  // widget nothing currently points at (its old event switched to a
+  // different photo, or it was never attached in the first place) still
+  // shows up here — falls back to a generic placeholder further down.
+  const widgetCards = useMemo(
+    () => widgets.map((widget) => ({ widget, linkedEvent: events.find((e) => e.widgetId === widget.id) })),
+    [widgets, events]
+  );
+
+  function widgetDisplayEvent(widget: Widget, linkedEvent?: PurEvent): PurEvent {
+    const base: PurEvent =
+      linkedEvent ?? {
+        id: `widget-${widget.id}`,
+        title: widget.name || 'Widget',
+        dateTimeISO: dayjs().add(7, 'day').toISOString(),
+        timezone: 'UTC',
+        category: 'other',
+        accentColor: widget.accentColor ?? 'violet',
+        cardTheme: 'custom',
+        repeat: 'none',
+        reminders: [],
+        createdAt: widget.createdAt,
+        updatedAt: widget.updatedAt,
+      };
+    return {
+      ...base,
+      cardTheme: 'custom',
+      customPhotoUri: widget.photoUri,
+      customWidgetName: widget.name,
+      customOverlayOpacity: widget.overlayOpacity,
+      customCornerStyle: widget.cornerStyle,
+      customTextStyle: widget.textStyle,
+      accentColor: widget.accentColor ?? base.accentColor,
+    };
+  }
 
   // All 6 categories' curated photos fetched once up front (same as
   // category-themes.tsx) — the Categories tab lists every category as its
@@ -98,16 +140,22 @@ export default function WidgetsScreen() {
 
   const isRealSample = sample.id !== 'sample';
 
+  // widgetId defaults to cleared — Built-in/Categories picks (the only two
+  // callers here) aren't reusing a saved widget, so any leftover widgetId
+  // from whatever this event was showing before must go too, or it'd keep
+  // claiming to be "linked" to a widget it no longer displays (updateEvent
+  // only overwrites fields actually present in the patch, so this has to
+  // be explicit — omitting the key would silently leave the stale one).
   async function applySelection(selection: WidgetSelection) {
-    setSample((s) => ({ ...s, ...selection }));
-    if (isRealSample) await updateEvent(sample.id, selection);
+    const patch: WidgetSelection = { widgetId: undefined, ...selection };
+    setSample((s) => ({ ...s, ...patch }));
+    if (isRealSample) await updateEvent(sample.id, patch);
   }
 
-  // Free plan: 1 custom-photo widget total across all events, gating only
-  // "+ New custom" (see openNewCustom below) — editing an already-saved
-  // widget (editSavedWidget) never needs this, it's not adding another one.
-  // Pro: unlimited.
-  const quotaFull = !isPro && myWidgets.length >= FREE_LIMITS.maxWidgets;
+  // Free plan: 1 saved widget total, gating only "+ New custom" (see
+  // openNewCustom below) — editing an already-saved widget (editSavedWidget)
+  // never needs this, it's not adding another one. Pro: unlimited.
+  const quotaFull = !isPro && widgets.length >= FREE_LIMITS.maxWidgets;
 
   // Tapping an already-saved widget opens it for editing (Widget Name,
   // Photo, Overlay, Accent, Corner Style, Text Style — same full editor as
@@ -115,62 +163,50 @@ export default function WidgetsScreen() {
   // behavior lives in the New/Edit Event wizard's own Choose Widget screen
   // instead (see selectWidget in widget-picker.tsx), where picking a style
   // for a *different* event actually makes sense.
-  function editSavedWidget(widget: PurEvent) {
-    router.push({ pathname: '/custom-widget', params: { eventId: widget.id } });
+  function editSavedWidget(widget: Widget) {
+    router.push({ pathname: '/custom-widget', params: { widgetId: widget.id } });
   }
 
   // Opens the full New Widget editor (Widget Name, Size, Overlay, Accent,
-  // Corner Style, Text Style — draft mode, see custom-widget.tsx) and
-  // applies the result straight to the previewed event once it resolves.
-  async function openNewCustom() {
+  // Corner Style, Text Style — see custom-widget.tsx) attached to the
+  // previewed event — its own Save creates the Widget record and links it
+  // there directly, so there's nothing left to apply here once it
+  // resolves; useFocusEffect above just refetches when this tab regains
+  // focus.
+  function openNewCustom() {
     if (quotaFull) {
       router.push('/paywall');
       return;
     }
-    router.push({ pathname: '/custom-widget', params: { draft: '1', eventId: isRealSample ? sample.id : '' } });
-    const picked = await awaitPick();
-    const result = JSON.parse(picked) as {
-      photoUri?: string;
-      widgetName?: string;
-      overlay?: number;
-      corner?: WidgetCornerStyle;
-      text?: WidgetTextStyle;
-      accentColor?: string;
-    };
-    if (!result.photoUri) return;
-    await applySelection({
-      cardTheme: 'custom',
-      customPhotoUri: result.photoUri,
-      customWidgetName: result.widgetName || undefined,
-      customOverlayOpacity: result.overlay,
-      customCornerStyle: result.corner,
-      customTextStyle: result.text,
-      accentColor: result.accentColor as WidgetSelection['accentColor'],
-    });
+    router.push({ pathname: '/custom-widget', params: { eventId: isRealSample ? sample.id : '' } });
   }
 
-  function pickCategoryPhoto(url: string) {
+  async function pickCategoryPhoto(url: string) {
     if (!isPro) {
       router.push('/paywall');
       return;
     }
-    applySelection({ cardTheme: 'custom', customPhotoUri: url });
+    // Persist it locally first — it's a remote Pexels URL, not a saved
+    // widget's own photo, so nothing else keeps it alive once tomorrow's
+    // daily rotation drops it from the Categories tab (see getCategoryPhotos).
+    const persistedUri = await persistRemoteImage(url);
+    applySelection({ cardTheme: 'custom', customPhotoUri: persistedUri });
   }
 
   const filteredMyWidgets = useMemo(() => {
-    if (!query.trim()) return myWidgets;
+    if (!query.trim()) return widgetCards;
     const q = query.trim().toLowerCase();
-    return myWidgets.filter((w) => (w.customWidgetName || w.title).toLowerCase().includes(q));
-  }, [myWidgets, query]);
+    return widgetCards.filter(({ widget, linkedEvent }) => (widget.name || linkedEvent?.title || '').toLowerCase().includes(q));
+  }, [widgetCards, query]);
 
   const sortedMyWidgets = useMemo(() => {
     const list = [...filteredMyWidgets];
     if (sortBy === 'name') {
-      list.sort((a, b) => (a.customWidgetName || a.title).localeCompare(b.customWidgetName || b.title));
+      list.sort((a, b) => (a.widget.name || a.linkedEvent?.title || '').localeCompare(b.widget.name || b.linkedEvent?.title || ''));
     } else if (sortBy === 'modified') {
-      list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      list.sort((a, b) => b.widget.updatedAt.localeCompare(a.widget.updatedAt));
     } else {
-      list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      list.sort((a, b) => b.widget.createdAt.localeCompare(a.widget.createdAt));
     }
     return list;
   }, [filteredMyWidgets, sortBy]);
@@ -188,9 +224,9 @@ export default function WidgetsScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}>
         <View style={styles.headerRow}>
           <Text style={[typography.title, { color: colors.text }]}>{t('widgets.title')}</Text>
-          <View style={[styles.planBadge, { backgroundColor: colors.surfaceAlt, borderRadius: 999 }]}>
-            <Ionicons name={isPro ? 'diamond-outline' : 'lock-closed-outline'} size={12} color={colors.secondary} />
-            <Text style={[typography.caption, { color: colors.secondary, marginLeft: 4 }]}>
+          <View style={[styles.planBadge, { backgroundColor: isPro ? `${colors.primary}1A` : colors.surfaceAlt, borderRadius: 999 }]}>
+            <Ionicons name={isPro ? 'diamond' : 'lock-closed-outline'} size={12} color={isPro ? colors.primary : colors.secondary} />
+            <Text style={[typography.caption, { color: isPro ? colors.primary : colors.secondary, marginLeft: 4, fontWeight: isPro ? '700' : '400' }]}>
               {isPro ? t('compare.pro') : t('settings.freePlan')}
             </Text>
           </View>
@@ -243,67 +279,17 @@ export default function WidgetsScreen() {
           </View>
         ) : null}
 
-        {/* My Widgets — every saved custom (photo) widget + "+ New custom". */}
-        {tab === 'mine' ? (
-          <View style={styles.myWidgetsHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('widgets.myWidgets')}</Text>
-              <View style={[styles.countBadge, { backgroundColor: colors.surfaceAlt, borderRadius: 999 }]}>
-                <Text style={[typography.caption, { color: colors.secondary }]}>{sortedMyWidgets.length}</Text>
-              </View>
-            </View>
-            <Pressable onPress={() => setSortMenuOpen(true)} style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[typography.body, { color: colors.secondary, marginRight: 4 }]}>{t('widgets.sort')}</Text>
-              <Ionicons name="swap-vertical-outline" size={16} color={colors.secondary} />
-            </Pressable>
-          </View>
-        ) : null}
-
-        {/* One MiniWidget-format card per row — same canonical widget
-            layout (header/title/date+time/D-H-M countdown/note) used
-            everywhere else a "widget" is previewed, not a bespoke
-            simplified overlay, per explicit request that widget format
-            stay identical everywhere. A photo grid tile can't fit that
-            much content, so this is a list, not a grid. */}
-        {tab === 'mine' ? (
-          <View style={[styles.list, { gap: spacing.md }]}>
-            {sortedMyWidgets.map((widget) => {
-              const selected = sample.cardTheme === 'custom' && sample.customPhotoUri === widget.customPhotoUri;
-              return (
-                <Pressable key={widget.id} onPress={() => editSavedWidget(widget)}>
-                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
-                    {widget.customWidgetName || widget.title}
-                  </Text>
-                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    {/* Force cardTheme 'custom' for this preview — "My
-                        Widgets" means "your saved custom-photo widgets",
-                        which should always show that photo here even
-                        though Free Styles lets the event's own *active*
-                        cardTheme currently point elsewhere without losing
-                        the saved photo (see custom-widget.tsx). */}
-                    <MiniWidget event={{ ...widget, cardTheme: 'custom' }} size="full" />
-                    {selected ? (
-                      <View style={styles.selectedBadge}>
-                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
-                      </View>
-                    ) : null}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
-        {/* Own full-width row below the grid, not a grid tile — same icon
-            badge + title/subtitle + trailing action grammar as the "View
-            Pro" upsell rows elsewhere (Events tab's LimitBanner, the
-            wizard's Appearance Pro note), not a bare dashed placeholder. */}
+        {/* Own full-width row above the "My Widgets" count/list, not a
+            grid tile below it — same icon badge + title/subtitle +
+            trailing action grammar as the "View Pro" upsell rows
+            elsewhere (Events tab's LimitBanner, the wizard's Appearance
+            Pro note), not a bare dashed placeholder. */}
         {tab === 'mine' ? (
           <Pressable
             onPress={openNewCustom}
             style={[
               styles.newCustomRow,
-              { borderRadius: radius.lg },
+              { borderRadius: radius.lg, marginTop: 0 },
               quotaFull
                 ? { backgroundColor: `${colors.primary}14`, borderColor: `${colors.primary}33`, borderWidth: 1 }
                 : { backgroundColor: colors.surfaceAlt, borderColor: colors.outline, borderWidth: 1, borderStyle: 'dashed' },
@@ -329,6 +315,51 @@ export default function WidgetsScreen() {
               <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
             )}
           </Pressable>
+        ) : null}
+
+        {/* My Widgets — every saved custom (photo) widget. */}
+        {tab === 'mine' ? (
+          <View style={styles.myWidgetsHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('widgets.myWidgets')}</Text>
+              <View style={[styles.countBadge, { backgroundColor: colors.surfaceAlt, borderRadius: 999 }]}>
+                <Text style={[typography.caption, { color: colors.secondary }]}>{sortedMyWidgets.length}</Text>
+              </View>
+            </View>
+            <Pressable onPress={() => setSortMenuOpen(true)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[typography.body, { color: colors.secondary, marginRight: 4 }]}>{t('widgets.sort')}</Text>
+              <Ionicons name="swap-vertical-outline" size={16} color={colors.secondary} />
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* One MiniWidget-format card per row — same canonical widget
+            layout (header/title/date+time/D-H-M countdown/note) used
+            everywhere else a "widget" is previewed, not a bespoke
+            simplified overlay, per explicit request that widget format
+            stay identical everywhere. A photo grid tile can't fit that
+            much content, so this is a list, not a grid. */}
+        {tab === 'mine' ? (
+          <View style={[styles.list, { gap: spacing.md }]}>
+            {sortedMyWidgets.map(({ widget, linkedEvent }) => {
+              const selected = sample.widgetId === widget.id;
+              return (
+                <Pressable key={widget.id} onPress={() => editSavedWidget(widget)}>
+                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
+                    {widget.name || linkedEvent?.title}
+                  </Text>
+                  <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
+                    <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="full" />
+                    {selected ? (
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         ) : null}
 
         {/* Categories — every category as its own section of Pro curated
@@ -442,7 +473,7 @@ const styles = StyleSheet.create({
   proBadge: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   proBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  myWidgetsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  myWidgetsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 10 },
   countBadge: { paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sortSheet: { paddingVertical: 8, marginHorizontal: 16, marginBottom: 24 },

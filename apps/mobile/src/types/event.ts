@@ -49,6 +49,18 @@ export interface PurEvent {
   customCornerStyle?: WidgetCornerStyle;
   /** Title-text weight preset for a 'custom' widget — defaults to 'system'. */
   customTextStyle?: WidgetTextStyle;
+  /** Which independent Widget (see storage/widgets.ts) the custom* fields
+   *  above are a snapshot of, when cardTheme === 'custom' — every widget
+   *  card renderer (MiniWidget, EventHeroCard) still reads the custom*
+   *  fields directly off the event, so nothing there needs to resolve this.
+   *  It exists so "My Widgets" (a saved-widget library) and re-linking a
+   *  widget to a *different* event don't depend on scanning events for
+   *  customPhotoUri — a widget is its own record now, not just "whatever
+   *  is currently on this one event's fields", so switching an event to a
+   *  new custom photo, or applying a saved widget elsewhere, can never
+   *  silently erase what used to be there. Unset for events that predate
+   *  this (storage/widgets.ts backfills one the first time it reads). */
+  widgetId?: string;
   /** Home-screen widget size — independent of cardTheme/customPhotoUri, see
    *  WidgetSize. Defaults to 'medium' when unset. */
   widgetSize?: WidgetSize;
@@ -73,4 +85,30 @@ export interface WidgetSelection {
   customCornerStyle?: WidgetCornerStyle;
   customTextStyle?: WidgetTextStyle;
   accentColor?: AccentKey;
+  /** Set when this selection came from an existing saved Widget (picking
+   *  one in "My Widgets", not "+ New custom") — see widgetId on PurEvent. */
+  widgetId?: string;
+}
+
+/** A saved custom-widget look — see storage/widgets.ts. Independent of any
+ *  one event: "My Widgets" lists these directly, and any number of events
+ *  can point at the same one via their own widgetId without it being
+ *  duplicated or losing whichever one they had before. */
+export interface Widget {
+  id: string;
+  /** User-assigned label (see app/custom-widget.tsx) — falls back to
+   *  whichever linked event's own title elsewhere it's shown without one. */
+  name?: string;
+  /** Local file/remote URL used as the background. */
+  photoUri: string;
+  /** Dark-scrim opacity (0-100) over the photo, for text legibility.
+   *  Defaults to 35 when unset. */
+  overlayOpacity?: number;
+  /** Corner radius preset — defaults to 'rounded'. */
+  cornerStyle?: WidgetCornerStyle;
+  /** Title-text weight preset — defaults to 'system'. */
+  textStyle?: WidgetTextStyle;
+  accentColor?: AccentKey;
+  createdAt: string;
+  updatedAt: string;
 }

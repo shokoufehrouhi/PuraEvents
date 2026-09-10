@@ -1,8 +1,9 @@
 // Placeholder subscription state until RevenueCat is wired up (Phase 3 —
-// see docs/PROJECT.md §5/§6). Hardcoding `false` keeps every Pro gate in the
-// UI real and reachable during development instead of silently vanishing.
+// see docs/PROJECT.md §5/§6). Temporarily hardcoded `true` per explicit
+// request to test the app in Pro mode — flip back to `false` to see the
+// free-tier gates again.
 export function usePro(): { isPro: boolean } {
-  return { isPro: false };
+  return { isPro: true };
 }
 
 // Free-tier limits, mirrored from docs/PROJECT.md §6.1.

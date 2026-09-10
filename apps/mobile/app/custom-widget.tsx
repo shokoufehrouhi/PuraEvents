@@ -11,6 +11,7 @@ import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
 import { Button } from '../src/components/ui/Button';
 import { listEvents, updateEvent } from '../src/storage/events';
+import { createWidget, getWidget, listWidgets, updateWidget } from '../src/storage/widgets';
 import { FREE_LIMITS, usePro } from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
 import { accents, type AccentKey } from '../src/theme/tokens';
@@ -24,7 +25,7 @@ type PreviewSize = 'small' | 'medium' | 'large';
 // canvas for a widget's look (photo/overlay/corners/text), not a live
 // editor of one specific event's real title/date/note, so it never shows a
 // real event's data here even when one is loaded (see the useEffect below,
-// which only pulls a real event's already-saved *style* fields).
+// which only pulls a real widget's already-saved *style* fields).
 const DEFAULT_SAMPLE: PurEvent = {
   id: 'sample',
   title: 'New York',
@@ -42,23 +43,30 @@ const DEFAULT_SAMPLE: PurEvent = {
 
 // Full custom-widget editor (see the Widgets tab's "Customize Widget"
 // button) — photo/overlay/accent/corner/text rows per the supplied
-// mockup, every row now backed by a real field on the event and pushing
-// its own picker screen (same "opens like Language" pattern as
-// Preferences' own Theme/Calendar/etc rows).
+// mockup, every row now backed by a real field, pushing its own picker
+// screen (same "opens like Language" pattern as Preferences' own
+// Theme/Calendar/etc rows).
 export default function CustomWidgetScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  // eventId: set when opened from a specific saved widget's swatch, or from
-  // the New/Edit Event wizard editing an event that already exists in
-  // storage — edit/exclude that exact one instead of auto-picking below.
+  // widgetId: set when opened from an existing saved Widget (see
+  // storage/widgets.ts) — editing it updates that record directly (and
+  // every event currently linked to it, so they keep rendering correctly)
+  // rather than creating another one.
+  // eventId: which event a *new* widget gets attached to (its own
+  // widgetId set once saved) — from the Widgets tab's currently-previewed
+  // event, or the New/Edit Event wizard's own event. Unused when widgetId
+  // is set (editing an existing widget doesn't need a specific event —
+  // Save updates every event already linked to it).
   // draft: set when opened from the New/Edit Event wizard — Save resolves
   // the picked settings back to the wizard (see pickerBridge) instead of
   // writing straight into storage, since there's no saved event to write
   // into yet (or the wizard's own Save hasn't run, for edit mode).
   // init*: the wizard's own current draft values, so re-opening this screen
   // to tweak an already-picked photo doesn't lose it.
-  const { eventId, draft, initPhotoUri, initWidgetName, initOverlay, initCorner, initText, initAccentColor } =
+  const { widgetId, eventId, draft, initPhotoUri, initWidgetName, initOverlay, initCorner, initText, initAccentColor } =
     useLocalSearchParams<{
+      widgetId?: string;
       eventId?: string;
       draft?: string;
       initPhotoUri?: string;
@@ -88,57 +96,62 @@ export default function CustomWidgetScreen() {
         }
       : DEFAULT_SAMPLE
   );
-  // The real event these style fields get saved into on Save — null until
-  // the fetch below resolves, forever if the user has no events yet, or
-  // always in draft mode (Save resolves back to the wizard instead).
-  // Kept separate from `sample` because `sample` never carries a real
-  // event's own id/title/date/note (see DEFAULT_SAMPLE above).
+  // Which event a brand-new widget gets attached to on Save — null until
+  // the fetch below resolves, forever if there's no widgetId/eventId and
+  // no events to fall back to, or always when editing an existing widget
+  // (widgetId) or in draft mode (Save resolves back to the wizard instead).
   const [targetEventId, setTargetEventId] = useState<string | null>(null);
-  // Every *other* event that already has a custom-photo widget — the
-  // free-tier quota (see FREE_LIMITS) counts these regardless of whether
-  // each one's cardTheme is *currently* pointed at 'custom' or something
-  // else (Free Styles lets you switch away without losing the saved photo).
-  const [otherUsedCount, setOtherUsedCount] = useState(0);
+  // Every *other* saved widget — the free-tier quota (see FREE_LIMITS)
+  // counts these regardless of whether any event is currently linked to
+  // each one (a widget stays "used" once saved, see storage/widgets.ts).
+  const [otherWidgetsCount, setOtherWidgetsCount] = useState(0);
   const [previewSize, setPreviewSize] = useState<PreviewSize>('medium');
   const [widgetName, setWidgetName] = useState(() => (isDraft ? initWidgetName ?? '' : ''));
 
   // Mount-only, not useFocusEffect — the photo picker (pickPhoto below)
   // presents a native modal that can re-trigger this screen's focus
   // lifecycle when it dismisses; refetching there would overwrite the
-  // just-picked photo with the still-unsaved event from storage before the
-  // user ever sees it, which is exactly the "preview doesn't update" bug.
+  // just-picked photo with the still-unsaved widget from storage before
+  // the user ever sees it, which is exactly the "preview doesn't update"
+  // bug.
   useEffect(() => {
-    listEvents().then((events) => {
-      setOtherUsedCount(events.filter((e) => e.customPhotoUri && e.id !== eventId).length);
+    listWidgets().then((widgets) => {
+      setOtherWidgetsCount(widgets.filter((w) => w.id !== widgetId).length);
       if (isDraft) return;
-      // An explicit eventId (tapped a specific saved widget's swatch) wins
-      // outright. Otherwise prefer any event that already has a custom
-      // photo (so re-opening this screen from "+ Custom" keeps editing the
-      // same one, regardless of its *currently active* cardTheme) and only
-      // fall back to any upcoming/repeating event as a save target when
-      // there isn't one yet.
-      const target = eventId
-        ? events.find((e) => e.id === eventId)
-        : events.find((e) => e.customPhotoUri) ?? events.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
-      if (target) {
-        setTargetEventId(target.id);
-        setWidgetName(target.customWidgetName ?? '');
-        // Only the already-saved *style* fields carry over — title/date/
-        // category/note stay DEFAULT_SAMPLE's fixed placeholder, per above.
-        setSample((s) => ({
-          ...s,
-          customPhotoUri: target.customPhotoUri,
-          accentColor: target.accentColor,
-          customOverlayOpacity: target.customOverlayOpacity,
-          customCornerStyle: target.customCornerStyle,
-          customTextStyle: target.customTextStyle,
-        }));
-      }
-    });
-  }, [eventId, isDraft]);
 
-  const slotsUsed = Math.min(otherUsedCount + (sample.customPhotoUri ? 1 : 0), FREE_LIMITS.maxWidgets);
-  const quotaFull = !isPro && otherUsedCount >= FREE_LIMITS.maxWidgets;
+      if (widgetId) {
+        // Editing an existing saved widget — its own record wins outright,
+        // no event lookup needed (Save below updates every event already
+        // linked to it).
+        getWidget(widgetId).then((widget) => {
+          if (!widget) return;
+          setWidgetName(widget.name ?? '');
+          setSample((s) => ({
+            ...s,
+            customPhotoUri: widget.photoUri,
+            accentColor: widget.accentColor ?? s.accentColor,
+            customOverlayOpacity: widget.overlayOpacity,
+            customCornerStyle: widget.cornerStyle,
+            customTextStyle: widget.textStyle,
+          }));
+        });
+        return;
+      }
+
+      // A brand-new widget — an explicit eventId (opened from a specific
+      // event's Appearance section) wins outright; otherwise fall back to
+      // any upcoming/repeating event as a save target.
+      listEvents().then((events) => {
+        const target = eventId
+          ? events.find((e) => e.id === eventId)
+          : events.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
+        if (target) setTargetEventId(target.id);
+      });
+    });
+  }, [widgetId, eventId, isDraft]);
+
+  const slotsUsed = Math.min(otherWidgetsCount + (sample.customPhotoUri ? 1 : 0), FREE_LIMITS.maxWidgets);
+  const quotaFull = !isPro && otherWidgetsCount >= FREE_LIMITS.maxWidgets;
 
   async function pickPhoto() {
     if (quotaFull) {
@@ -191,7 +204,8 @@ export default function CustomWidgetScreen() {
     if (isDraft) {
       // Hand the picked settings back to the wizard instead of writing to
       // storage — it applies them to its own draft state and only
-      // persists once the event itself is actually saved.
+      // persists once the event itself is actually saved (which also
+      // creates the actual Widget record — see EventWizard.tsx).
       resolvePick(
         JSON.stringify({
           photoUri: sample.customPhotoUri,
@@ -202,15 +216,56 @@ export default function CustomWidgetScreen() {
           accentColor: sample.accentColor,
         })
       );
-    } else if (targetEventId) {
+    } else if (widgetId) {
+      // Editing an existing saved widget — update its own record, then
+      // refresh every event currently linked to it so they keep rendering
+      // this same look (MiniWidget/EventHeroCard read the snapshot fields
+      // directly off the event, not this record).
+      await updateWidget(widgetId, {
+        name: widgetName.trim() || undefined,
+        photoUri: sample.customPhotoUri,
+        overlayOpacity: sample.customOverlayOpacity,
+        cornerStyle: sample.customCornerStyle,
+        textStyle: sample.customTextStyle,
+        accentColor: sample.accentColor,
+      });
+      const events = await listEvents();
+      await Promise.all(
+        events
+          .filter((e) => e.widgetId === widgetId)
+          .map((e) =>
+            updateEvent(e.id, {
+              cardTheme: 'custom',
+              customPhotoUri: sample.customPhotoUri,
+              customWidgetName: widgetName.trim() || undefined,
+              accentColor: sample.accentColor,
+              customOverlayOpacity: sample.customOverlayOpacity,
+              customCornerStyle: sample.customCornerStyle,
+              customTextStyle: sample.customTextStyle,
+            })
+          )
+      );
+    } else if (targetEventId && sample.customPhotoUri) {
+      // A brand-new widget — its own independent record, never
+      // overwriting whatever the target event had before (see widgetId's
+      // comment on PurEvent for why that matters).
+      const widget = await createWidget({
+        name: widgetName.trim() || undefined,
+        photoUri: sample.customPhotoUri,
+        overlayOpacity: sample.customOverlayOpacity,
+        cornerStyle: sample.customCornerStyle,
+        textStyle: sample.customTextStyle,
+        accentColor: sample.accentColor,
+      });
       await updateEvent(targetEventId, {
-        cardTheme: sample.cardTheme,
+        cardTheme: 'custom',
         customPhotoUri: sample.customPhotoUri,
         customWidgetName: widgetName.trim() || undefined,
         accentColor: sample.accentColor,
         customOverlayOpacity: sample.customOverlayOpacity,
         customCornerStyle: sample.customCornerStyle,
         customTextStyle: sample.customTextStyle,
+        widgetId: widget.id,
       });
     }
     router.back();

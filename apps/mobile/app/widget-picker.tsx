@@ -9,14 +9,16 @@ import { EventIcon } from '../src/components/EventIcon';
 import { MiniWidget } from '../src/components/MiniWidget';
 import { Button } from '../src/components/ui/Button';
 import { SegmentedControl } from '../src/components/ui/SegmentedControl';
-import { listEvents, updateEvent } from '../src/storage/events';
+import { listEvents } from '../src/storage/events';
+import { createWidget, listWidgets } from '../src/storage/widgets';
 import { FREE_LIMITS, usePro } from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
 import { CARD_THEME_KEYS } from '../src/theme/cardThemes';
 import { ACCENT_KEYS } from '../src/theme/tokens';
-import type { CardTheme, EventCategory, PurEvent, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../src/types/event';
+import type { CardTheme, EventCategory, PurEvent, Widget, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../src/types/event';
 import { getCategoryPhotos } from '../src/utils/categoryPhoto';
 import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
+import { persistRemoteImage } from '../src/utils/persistImage';
 
 type Tab = 'builtin' | 'mine' | 'categories';
 
@@ -55,7 +57,8 @@ export default function WidgetPickerScreen() {
 
   const [tab, setTab] = useState<Tab>('mine');
   const [query, setQuery] = useState('');
-  const [myWidgets, setMyWidgets] = useState<PurEvent[]>([]);
+  const [events, setEvents] = useState<PurEvent[]>([]);
+  const [widgets, setWidgets] = useState<Widget[]>([]);
   const [categoryPhotos, setCategoryPhotos] = useState<Partial<Record<EventCategory, string[]>>>({});
   // The event actually being edited (eventId), when it already exists —
   // gives the Built-in tab's preview cards the real title/date/note
@@ -72,11 +75,48 @@ export default function WidgetPickerScreen() {
   }));
 
   useEffect(() => {
-    listEvents().then((events) => {
-      setMyWidgets(events.filter((e) => e.customPhotoUri));
-      if (eventId) setTargetEvent(events.find((e) => e.id === eventId) ?? null);
+    listEvents().then((loaded) => {
+      setEvents(loaded);
+      if (eventId) setTargetEvent(loaded.find((e) => e.id === eventId) ?? null);
     });
+    listWidgets().then(setWidgets);
   }, [eventId]);
+
+  // Each saved widget paired with whichever real event, if any, currently
+  // links to it — see the identical pairing in app/(tabs)/widgets.tsx for
+  // why (a realistic preview card, and staying visible even when nothing
+  // currently points at it).
+  const widgetCards = useMemo(
+    () => widgets.map((widget) => ({ widget, linkedEvent: events.find((e) => e.widgetId === widget.id) })),
+    [widgets, events]
+  );
+
+  function widgetDisplayEvent(widget: Widget, linkedEvent?: PurEvent): PurEvent {
+    const base: PurEvent =
+      linkedEvent ?? {
+        id: `widget-${widget.id}`,
+        title: widget.name || 'Widget',
+        dateTimeISO: dayjs().add(7, 'day').toISOString(),
+        timezone: 'UTC',
+        category: 'other',
+        accentColor: widget.accentColor ?? 'violet',
+        cardTheme: 'custom',
+        repeat: 'none',
+        reminders: [],
+        createdAt: widget.createdAt,
+        updatedAt: widget.updatedAt,
+      };
+    return {
+      ...base,
+      cardTheme: 'custom',
+      customPhotoUri: widget.photoUri,
+      customWidgetName: widget.name,
+      customOverlayOpacity: widget.overlayOpacity,
+      customCornerStyle: widget.cornerStyle,
+      customTextStyle: widget.textStyle,
+      accentColor: widget.accentColor ?? base.accentColor,
+    };
+  }
 
   // Placeholder content for the Built-in tab's preview cards when there's
   // no real event yet (still creating one) — same "New York" placeholder
@@ -113,20 +153,16 @@ export default function WidgetPickerScreen() {
     };
   }, []);
 
-  // Free plan: 1 custom-photo widget total across all events. Pro:
-  // unlimited. Deliberately NOT excluding this event's own widget — "+ New
-  // custom" means "something different from what's already here", so
-  // once the limit is hit anywhere it's gated, even while editing the one
-  // event that already owns it. Re-picking the exact widget already
-  // staged is still a no-op — see the customPhotoUri comparison in
-  // selectWidget below.
-  const quotaFull = !isPro && myWidgets.length >= FREE_LIMITS.maxWidgets;
+  // Free plan: 1 saved widget total. Pro: unlimited. Picking an existing
+  // widget (selectWidget below) is never gated by this — it doesn't create
+  // another one, just reuses/links the one already saved.
+  const quotaFull = !isPro && widgets.length >= FREE_LIMITS.maxWidgets;
 
   const filteredMyWidgets = useMemo(() => {
-    if (!query.trim()) return myWidgets;
+    if (!query.trim()) return widgetCards;
     const q = query.trim().toLowerCase();
-    return myWidgets.filter((w) => (w.customWidgetName || w.title).toLowerCase().includes(q));
-  }, [myWidgets, query]);
+    return widgetCards.filter(({ widget, linkedEvent }) => (widget.name || linkedEvent?.title || '').toLowerCase().includes(q));
+  }, [widgetCards, query]);
 
   // Searchable by category name/type — typing "trav" narrows the sections
   // below to just Travel, for example.
@@ -147,42 +183,31 @@ export default function WidgetPickerScreen() {
 
   // Picking a widget you *already* made and applying it here is never
   // gated, even on the free plan at its 1-widget cap — it doesn't create
-  // another one, just reuses the one you have. Only "+ New custom" (an
-  // actually new photo) spends the quota (see openNewCustom below).
-  //
-  // On free, though, the widget still needs to stay singular: `widget`'s
-  // custom fields are copied onto *this* event by value below, not moved
-  // by reference, so without clearing them off the event that currently
-  // owns it, both events would end up with customPhotoUri set and "My
-  // Widgets" would count two. Pro has no cap, so genuinely reusing the
-  // same photo on several events is fine there — only free moves it.
-  async function selectWidget(widget: PurEvent) {
-    if (!isPro && widget.id !== eventId) {
-      await updateEvent(widget.id, {
-        cardTheme: 'color',
-        customPhotoUri: undefined,
-        customWidgetName: undefined,
-        customOverlayOpacity: undefined,
-        customCornerStyle: undefined,
-        customTextStyle: undefined,
-      });
-      setMyWidgets((prev) => prev.filter((w) => w.id !== widget.id));
-    }
+  // another one, just links the same saved widget onto this event too.
+  // Every event that links a widget shows the same look, but "My Widgets"
+  // still only ever lists it once (see storage/widgets.ts) — nothing here
+  // needs to touch whichever *other* event(s) already link it.
+  function selectWidget(widget: Widget) {
     setStaged({
       cardTheme: 'custom',
-      customPhotoUri: widget.customPhotoUri,
-      customWidgetName: widget.customWidgetName,
-      customOverlayOpacity: widget.customOverlayOpacity,
-      customCornerStyle: widget.customCornerStyle,
-      customTextStyle: widget.customTextStyle,
+      customPhotoUri: widget.photoUri,
+      customWidgetName: widget.name,
+      customOverlayOpacity: widget.overlayOpacity,
+      customCornerStyle: widget.cornerStyle,
+      customTextStyle: widget.textStyle,
       accentColor: widget.accentColor,
+      widgetId: widget.id,
     });
   }
 
-  // Opens the full New Widget editor (draft mode — see custom-widget.tsx)
-  // and, once it resolves a photo, confirms immediately instead of just
-  // staging it: the editor already has its own explicit Save, so a second
-  // "Use selected widget" tap right after would be redundant.
+  // Opens the full New Widget editor (draft mode — see custom-widget.tsx,
+  // needed here since there may not be a real saved event yet to attach
+  // to). Once it resolves a photo, creates the actual independent Widget
+  // record right away (not deferred to whenever/if the wizard's own event
+  // save happens — a widget doesn't need an event to exist, see
+  // storage/widgets.ts) and confirms immediately instead of just staging
+  // it: the editor already has its own explicit Save, so a second "Use
+  // selected widget" tap right after would be redundant.
   async function openNewCustom() {
     if (quotaFull) {
       router.push('/paywall');
@@ -199,23 +224,36 @@ export default function WidgetPickerScreen() {
       accentColor?: string;
     };
     if (!result.photoUri) return;
+    const widget = await createWidget({
+      name: result.widgetName || undefined,
+      photoUri: result.photoUri,
+      overlayOpacity: result.overlay,
+      cornerStyle: result.corner,
+      textStyle: result.text,
+      accentColor: result.accentColor as WidgetSelection['accentColor'],
+    });
     confirm({
       cardTheme: 'custom',
-      customPhotoUri: result.photoUri,
-      customWidgetName: result.widgetName || undefined,
-      customOverlayOpacity: result.overlay,
-      customCornerStyle: result.corner,
-      customTextStyle: result.text,
-      accentColor: result.accentColor as WidgetSelection['accentColor'],
+      customPhotoUri: widget.photoUri,
+      customWidgetName: widget.name,
+      customOverlayOpacity: widget.overlayOpacity,
+      customCornerStyle: widget.cornerStyle,
+      customTextStyle: widget.textStyle,
+      accentColor: widget.accentColor,
+      widgetId: widget.id,
     });
   }
 
-  function pickCategoryPhoto(url: string) {
+  async function pickCategoryPhoto(url: string) {
     if (!isPro) {
       router.push('/paywall');
       return;
     }
-    setStaged({ cardTheme: 'custom', customPhotoUri: url });
+    // Persist it locally first — it's a remote Pexels URL, not a saved
+    // widget's own photo, so nothing else keeps it alive once tomorrow's
+    // daily rotation drops it from the Categories tab (see getCategoryPhotos).
+    const persistedUri = await persistRemoteImage(url);
+    setStaged({ cardTheme: 'custom', customPhotoUri: persistedUri });
   }
 
   return (
@@ -275,21 +313,15 @@ export default function WidgetPickerScreen() {
             that widget format stay identical everywhere. */}
         {tab === 'mine' ? (
           <View style={[styles.list, { gap: spacing.md }]}>
-            {filteredMyWidgets.map((widget) => {
-              const selected = staged.customPhotoUri === widget.customPhotoUri;
+            {filteredMyWidgets.map(({ widget, linkedEvent }) => {
+              const selected = staged.widgetId === widget.id;
               return (
                 <Pressable key={widget.id} onPress={() => selectWidget(widget)}>
                   <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
-                    {widget.customWidgetName || widget.title}
+                    {widget.name || linkedEvent?.title}
                   </Text>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    {/* Force cardTheme 'custom' for this preview — "My
-                        Widgets" means "your saved custom-photo widgets",
-                        which should always show that photo here even
-                        though Free Styles lets the event's own *active*
-                        cardTheme currently point elsewhere without losing
-                        the saved photo (see custom-widget.tsx). */}
-                    <MiniWidget event={{ ...widget, cardTheme: 'custom' }} size="full" />
+                    <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="full" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />

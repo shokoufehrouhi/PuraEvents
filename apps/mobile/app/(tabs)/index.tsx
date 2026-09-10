@@ -211,7 +211,18 @@ export default function EventListScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Text style={[typography.title, styles.headerTitle, { color: colors.text }]}>{t('appName')}</Text>
+        <View style={styles.headerTitleRow}>
+          <Text style={[typography.title, styles.headerTitle, { color: colors.text }]}>{t('appName')}</Text>
+          {/* Same plan badge as the Widgets tab's own header (see
+              app/(tabs)/widgets.tsx) — free/Pro status wasn't visible
+              anywhere on this screen before. */}
+          <View style={[styles.planBadge, { backgroundColor: isPro ? `${colors.primary}1A` : colors.surfaceAlt, borderRadius: 999 }]}>
+            <Ionicons name={isPro ? 'diamond' : 'lock-closed-outline'} size={12} color={isPro ? colors.primary : colors.secondary} />
+            <Text style={[typography.caption, { color: isPro ? colors.primary : colors.secondary, marginLeft: 4, fontWeight: isPro ? '700' : '400' }]}>
+              {isPro ? t('compare.pro') : t('settings.freePlan')}
+            </Text>
+          </View>
+        </View>
         <Pressable
           onPress={() => router.push(limitReached ? '/paywall' : '/event/new')}
           hitSlop={12}
@@ -351,7 +362,9 @@ const styles = StyleSheet.create({
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   filterSheet: { paddingVertical: 8, marginHorizontal: 16, marginBottom: 24 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   headerTitle: { fontSize: 28, fontWeight: '700' },
+  planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
   headerAddButton: {
     width: 38,
     height: 38,

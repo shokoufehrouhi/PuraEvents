@@ -16,3 +16,24 @@ export async function persistPickedImage(sourceUri: string): Promise<string> {
   await FileSystem.copyAsync({ from: sourceUri, to: destUri });
   return destUri;
 }
+
+// A Categories photo (see categoryPhoto.ts) is a remote Pexels URL, not a
+// local file — copyAsync above can't touch it. Download it into the same
+// permanent directory instead, so an event that picked one keeps showing
+// it even after tomorrow's daily cache rotation drops that photo from the
+// Categories tab entirely (see getCategoryPhotos), or Pexels itself ever
+// takes it down. Falls back to the original remote URL on any failure
+// (offline, etc.) rather than throwing — MiniWidget's own onError handling
+// still covers that case gracefully.
+export async function persistRemoteImage(sourceUrl: string): Promise<string> {
+  try {
+    const dir = `${FileSystem.documentDirectory}widget-photos/`;
+    await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+    const ext = sourceUrl.split('.').pop()?.split('?')[0] || 'jpg';
+    const destUri = `${dir}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const result = await FileSystem.downloadAsync(sourceUrl, destUri);
+    return result.uri;
+  } catch {
+    return sourceUrl;
+  }
+}

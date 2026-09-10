@@ -1,9 +1,9 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
@@ -12,6 +12,7 @@ import { Button } from '../../../src/components/ui/Button';
 import { Section } from '../../../src/components/ui/Section';
 import { cancelRemindersForEvent } from '../../../src/notifications';
 import { deleteEvent, getEvent } from '../../../src/storage/events';
+import { usePro } from '../../../src/subscription';
 import { getCategoryIcon } from '../../../src/theme/icons';
 import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext';
 import { accents } from '../../../src/theme/tokens';
@@ -59,6 +60,7 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { prefs } = usePreferences();
+  const { isPro } = usePro();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [event, setEvent] = useState<PurEvent | null>(null);
@@ -86,12 +88,6 @@ export default function EventDetailScreen() {
     ]);
   }
 
-  async function handleShare() {
-    await Share.share({
-      message: `${event!.title} — ${getNextOccurrence(event!.dateTimeISO, event!.repeat).format('YYYY-MM-DD HH:mm')}`,
-    });
-  }
-
   function goEdit() {
     router.push(`/event/${event!.id}/edit`);
   }
@@ -113,17 +109,14 @@ export default function EventDetailScreen() {
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.eventDetails')}</Text>
-        <View style={styles.headerRight}>
-          <Pressable onPress={goEdit} hitSlop={12} style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}>
-            <Feather name="edit-2" size={18} color={colors.text} />
-          </Pressable>
-          <Pressable
-            onPress={handleDelete}
-            hitSlop={12}
-            style={[styles.headerButton, { backgroundColor: colors.surfaceAlt, marginLeft: 12 }]}
-          >
-            <Ionicons name="trash-outline" size={20} color={colors.danger} />
-          </Pressable>
+        {/* Same plan badge as the Events/Widgets tabs' own headers — Edit/
+            Delete moved down to the pinned footer buttons, so this corner
+            isn't just empty space. */}
+        <View style={[styles.planBadge, { backgroundColor: isPro ? `${colors.primary}1A` : colors.surfaceAlt, borderRadius: 999 }]}>
+          <Ionicons name={isPro ? 'diamond' : 'lock-closed-outline'} size={12} color={isPro ? colors.primary : colors.secondary} />
+          <Text style={[typography.caption, { color: isPro ? colors.primary : colors.secondary, marginLeft: 4, fontWeight: isPro ? '700' : '400' }]}>
+            {isPro ? t('compare.pro') : t('settings.freePlan')}
+          </Text>
         </View>
       </View>
 
@@ -217,8 +210,8 @@ export default function EventDetailScreen() {
           { paddingHorizontal: spacing.md, paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.outline, backgroundColor: colors.background },
         ]}
       >
-        <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
-        <Button label={t('events.addWidget')} onPress={() => router.push('/widgets')} style={{ flex: 1, marginLeft: 8 }} />
+        <Button label={t('events.edit')} variant="secondary" onPress={goEdit} style={{ flex: 1, marginRight: 8 }} />
+        <Button label={t('events.delete')} variant="dangerOutline" onPress={handleDelete} style={{ flex: 1, marginLeft: 8 }} />
       </View>
     </SafeAreaView>
   );
@@ -226,8 +219,8 @@ export default function EventDetailScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
-  headerRight: { flexDirection: 'row', alignItems: 'center' },
   headerButton: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   categoryImage: { width: 56, height: 56 },
   categoryLabel: { fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
@@ -242,7 +235,7 @@ const styles = StyleSheet.create({
   },
   detailRow: { flexDirection: 'row', alignItems: 'center' },
   detailBadge: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  // Fixed outside the ScrollView so Share/Add Widget always stay visible at
+  // Fixed outside the ScrollView so Edit/Delete always stay visible at
   // the bottom of the screen — only the form content above scrolls.
   footer: { flexDirection: 'row', paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
 });

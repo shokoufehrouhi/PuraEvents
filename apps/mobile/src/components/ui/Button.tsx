@@ -6,7 +6,11 @@ import { minTapTarget } from '../../theme/tokens';
 interface Props {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'danger';
+  // 'dangerOutline' — same outline look as 'secondary', just with red
+  // label text — for a destructive action sitting next to a non-
+  // destructive one where a solid red fill would be too loud (see the
+  // event Detail screen's Edit/Delete pair).
+  variant?: 'primary' | 'secondary' | 'danger' | 'dangerOutline';
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -16,9 +20,10 @@ interface Props {
 export function Button({ label, onPress, variant = 'primary', disabled, style }: Props) {
   const { colors, radius, spacing, typography } = useTheme();
 
+  const outlined = variant === 'secondary' || variant === 'dangerOutline';
   const bg = variant === 'primary' ? colors.primary : variant === 'danger' ? colors.danger : 'transparent';
-  const border = variant === 'secondary' ? colors.outline : 'transparent';
-  const textColor = variant === 'secondary' ? colors.text : colors.onPrimary;
+  const border = outlined ? colors.outline : 'transparent';
+  const textColor = variant === 'dangerOutline' ? colors.danger : outlined ? colors.text : colors.onPrimary;
 
   return (
     <Pressable
@@ -29,7 +34,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, style }:
         {
           backgroundColor: bg,
           borderColor: border,
-          borderWidth: variant === 'secondary' ? StyleSheet.hairlineWidth * 2 : 0,
+          borderWidth: outlined ? StyleSheet.hairlineWidth * 2 : 0,
           borderRadius: radius.md,
           paddingVertical: spacing.md - 2,
           opacity: disabled ? 0.4 : pressed ? 0.75 : 1,

@@ -83,6 +83,9 @@ export function EventWizard({ mode, eventId }: Props) {
   const [customOverlayOpacity, setCustomOverlayOpacity] = useState<number | undefined>(undefined);
   const [customCornerStyle, setCustomCornerStyle] = useState<WidgetCornerStyle | undefined>(undefined);
   const [customTextStyle, setCustomTextStyle] = useState<WidgetTextStyle | undefined>(undefined);
+  // Which independent Widget (see storage/widgets.ts) the custom* fields
+  // above are a snapshot of — see widgetId's comment on PurEvent.
+  const [widgetId, setWidgetId] = useState<string | undefined>(undefined);
   // Independent of cardTheme/customPhotoUri — a Categories photo at Small
   // is just as valid as Built-in Clean at Large.
   const [widgetSize, setWidgetSize] = useState<WidgetSize>('medium');
@@ -105,6 +108,7 @@ export function EventWizard({ mode, eventId }: Props) {
         setCustomOverlayOpacity(e.customOverlayOpacity);
         setCustomCornerStyle(e.customCornerStyle);
         setCustomTextStyle(e.customTextStyle);
+        setWidgetId(e.widgetId);
         setWidgetSize(e.widgetSize ?? 'medium');
         setRepeat(e.repeat);
         setReminders(e.reminders);
@@ -133,6 +137,7 @@ export function EventWizard({ mode, eventId }: Props) {
     customOverlayOpacity,
     customCornerStyle,
     customTextStyle,
+    widgetId,
     widgetSize,
     repeat: isDraftEmpty ? 'none' : repeat,
     reminders,
@@ -191,6 +196,9 @@ export function EventWizard({ mode, eventId }: Props) {
     setCustomOverlayOpacity(result.customOverlayOpacity);
     setCustomCornerStyle(result.customCornerStyle);
     setCustomTextStyle(result.customTextStyle);
+    // Undefined for a Built-in theme or Category photo (neither is a saved
+    // Widget) — correctly clears whatever was set before in that case.
+    setWidgetId(result.widgetId);
     if (result.accentColor) setAccentColor(result.accentColor);
   }
 
@@ -240,6 +248,7 @@ export function EventWizard({ mode, eventId }: Props) {
       customOverlayOpacity,
       customCornerStyle,
       customTextStyle,
+      widgetId,
       widgetSize,
       repeat,
       reminders,
