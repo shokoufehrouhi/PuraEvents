@@ -62,7 +62,7 @@ export default function WidgetPickerScreen() {
   // selected at a time, filterable via the search bar above.
   useEffect(() => {
     let cancelled = false;
-    Promise.all(CATEGORIES.map((c) => fetchCategoryPhotos(c, 2))).then((results) => {
+    Promise.all(CATEGORIES.map((c) => fetchCategoryPhotos(c, 4))).then((results) => {
       if (cancelled) return;
       const map: Partial<Record<EventCategory, string[]>> = {};
       CATEGORIES.forEach((c, i) => {
@@ -273,12 +273,12 @@ export default function WidgetPickerScreen() {
           </View>
         ) : null}
 
-        {/* Every category as its own section (my widgets in it, then Pro
-            curated photos), filterable via the search bar above instead of
-            a single-select chip row. */}
+        {/* Every category as its own section of Pro curated photos only
+            (not my own saved widgets — this tab is for browsing new
+            looks, not the "My Widgets" library), filterable via the
+            search bar above instead of a single-select chip row. */}
         {tab === 'categories'
           ? visibleCategories.map((category) => {
-              const widgetsInCategory = myWidgets.filter((w) => w.category === category);
               const photos = categoryPhotos[category] ?? [];
               return (
                 <View key={category} style={{ marginBottom: spacing.lg }}>
@@ -287,23 +287,6 @@ export default function WidgetPickerScreen() {
                     <Text style={[typography.bodyStrong, { color: colors.text, marginLeft: 8 }]}>{t(`events.category.${category}`)}</Text>
                   </View>
                   <View style={styles.grid}>
-                    {widgetsInCategory.map((widget) => {
-                      const selected = staged.customPhotoUri === widget.customPhotoUri;
-                      return (
-                        <Pressable key={widget.id} style={styles.card} onPress={() => selectWidget(widget)}>
-                          <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                            <Image source={{ uri: widget.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                            <View style={styles.cardScrim} />
-                            <View style={styles.checkBadge}>
-                              <Ionicons name={selected ? 'checkmark-circle' : 'chevron-down-circle'} size={20} color="#fff" />
-                            </View>
-                          </View>
-                          <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
-                            {widget.customWidgetName || widget.title}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
                     {photos.map((url) => (
                       <Pressable key={url} style={styles.card} onPress={() => pickCategoryPhoto(url)}>
                         <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
@@ -325,7 +308,7 @@ export default function WidgetPickerScreen() {
           : null}
         {tab === 'categories' && !isPro ? (
           <Text style={[typography.caption, { color: colors.secondary, textAlign: 'center' }]}>
-            {t('widgets.premiumPerCategory', { count: 2 })}
+            {t('widgets.premiumPerCategory', { count: 4 })}
           </Text>
         ) : null}
       </ScrollView>

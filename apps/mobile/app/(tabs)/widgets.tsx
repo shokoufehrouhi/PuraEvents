@@ -72,7 +72,7 @@ export default function WidgetsScreen() {
   // own section, not just one selected at a time, per the supplied design.
   useEffect(() => {
     let cancelled = false;
-    Promise.all(CATEGORIES.map((c) => fetchCategoryPhotos(c, 2))).then((results) => {
+    Promise.all(CATEGORIES.map((c) => fetchCategoryPhotos(c, 4))).then((results) => {
       if (cancelled) return;
       const map: Partial<Record<EventCategory, string[]>> = {};
       CATEGORIES.forEach((c, i) => {
@@ -322,12 +322,13 @@ export default function WidgetsScreen() {
           </Pressable>
         ) : null}
 
-        {/* Categories — every category as its own section (my widgets in
-            it, then Pro curated photos), filterable via the search bar
-            above instead of a single-select chip row. */}
+        {/* Categories — every category as its own section of Pro curated
+            photos only (not my own saved widgets — this tab is for
+            browsing new looks, not the "my widgets" library, see the My
+            Widgets tab for that), filterable via the search bar above
+            instead of a single-select chip row. */}
         {tab === 'categories'
           ? visibleCategories.map((category) => {
-              const widgetsInCategory = myWidgets.filter((w) => w.category === category);
               const photos = categoryPhotos[category] ?? [];
               return (
                 <View key={category} style={{ marginBottom: spacing.lg }}>
@@ -336,23 +337,6 @@ export default function WidgetsScreen() {
                     <Text style={[typography.bodyStrong, { color: colors.text, marginLeft: 8 }]}>{t(`events.category.${category}`)}</Text>
                   </View>
                   <View style={styles.grid}>
-                    {widgetsInCategory.map((widget) => {
-                      const selected = sample.cardTheme === 'custom' && sample.customPhotoUri === widget.customPhotoUri;
-                      return (
-                        <Pressable key={widget.id} style={styles.card} onPress={() => editSavedWidget(widget)}>
-                          <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                            <Image source={{ uri: widget.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                            <View style={styles.cardScrim} />
-                            <View style={styles.checkBadge}>
-                              <Ionicons name={selected ? 'checkmark-circle' : 'chevron-down-circle'} size={20} color="#fff" />
-                            </View>
-                          </View>
-                          <Text style={[typography.bodyStrong, { color: colors.text, marginTop: 6, textAlign: 'center' }]} numberOfLines={1}>
-                            {widget.customWidgetName || widget.title}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
                     {photos.map((url) => (
                       <Pressable key={url} style={styles.card} onPress={() => pickCategoryPhoto(url)}>
                         <View style={[styles.cardPhoto, { borderRadius: radius.md, borderWidth: sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
@@ -374,7 +358,7 @@ export default function WidgetsScreen() {
           : null}
         {tab === 'categories' && !isPro ? (
           <Text style={[typography.caption, { color: colors.secondary, textAlign: 'center' }]}>
-            {t('widgets.premiumPerCategory', { count: 2 })}
+            {t('widgets.premiumPerCategory', { count: 4 })}
           </Text>
         ) : null}
       </ScrollView>

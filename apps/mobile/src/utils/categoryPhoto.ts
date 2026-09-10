@@ -1,5 +1,5 @@
 // Curated Pexels search terms for the Widgets tab's Pro "category photo"
-// gallery (2 photos per category, locked behind Pro) — same Pexels API
+// gallery (4 photos per category, locked behind Pro) — same Pexels API
 // already used for the Events tab's location-photo hero banner (see
 // locationPhoto.ts), just keyed by category instead of place name.
 import type { EventCategory } from '../types/event';
@@ -16,7 +16,7 @@ const CATEGORY_SEARCH_TERMS: Record<EventCategory, string> = {
 // Returns up to `count` distinct photo URLs for a category, or [] on any
 // failure (missing API key, offline, no results) — callers just show
 // nothing/a placeholder for that category rather than crashing.
-export async function fetchCategoryPhotos(category: EventCategory, count = 2): Promise<string[]> {
+export async function fetchCategoryPhotos(category: EventCategory, count = 4): Promise<string[]> {
   const apiKey = process.env.EXPO_PUBLIC_PEXELS_API_KEY;
   if (!apiKey) return [];
   const query = CATEGORY_SEARCH_TERMS[category];
