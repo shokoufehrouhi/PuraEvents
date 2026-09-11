@@ -215,16 +215,27 @@ export default function EventListScreen() {
           <Text style={[typography.title, styles.headerTitle, { color: colors.text }]}>{t('appName')}</Text>
           {/* Same plan badge as the Widgets tab's own header (see
               app/(tabs)/widgets.tsx) — free/Pro status wasn't visible
-              anywhere on this screen before. */}
-          <View style={[styles.planBadge, { backgroundColor: isPro ? `${colors.primary}1A` : colors.surfaceAlt, borderRadius: 999 }]}>
-            <Ionicons name={isPro ? 'diamond' : 'lock-closed-outline'} size={12} color={isPro ? colors.primary : colors.secondary} />
-            <Text style={[typography.caption, { color: isPro ? colors.primary : colors.secondary, marginLeft: 4, fontWeight: isPro ? '700' : '400' }]}>
-              {isPro ? t('compare.pro') : t('settings.freePlan')}
-            </Text>
-          </View>
+              anywhere on this screen before. Free reads as a tappable
+              "Get Pro" CTA (routes to /upgrade), not a neutral status
+              label — a bare "Free plan" caption just described the
+              account, it didn't invite tapping toward Pro. */}
+          {isPro ? (
+            <View style={[styles.planBadge, { backgroundColor: `${colors.primary}1A`, borderRadius: 999 }]}>
+              <Ionicons name="diamond" size={12} color={colors.primary} />
+              <Text style={[typography.caption, { color: colors.primary, marginLeft: 4, fontWeight: '700' }]}>{t('compare.pro')}</Text>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => router.push('/upgrade')}
+              style={[styles.planBadge, { backgroundColor: `${colors.primary}1A`, borderRadius: 999 }]}
+            >
+              <Ionicons name="diamond" size={12} color={colors.primary} />
+              <Text style={[typography.caption, { color: colors.primary, marginLeft: 4, fontWeight: '700' }]}>{t('widgets.getPro')}</Text>
+            </Pressable>
+          )}
         </View>
         <Pressable
-          onPress={() => router.push(limitReached ? '/paywall' : '/event/new')}
+          onPress={() => router.push(limitReached ? '/upgrade' : '/event/new')}
           hitSlop={12}
           style={({ pressed }) => [
             styles.headerAddButton,
@@ -273,8 +284,11 @@ export default function EventListScreen() {
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
         ListHeaderComponent={
           <>
-            {limitReached ? (
-              <LimitBanner onPress={() => router.push('/paywall')} />
+            {/* Pro upsell only makes sense against the active-event cap,
+                which Upcoming represents — Past is a history view, not
+                somewhere hitting the limit is relevant. */}
+            {limitReached && tab === 'upcoming' ? (
+              <LimitBanner onPress={() => router.push('/upgrade')} />
             ) : null}
             {/* Always a generic "Today" banner — never tied to a specific
                 event's title/countdown (a user explicitly asked why "their"

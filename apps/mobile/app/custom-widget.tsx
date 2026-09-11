@@ -18,6 +18,7 @@ import { accents, type AccentKey } from '../src/theme/tokens';
 import type { PurEvent, WidgetCornerStyle, WidgetTextStyle } from '../src/types/event';
 import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
 import { persistPickedImage } from '../src/utils/persistImage';
+import { getActiveWidgetIds } from '../src/utils/widgetAccess';
 
 type PreviewSize = 'small' | 'medium' | 'large';
 
@@ -120,6 +121,13 @@ export default function CustomWidgetScreen() {
       if (isDraft) return;
 
       if (widgetId) {
+        // Frozen (see widgetAccess.ts) — a stale deep link or another
+        // future entry point could otherwise reach this screen straight
+        // past the list-level gate in widgets.tsx/widget-picker.tsx.
+        if (!isPro && !getActiveWidgetIds(widgets, isPro).has(widgetId)) {
+          router.push('/upgrade');
+          return;
+        }
         // Editing an existing saved widget — its own record wins outright,
         // no event lookup needed (Save below updates every event already
         // linked to it).
@@ -148,6 +156,10 @@ export default function CustomWidgetScreen() {
         if (target) setTargetEventId(target.id);
       });
     });
+    // isPro/router deliberately excluded, same as the other route params
+    // below — this effect is mount-only (see the comment above), and
+    // neither one changes from the photo-picker's own dismissal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [widgetId, eventId, isDraft]);
 
   const slotsUsed = Math.min(otherWidgetsCount + (sample.customPhotoUri ? 1 : 0), FREE_LIMITS.maxWidgets);
@@ -155,7 +167,7 @@ export default function CustomWidgetScreen() {
 
   async function pickPhoto() {
     if (quotaFull) {
-      router.push('/paywall');
+      router.push('/upgrade');
       return;
     }
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();

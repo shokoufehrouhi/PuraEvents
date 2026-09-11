@@ -18,6 +18,7 @@ import { ACCENT_KEYS } from '../../src/theme/tokens';
 import type { CardTheme, EventCategory, PurEvent, Widget, WidgetSelection } from '../../src/types/event';
 import { getCategoryPhotos } from '../../src/utils/categoryPhoto';
 import { persistRemoteImage } from '../../src/utils/persistImage';
+import { getActiveWidgetIds, isWidgetFrozen } from '../../src/utils/widgetAccess';
 
 const SAMPLE_EVENT: PurEvent = {
   id: 'sample',
@@ -95,6 +96,12 @@ export default function WidgetsScreen() {
     [widgets, events]
   );
 
+  // If Pro lapses with more saved widgets than the free limit allows, only
+  // the most recently *created* one(s) stay active — the rest freeze (see
+  // widgetAccess.ts) instead of silently disappearing, so nothing already
+  // made ever looks deleted, just locked until Pro comes back.
+  const activeWidgetIds = useMemo(() => getActiveWidgetIds(widgets, isPro), [widgets, isPro]);
+
   function widgetDisplayEvent(widget: Widget, linkedEvent?: PurEvent): PurEvent {
     const base: PurEvent =
       linkedEvent ?? {
@@ -162,8 +169,13 @@ export default function WidgetsScreen() {
   // "+ New custom"), not a quick "apply this look elsewhere" — that copy
   // behavior lives in the New/Edit Event wizard's own Choose Widget screen
   // instead (see selectWidget in widget-picker.tsx), where picking a style
-  // for a *different* event actually makes sense.
+  // for a *different* event actually makes sense. A frozen widget (see
+  // activeWidgetIds above) goes to the paywall instead of the editor.
   function editSavedWidget(widget: Widget) {
+    if (isWidgetFrozen(widget, activeWidgetIds, isPro)) {
+      router.push('/upgrade');
+      return;
+    }
     router.push({ pathname: '/custom-widget', params: { widgetId: widget.id } });
   }
 
@@ -175,7 +187,7 @@ export default function WidgetsScreen() {
   // focus.
   function openNewCustom() {
     if (quotaFull) {
-      router.push('/paywall');
+      router.push('/upgrade');
       return;
     }
     router.push({ pathname: '/custom-widget', params: { eventId: isRealSample ? sample.id : '' } });
@@ -183,7 +195,7 @@ export default function WidgetsScreen() {
 
   async function pickCategoryPhoto(url: string) {
     if (!isPro) {
-      router.push('/paywall');
+      router.push('/upgrade');
       return;
     }
     // Persist it locally first — it's a remote Pexels URL, not a saved
@@ -224,12 +236,23 @@ export default function WidgetsScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}>
         <View style={styles.headerRow}>
           <Text style={[typography.title, { color: colors.text }]}>{t('widgets.title')}</Text>
-          <View style={[styles.planBadge, { backgroundColor: isPro ? `${colors.primary}1A` : colors.surfaceAlt, borderRadius: 999 }]}>
-            <Ionicons name={isPro ? 'diamond' : 'lock-closed-outline'} size={12} color={isPro ? colors.primary : colors.secondary} />
-            <Text style={[typography.caption, { color: isPro ? colors.primary : colors.secondary, marginLeft: 4, fontWeight: isPro ? '700' : '400' }]}>
-              {isPro ? t('compare.pro') : t('settings.freePlan')}
-            </Text>
-          </View>
+          {/* Free reads as a tappable "Get Pro" CTA (routes to /upgrade),
+              not a neutral status label — see the Events tab's own copy
+              of this badge for the full comment. */}
+          {isPro ? (
+            <View style={[styles.planBadge, { backgroundColor: `${colors.primary}1A`, borderRadius: 999 }]}>
+              <Ionicons name="diamond" size={12} color={colors.primary} />
+              <Text style={[typography.caption, { color: colors.primary, marginLeft: 4, fontWeight: '700' }]}>{t('compare.pro')}</Text>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => router.push('/upgrade')}
+              style={[styles.planBadge, { backgroundColor: `${colors.primary}1A`, borderRadius: 999 }]}
+            >
+              <Ionicons name="diamond" size={12} color={colors.primary} />
+              <Text style={[typography.caption, { color: colors.primary, marginLeft: 4, fontWeight: '700' }]}>{t('widgets.getPro')}</Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, marginTop: spacing.lg }]}>
@@ -343,16 +366,32 @@ export default function WidgetsScreen() {
           <View style={[styles.list, { gap: spacing.md }]}>
             {sortedMyWidgets.map(({ widget, linkedEvent }) => {
               const selected = sample.widgetId === widget.id;
+              const frozen = isWidgetFrozen(widget, activeWidgetIds, isPro);
               return (
-                <Pressable key={widget.id} onPress={() => editSavedWidget(widget)}>
-                  <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]} numberOfLines={1}>
-                    {widget.name || linkedEvent?.title}
-                  </Text>
+                <Pressable key={widget.id} onPress={() => editSavedWidget(widget)} style={{ opacity: frozen ? 0.55 : 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 6 }}>
+                    <Text style={[typography.caption, { color: colors.secondary }]} numberOfLines={1}>
+                      {widget.name || linkedEvent?.title}
+                    </Text>
+                    {/* Over the free-plan limit after Pro lapsed — see
+                        activeWidgetIds above. */}
+                    {frozen ? (
+                      <Text style={[typography.caption, { color: colors.primary, marginLeft: 6 }]} numberOfLines={1}>
+                        · {t('widgets.availableWithPro')}
+                      </Text>
+                    ) : null}
+                  </View>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
                     <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="full" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                      </View>
+                    ) : null}
+                    {frozen ? (
+                      <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
+                        <Ionicons name="lock-closed" size={11} color="#fff" />
+                        <Text style={styles.proBadgeText}>PRO</Text>
                       </View>
                     ) : null}
                   </View>

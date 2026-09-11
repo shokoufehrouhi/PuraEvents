@@ -9,6 +9,7 @@ import { CARD_THEMES } from '../theme/cardThemes';
 import { accents } from '../theme/tokens';
 import type { PurEvent, WidgetCornerStyle, WidgetTextStyle } from '../types/event';
 import { darken } from '../utils/color';
+import { resolvePhotoUri } from '../utils/persistImage';
 import { getNextOccurrence } from '../utils/recurrence';
 import { EventIcon } from './EventIcon';
 import { HeroCountdown } from './HeroCountdown';
@@ -197,7 +198,12 @@ export function MiniWidget({ event, size }: Props) {
       // image undersized/misaligned (same bug fixed for the Widgets tab's
       // grid cards — see app/(tabs)/widgets.tsx).
       <View style={[boxStyle, { overflow: 'hidden' }]}>
-        <Image source={{ uri: event.customPhotoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setPhotoFailed(true)} />
+        <Image
+          source={{ uri: resolvePhotoUri(event.customPhotoUri) }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          onError={() => setPhotoFailed(true)}
+        />
         <View style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${overlayOpacity})` }} />
         {inner}
       </View>

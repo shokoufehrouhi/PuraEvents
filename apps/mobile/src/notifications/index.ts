@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 
 import type { PurEvent } from '../types/event';
+import { getActiveReminders } from '../utils/reminders';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -35,15 +36,21 @@ export async function cancelRemindersForEvent(eventId: string): Promise<void> {
   await Promise.all(toCancel.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
 }
 
+// isPro is required, not optional — on free plan only FREE_LIMITS.
+// freeReminderOffset ("1 day before") actually gets scheduled, same offsets
+// the detail screen shows as active (see getActiveReminders); the rest stay
+// in event.reminders untouched so they come back the moment Pro does.
 export async function scheduleRemindersForEvent(
-  event: Pick<PurEvent, 'id' | 'title' | 'dateTimeISO' | 'reminders'>
+  event: Pick<PurEvent, 'id' | 'title' | 'dateTimeISO' | 'reminders'>,
+  isPro: boolean
 ): Promise<void> {
   await cancelRemindersForEvent(event.id);
 
   const eventTime = new Date(event.dateTimeISO).getTime();
   const now = Date.now();
+  const activeReminders = getActiveReminders(event.reminders, isPro);
 
-  for (const offsetMin of event.reminders) {
+  for (const offsetMin of activeReminders) {
     const fireAt = eventTime - offsetMin * 60_000;
     if (fireAt <= now) continue; // don't schedule reminders in the past
 

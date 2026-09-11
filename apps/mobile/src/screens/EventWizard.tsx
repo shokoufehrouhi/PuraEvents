@@ -22,8 +22,8 @@ import { usePreferences, useTheme } from '../theme/PreferencesContext';
 import { ACCENT_KEYS, accents, elevation, responsiveContent, type AccentKey } from '../theme/tokens';
 import type { CardTheme, EventCategory, PurEvent, RepeatRule, WidgetCornerStyle, WidgetSelection, WidgetSize, WidgetTextStyle } from '../types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../utils/calendars';
+import { resolvePhotoUri } from '../utils/persistImage';
 import { awaitPick } from '../utils/pickerBridge';
-import { PRESET_REMINDER_OFFSETS, reminderLabel } from '../utils/reminders';
 
 type SectionKey = 'schedule' | 'reminders' | 'appearance' | 'advanced';
 
@@ -32,25 +32,33 @@ interface AccordionRowProps {
   summary: string;
   expanded: boolean;
   onPress: () => void;
-  children: ReactNode;
+  children?: ReactNode;
+  // Reminders (with Pro, more than one can be picked — see reminder-picker.tsx)
+  // navigates to its own push screen instead of expanding in place, same
+  // "Language" row pattern as Preferences — the summary always shows (no
+  // expand/collapse), the chevron always points forward, and there's no
+  // inline content to expand into.
+  navigate?: boolean;
 }
 
 // One collapsible row inside the grouped card below Basics — collapsed
 // shows title + a one-line summary, expanded swaps the summary for the
 // editable content. Matches the approved "single scrollable form" layout
 // (not a paginated wizard) — see UI feedback.
-function AccordionRow({ title, summary, expanded, onPress, children }: AccordionRowProps) {
+function AccordionRow({ title, summary, expanded, onPress, children, navigate }: AccordionRowProps) {
   const { colors, spacing, typography } = useTheme();
   return (
     <View style={{ padding: spacing.md }}>
       <Pressable onPress={onPress} style={styles.accordionHeader}>
         <View style={{ flex: 1 }}>
           <Text style={[typography.bodyStrong, { color: colors.text }]}>{title}</Text>
-          {!expanded ? <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{summary}</Text> : null}
+          {navigate || !expanded ? (
+            <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{summary}</Text>
+          ) : null}
         </View>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
+        <Ionicons name={navigate ? 'chevron-forward' : expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
       </Pressable>
-      {expanded ? <View style={{ marginTop: spacing.sm + 4 }}>{children}</View> : null}
+      {!navigate && expanded ? <View style={{ marginTop: spacing.sm + 4 }}>{children}</View> : null}
     </View>
   );
 }
@@ -211,17 +219,14 @@ export function EventWizard({ mode, eventId }: Props) {
     setWidgetSize(picked as WidgetSize);
   }
 
-  function addReminder() {
-    if (!isPro && reminders.length >= FREE_LIMITS.maxRemindersPerEvent) {
-      router.push('/paywall');
-      return;
-    }
-    const next = PRESET_REMINDER_OFFSETS.find((o) => !reminders.includes(o));
-    if (next !== undefined) setReminders([...reminders, next].sort((a, b) => a - b));
-  }
-
-  function removeReminder(offset: number) {
-    setReminders(reminders.filter((r) => r !== offset));
+  // Full push screen, multi-select (Pro can pick more than one) — same
+  // "Language" row pattern as Widget Size above, per explicit request,
+  // rather than the previous inline add/remove list. The picker screen
+  // itself owns the free (1)/Pro (unlimited) quota gate.
+  async function pickReminders() {
+    router.push({ pathname: '/reminder-picker', params: { current: JSON.stringify(reminders) } });
+    const picked = await awaitPick();
+    setReminders(JSON.parse(picked) as number[]);
   }
 
   async function handleSave() {
@@ -230,7 +235,7 @@ export function EventWizard({ mode, eventId }: Props) {
     if (mode === 'create') {
       const existing = await listEvents();
       if (!isPro && existing.length >= FREE_LIMITS.maxActiveEvents) {
-        router.push('/paywall');
+        router.push('/upgrade');
         return;
       }
     }
@@ -256,7 +261,7 @@ export function EventWizard({ mode, eventId }: Props) {
     };
 
     const saved = mode === 'edit' && eventId ? await updateEvent(eventId, input) : await createEvent(input);
-    if (saved) await scheduleRemindersForEvent(saved);
+    if (saved) await scheduleRemindersForEvent(saved, isPro);
     router.back();
   }
 
@@ -412,28 +417,9 @@ export function EventWizard({ mode, eventId }: Props) {
               title={t('events.stepReminders')}
               summary={remindersSummary}
               expanded={expanded === 'reminders'}
-              onPress={() => toggle('reminders')}
-            >
-              {reminders.map((offset) => (
-                <View
-                  key={offset}
-                  style={[styles.reminderRow, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: spacing.sm + 4 }]}
-                >
-                  <Ionicons name="notifications-outline" size={18} color={colors.secondary} />
-                  <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{reminderLabel(offset, t)}</Text>
-                  <Pressable onPress={() => removeReminder(offset)} hitSlop={8}>
-                    <Ionicons name="close-circle" size={20} color={colors.secondary} />
-                  </Pressable>
-                </View>
-              ))}
-              <Pressable onPress={addReminder} style={[styles.addReminder, { borderColor: colors.primary, borderRadius: radius.md }]}>
-                <Ionicons name="add" size={18} color={colors.primary} />
-                <Text style={[typography.bodyStrong, { color: colors.primary, marginLeft: 6 }]}>{t('events.reminderAdd')}</Text>
-                {!isPro && reminders.length >= FREE_LIMITS.maxRemindersPerEvent ? (
-                  <Ionicons name="lock-closed" size={14} color={colors.secondary} style={{ marginLeft: 6 }} />
-                ) : null}
-              </Pressable>
-            </AccordionRow>
+              onPress={pickReminders}
+              navigate
+            />
 
             <AccordionRow
               title={t('events.stepAppearance')}
@@ -464,7 +450,7 @@ export function EventWizard({ mode, eventId }: Props) {
               >
                 {cardTheme === 'custom' && customPhotoUri ? (
                   <ImageBackground
-                    source={{ uri: customPhotoUri }}
+                    source={{ uri: resolvePhotoUri(customPhotoUri) }}
                     style={[styles.currentWidgetThumb, { borderRadius: radius.sm, overflow: 'hidden' }]}
                     imageStyle={{ borderRadius: radius.sm }}
                     resizeMode="cover"
@@ -618,8 +604,6 @@ const styles = StyleSheet.create({
   // 32px EventIcon — 32 read as too big, this is the midpoint.
   dot: { width: 22, height: 22, borderRadius: 11 },
   accordionHeader: { flexDirection: 'row', alignItems: 'center' },
-  reminderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  addReminder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, padding: 12, borderStyle: 'dashed' },
   proNote: { flexDirection: 'row', alignItems: 'center', padding: 10, marginTop: 12, borderWidth: 1 },
   // Current selection row — thumbnail/swatch + name/subtitle + "Change".
   currentWidgetRow: { flexDirection: 'row', alignItems: 'center', padding: 10 },

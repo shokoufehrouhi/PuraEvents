@@ -6,6 +6,7 @@ import { CARD_THEMES } from '../theme/cardThemes';
 import { accents } from '../theme/tokens';
 import type { PurEvent, WidgetCornerStyle, WidgetTextStyle } from '../types/event';
 import { formatEventDateLine, formatTodayLine } from '../utils/eventDate';
+import { resolvePhotoUri } from '../utils/persistImage';
 import { getNextOccurrenceISO } from '../utils/recurrence';
 import { EventIcon } from './EventIcon';
 import { HeroCountdown } from './HeroCountdown';
@@ -166,7 +167,7 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
   if (hasPhoto) {
     return (
       <ImageBackground
-        source={photoUri ? { uri: photoUri } : customPhoto ? { uri: customPhoto } : FALLBACK_HERO_IMAGE}
+        source={photoUri ? { uri: resolvePhotoUri(photoUri) } : customPhoto ? { uri: resolvePhotoUri(customPhoto) } : FALLBACK_HERO_IMAGE}
         style={[styles.card, { borderRadius: cornerRadius, minHeight: height }]}
         imageStyle={{ borderRadius: cornerRadius }}
         resizeMode="cover"
