@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,15 +14,16 @@ import { MiniWidget } from '../../../src/components/MiniWidget';
 import { Button } from '../../../src/components/ui/Button';
 import { Section } from '../../../src/components/ui/Section';
 import { cancelRemindersForEvent, scheduleRemindersForEvent } from '../../../src/notifications';
-import { deleteEvent, getEvent, listEvents } from '../../../src/storage/events';
+import { deleteEvent, getEvent, listEvents, updateEvent } from '../../../src/storage/events';
 import { usePro } from '../../../src/subscription';
 import { getCategoryIcon } from '../../../src/theme/icons';
 import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext';
 import { accents } from '../../../src/theme/tokens';
-import type { PurEvent } from '../../../src/types/event';
+import type { PurEvent, WidgetSelection } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
 import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
+import { awaitPick } from '../../../src/utils/pickerBridge';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
 
@@ -132,6 +133,31 @@ export default function EventDetailScreen() {
     }
   }
 
+  // Same "Choose Widget" gallery the wizard's own Appearance step opens
+  // (see openWidgetPicker in EventWizard.tsx), just applied straight to
+  // this already-saved event instead of a still-unsaved draft — the picker
+  // itself doesn't care which case it's in, it only ever hands back a
+  // WidgetSelection via the pickerBridge.
+  async function handleAddWidget() {
+    router.push({
+      pathname: '/widget-picker',
+      params: { eventId: event!.id, cardTheme: event!.cardTheme, photoUri: event!.customPhotoUri ?? '', category: event!.category },
+    });
+    const picked = await awaitPick();
+    const result = JSON.parse(picked) as WidgetSelection;
+    await updateEvent(event!.id, {
+      cardTheme: result.cardTheme,
+      customPhotoUri: result.customPhotoUri,
+      customWidgetName: result.customWidgetName,
+      customOverlayOpacity: result.customOverlayOpacity,
+      customCornerStyle: result.customCornerStyle,
+      customTextStyle: result.customTextStyle,
+      widgetId: result.widgetId,
+      ...(result.accentColor ? { accentColor: result.accentColor } : {}),
+    });
+    setEvent(await getEvent(event!.id) ?? null);
+  }
+
   // Over the free-plan "3 editable at once" limit — see getActiveEventIds.
   // Tappable, not just disabled: same as a frozen widget, tapping Edit here
   // routes to the paywall instead of the editor.
@@ -171,10 +197,9 @@ export default function EventDetailScreen() {
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.eventDetails')}</Text>
-        {/* Same plan badge as the Events/Widgets tabs' own headers — Edit/
-            Delete moved down to the pinned footer buttons, so this corner
-            isn't just empty space. Free reads as a tappable "Get Pro" CTA
-            (routes to /upgrade), not a neutral status label. */}
+        {/* Same plan badge as the Events/Widgets tabs' own headers. Free
+            reads as a tappable "Get Pro" CTA (routes to /upgrade), not a
+            neutral status label. */}
         {isPro ? (
           <View style={[styles.planBadge, { backgroundColor: `${colors.primary}1A`, borderRadius: 999 }]}>
             <Ionicons name="diamond" size={12} color={colors.primary} />
@@ -203,17 +228,40 @@ export default function EventDetailScreen() {
             </Text>
             <Text style={[typography.body, { color: colors.secondary, marginTop: 2 }]}>{dateTimeValue}</Text>
           </View>
-          {/* Opposite the title, same row — shares this event's widget
-              (always captured at 'large', see shareCaptureRef) as an image
-              through the native Share Sheet. */}
-          <Pressable
-            onPress={handleShare}
-            hitSlop={12}
-            accessibilityLabel={t('events.share')}
-            style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}
-          >
-            <Ionicons name="share-outline" size={20} color={colors.text} />
-          </Pressable>
+          {/* Opposite the title, same row — same spot Edit/Delete lived in
+              before Share/Add Widget took over the pinned footer (see
+              styles.footer below). Edit still routes to /upgrade instead
+              of the editor when frozen (over the free-plan "3 at once"
+              limit) — same lock-badge language as the Events tab's own
+              add button (app/(tabs)/index.tsx) — and dims when the event
+              is simply past, nothing left to edit. Feather's edit-3 (a
+              hollow diagonal pencil over a separate underline), per the
+              supplied reference icon — Ionicons has nothing with that
+              same silhouette. */}
+          <View style={{ flexDirection: 'row' }}>
+            <Pressable
+              onPress={goEdit}
+              disabled={isPast}
+              hitSlop={12}
+              accessibilityLabel={t('events.edit')}
+              style={[styles.headerButton, { backgroundColor: colors.surfaceAlt, opacity: isPast ? 0.4 : 1 }]}
+            >
+              <Feather name="edit-3" size={18} color={colors.text} />
+              {frozen && !isPast ? (
+                <View style={[styles.lockBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
+                  <Ionicons name="lock-closed" size={9} color="#fff" />
+                </View>
+              ) : null}
+            </Pressable>
+            <Pressable
+              onPress={handleDelete}
+              hitSlop={12}
+              accessibilityLabel={t('events.delete')}
+              style={[styles.headerButton, { backgroundColor: colors.surfaceAlt, marginLeft: 10 }]}
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.danger} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Rendered off-screen, never visible — ViewShot needs a real
@@ -314,22 +362,9 @@ export default function EventDetailScreen() {
           { paddingHorizontal: spacing.md, paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.outline, backgroundColor: colors.background },
         ]}
       >
-        {/* Only for the over-the-limit case — a merely-past event's Edit
-            needs no explanation, it's just disabled outright below. */}
-        {frozen && !isPast ? (
-          <Text style={[typography.caption, { color: colors.primary, textAlign: 'center', marginBottom: 6 }]}>
-            {t('widgets.availableWithPro')}
-          </Text>
-        ) : null}
         <View style={{ flexDirection: 'row' }}>
-          <Button
-            label={t('events.edit')}
-            variant="secondary"
-            onPress={goEdit}
-            disabled={isPast}
-            style={{ flex: 1, marginRight: 8 }}
-          />
-          <Button label={t('events.delete')} variant="dangerOutline" onPress={handleDelete} style={{ flex: 1, marginLeft: 8 }} />
+          <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
+          <Button label={t('events.addWidget')} onPress={handleAddWidget} style={{ flex: 1, marginLeft: 8 }} />
         </View>
       </View>
     </SafeAreaView>
@@ -356,9 +391,20 @@ const styles = StyleSheet.create({
   detailBadge: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   // Off-screen, not display:none — see the ViewShot host's own comment.
   shareCaptureHost: { position: 'absolute', top: 0, left: -9999 },
-  // Fixed outside the ScrollView so Edit/Delete always stay visible at
-  // the bottom of the screen — only the form content above scrolls. Column,
-  // not row — the optional "Available with Pro" caption stacks above the
-  // Edit/Delete row, which is its own nested row (see JSX).
+  // Same badge as the Events tab's own add button (app/(tabs)/index.tsx) —
+  // a frozen Edit icon gets a small lock instead of a separate caption.
+  lockBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Fixed outside the ScrollView so Share/Add Widget always stay visible
+  // at the bottom of the screen — only the form content above scrolls.
   footer: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
 });
