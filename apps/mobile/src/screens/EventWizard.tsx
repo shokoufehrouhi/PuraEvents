@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CivilCalendarPicker } from '../components/CivilCalendarPicker';
@@ -30,7 +30,6 @@ import {
   type RepeatRule,
   type WidgetCornerStyle,
   type WidgetSelection,
-  type WidgetSize,
   type WidgetTextStyle,
 } from '../types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../utils/calendars';
@@ -106,9 +105,6 @@ export function EventWizard({ mode, eventId }: Props) {
   // Which independent Widget (see storage/widgets.ts) the custom* fields
   // above are a snapshot of — see widgetId's comment on PurEvent.
   const [widgetId, setWidgetId] = useState<string | undefined>(undefined);
-  // Independent of cardTheme/customPhotoUri — a Categories photo at Small
-  // is just as valid as Built-in Clean at Large.
-  const [widgetSize, setWidgetSize] = useState<WidgetSize>('medium');
   const [repeat, setRepeat] = useState<RepeatRule>('none');
   const [reminders, setReminders] = useState<number[]>(prefs.defaultReminderOffsets);
   const [note, setNote] = useState('');
@@ -141,7 +137,6 @@ export function EventWizard({ mode, eventId }: Props) {
         setCustomCornerStyle(e.customCornerStyle);
         setCustomTextStyle(e.customTextStyle);
         setWidgetId(e.widgetId);
-        setWidgetSize(e.widgetSize ?? 'medium');
         setRepeat(e.repeat);
         setReminders(e.reminders);
         setNote(e.note ?? '');
@@ -173,7 +168,6 @@ export function EventWizard({ mode, eventId }: Props) {
     customCornerStyle,
     customTextStyle,
     widgetId,
-    widgetSize,
     repeat: isDraftEmpty ? 'none' : repeat,
     reminders,
     note: isDraftEmpty ? "Don't forget your passport" : note.trim() || undefined,
@@ -246,15 +240,6 @@ export function EventWizard({ mode, eventId }: Props) {
     if (result.accentColor) setAccentColor(result.accentColor);
   }
 
-  // Full push screen, same simple list+checkmark pattern as language-picker
-  // — independent of openWidgetPicker above, since size doesn't change what
-  // style/photo the widget shows.
-  async function pickWidgetSize() {
-    router.push({ pathname: '/widget-size-picker', params: { current: widgetSize } });
-    const picked = await awaitPick();
-    setWidgetSize(picked as WidgetSize);
-  }
-
   // Full push screen, multi-select (Pro can pick more than one) — same
   // "Language" row pattern as Widget Size above, per explicit request,
   // rather than the previous inline add/remove list. The picker screen
@@ -277,31 +262,44 @@ export function EventWizard({ mode, eventId }: Props) {
     }
 
     setSaving(true);
-    const input = {
-      title: title.trim(),
-      dateTimeISO: date.toISOString(),
-      timezone,
-      category,
-      accentColor,
-      cardTheme,
-      customPhotoUri,
-      customWidgetName,
-      customOverlayOpacity,
-      customCornerStyle,
-      customTextStyle,
-      widgetId,
-      widgetSize,
-      repeat,
-      reminders,
-      note: note.trim() || undefined,
-      shareMessage: shareMessage.trim() || undefined,
-      sender: sender.trim() || undefined,
-      notificationSound,
-    };
+    try {
+      const input = {
+        title: title.trim(),
+        dateTimeISO: date.toISOString(),
+        timezone,
+        category,
+        accentColor,
+        cardTheme,
+        customPhotoUri,
+        customWidgetName,
+        customOverlayOpacity,
+        customCornerStyle,
+        customTextStyle,
+        widgetId,
+        repeat,
+        reminders,
+        note: note.trim() || undefined,
+        shareMessage: shareMessage.trim() || undefined,
+        sender: sender.trim() || undefined,
+        notificationSound,
+      };
 
-    const saved = mode === 'edit' && eventId ? await updateEvent(eventId, input) : await createEvent(input);
-    if (saved) await scheduleRemindersForEvent(saved, isPro, prefs.notificationsEnabled);
-    router.back();
+      const saved = mode === 'edit' && eventId ? await updateEvent(eventId, input) : await createEvent(input);
+      if (saved) await scheduleRemindersForEvent(saved, isPro, prefs.notificationsEnabled);
+      router.back();
+    } catch (error) {
+      // Without this, a thrown error here (e.g. from the notification
+      // scheduling call) left `saving` stuck true forever — canSave's
+      // `!saving` then permanently disabled this same Save button with
+      // zero feedback, silently no-op'ing every future tap even after
+      // fixing whatever caused the first failure. Surface it and reset
+      // instead, so at minimum the user sees *something* went wrong and
+      // can try again.
+      Alert.alert(t('events.saveErrorTitle'), t('events.saveErrorMessage'));
+      console.error('Failed to save event', error);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
@@ -468,11 +466,10 @@ export function EventWizard({ mode, eventId }: Props) {
               onPress={() => toggle('appearance')}
             >
               {/* MiniWidget, not EventHeroCard — this is a preview of the
-                  actual home-screen widget, so it needs to reflect Widget
-                  Size below (small/medium/large render very differently,
-                  not just a smaller version of the same banner). */}
+                  actual home-screen widget (a single fixed Small size, see
+                  androidWidgetTask.tsx). */}
               <View style={{ alignItems: 'center', marginBottom: spacing.sm }}>
-                <MiniWidget event={draftEvent} size={widgetSize} />
+                <MiniWidget event={draftEvent} size="small" />
               </View>
 
               <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>
@@ -556,18 +553,6 @@ export function EventWizard({ mode, eventId }: Props) {
                   </Text>
                 </Pressable>
               </View>
-
-              {/* Independent of the style/photo above — a Categories photo
-                  at Small is just as valid as Built-in Clean at Large. */}
-              <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>{t('widgets.widgetSize')}</Text>
-              <Pressable
-                onPress={pickWidgetSize}
-                style={[styles.dropdownField, { borderColor: colors.outline, borderRadius: radius.md }]}
-              >
-                <Ionicons name="resize-outline" size={18} color={colors.secondary} />
-                <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t(`widgets.${widgetSize}`)}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
-              </Pressable>
 
               {!isPro ? (
                 <Pressable

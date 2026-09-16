@@ -31,13 +31,6 @@ export type WidgetCornerStyle = 'sharp' | 'rounded' | 'extraRounded';
  *  No new font files are involved, just a fontWeight swap. */
 export type WidgetTextStyle = 'system' | 'bold' | 'black';
 
-/** Home-screen widget size — independent of cardTheme/customPhotoUri (the
- *  *look*): you can use a Categories photo at Small just as easily as
- *  Built-in Clean at Large. Picked in New/Edit Event's Appearance section
- *  and in the standalone custom-widget.tsx editor; defaults to 'medium'
- *  when unset. */
-export type WidgetSize = 'small' | 'medium' | 'large';
-
 export interface PurEvent {
   id: string;
   title: string;
@@ -76,9 +69,6 @@ export interface PurEvent {
    *  silently erase what used to be there. Unset for events that predate
    *  this (storage/widgets.ts backfills one the first time it reads). */
   widgetId?: string;
-  /** Home-screen widget size — independent of cardTheme/customPhotoUri, see
-   *  WidgetSize. Defaults to 'medium' when unset. */
-  widgetSize?: WidgetSize;
   note?: string;
   /** Optional custom message for the Share card (see components/ShareCard
    *  and event/[id]/index.tsx's own Share button) — up to 256 chars,

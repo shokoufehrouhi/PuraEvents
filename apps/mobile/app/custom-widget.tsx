@@ -21,8 +21,6 @@ import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
 import { persistPickedImage } from '../src/utils/persistImage';
 import { getActiveWidgetIds } from '../src/utils/widgetAccess';
 
-type PreviewSize = 'small' | 'medium' | 'large';
-
 // Fixed placeholder content for the preview — this screen is a design
 // canvas for a widget's look (photo/overlay/corners/text), not a live
 // editor of one specific event's real title/date/note, so it never shows a
@@ -108,7 +106,6 @@ export default function CustomWidgetScreen() {
   // counts these regardless of whether any event is currently linked to
   // each one (a widget stays "used" once saved, see storage/widgets.ts).
   const [otherWidgetsCount, setOtherWidgetsCount] = useState(0);
-  const [previewSize, setPreviewSize] = useState<PreviewSize>('medium');
   const [widgetName, setWidgetName] = useState(() => (isDraft ? initWidgetName ?? '' : ''));
 
   // Mount-only, not useFocusEffect — the photo picker (pickPhoto below)
@@ -182,12 +179,6 @@ export default function CustomWidgetScreen() {
       const persistedUri = await persistPickedImage(result.assets[0].uri);
       setSample((s) => ({ ...s, cardTheme: 'custom', customPhotoUri: persistedUri }));
     }
-  }
-
-  async function pickSize() {
-    router.push({ pathname: '/widget-size-picker', params: { current: previewSize } });
-    const picked = await awaitPick();
-    setPreviewSize(picked as PreviewSize);
   }
 
   async function pickOverlay() {
@@ -327,11 +318,10 @@ export default function CustomWidgetScreen() {
       </View>
 
       <View style={{ alignItems: 'center', marginVertical: spacing.lg }}>
-        <MiniWidget event={sample} size={previewSize} />
+        <MiniWidget event={sample} size="small" />
       </View>
 
       <Section>
-        <Row icon="resize-outline" label={t('widgets.widgetSize')} value={t(`widgets.${previewSize}`)} onPress={pickSize} />
         <Row icon="image-outline" label={t('widgets.choosePhoto')} onPress={pickPhoto} />
         <Row icon="contrast-outline" label={t('widgets.overlay')} value={`${sample.customOverlayOpacity ?? 35}%`} onPress={pickOverlay} />
         <Row

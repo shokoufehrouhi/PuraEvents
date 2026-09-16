@@ -132,10 +132,6 @@ function Navigation() {
           name="custom-widget"
           options={{ ...headerOptions, title: t('widgets.customWidgetTitle'), headerBackTitle: t('widgets.title') }}
         />
-        <Stack.Screen
-          name="widget-size-picker"
-          options={{ ...headerOptions, title: t('widgets.widgetSize'), headerBackTitle: t('widgets.customWidgetTitle') }}
-        />
         {/* headerBackButtonDisplayMode 'minimal', not a headerBackTitle
             string — New/Edit Event (whichever opened this) doesn't expose
             one shared title this could reuse, same as

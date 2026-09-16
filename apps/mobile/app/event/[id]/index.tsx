@@ -15,16 +15,15 @@ import { ShareCard } from '../../../src/components/ShareCard';
 import { Button } from '../../../src/components/ui/Button';
 import { Section } from '../../../src/components/ui/Section';
 import { cancelRemindersForEvent, scheduleRemindersForEvent } from '../../../src/notifications';
-import { deleteEvent, getEvent, listEvents, updateEvent } from '../../../src/storage/events';
+import { deleteEvent, getEvent, listEvents } from '../../../src/storage/events';
 import { usePro } from '../../../src/subscription';
 import { getCategoryIcon } from '../../../src/theme/icons';
 import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext';
 import { accents } from '../../../src/theme/tokens';
-import type { PurEvent, WidgetSelection } from '../../../src/types/event';
+import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
 import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
-import { awaitPick } from '../../../src/utils/pickerBridge';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
 import { requestPinWidgetForEvent } from '../../../src/widgets/androidWidgetTask';
@@ -75,11 +74,12 @@ export default function EventDetailScreen() {
   // "only 3 editable at once" rotation below — see getActiveEventIds.
   const [allEvents, setAllEvents] = useState<PurEvent[]>([]);
   // Off-screen capture target for the Share button (see handleShare below)
-  // — the ShareCard graphic, independent of the visible preview's own
-  // event.widgetSize (see ShareCard.tsx's own fixed gift-card dimensions).
+  // — the ShareCard graphic, independent of the visible widget preview
+  // below (see ShareCard.tsx's own fixed gift-card dimensions).
   const shareCaptureRef = useRef<ViewShotRef>(null);
-  // Android-only (see handleAddToHomeScreen) — no iOS equivalent exists,
-  // since Apple gives apps no API to place a widget themselves at all.
+  // Only actually used on Android (see handleAddWidget) — no iOS
+  // equivalent exists, since Apple gives apps no API to place a widget
+  // themselves at all.
   const [requestingHomeScreenWidget, setRequestingHomeScreenWidget] = useState(false);
 
   useFocusEffect(
@@ -138,41 +138,25 @@ export default function EventDetailScreen() {
     }
   }
 
-  // Same "Choose Widget" gallery the wizard's own Appearance step opens
-  // (see openWidgetPicker in EventWizard.tsx), just applied straight to
-  // this already-saved event instead of a still-unsaved draft — the picker
-  // itself doesn't care which case it's in, it only ever hands back a
-  // WidgetSelection via the pickerBridge.
-  async function handleAddWidget() {
-    router.push({
-      pathname: '/widget-picker',
-      params: { eventId: event!.id, cardTheme: event!.cardTheme, photoUri: event!.customPhotoUri ?? '', category: event!.category },
-    });
-    const picked = await awaitPick();
-    const result = JSON.parse(picked) as WidgetSelection;
-    await updateEvent(event!.id, {
-      cardTheme: result.cardTheme,
-      customPhotoUri: result.customPhotoUri,
-      customWidgetName: result.customWidgetName,
-      customOverlayOpacity: result.customOverlayOpacity,
-      customCornerStyle: result.customCornerStyle,
-      customTextStyle: result.customTextStyle,
-      widgetId: result.widgetId,
-      ...(result.accentColor ? { accentColor: result.accentColor } : {}),
-    });
-    setEvent(await getEvent(event!.id) ?? null);
-  }
-
   // Pins a real, honest-to-god CountdownWidget on the Home Screen already
-  // configured to show *this* event — not the in-app style mockup
-  // handleAddWidget above deals with. See requestPinWidgetForEvent's own
-  // comment for why the eventId has to be stashed ahead of the OS prompt
-  // rather than passed through it directly.
-  async function handleAddToHomeScreen() {
+  // configured to show *this* event. Android only — react-native-android-
+  // widget's requestPinWidget calls straight into a native module that only
+  // exists on Android, and there's no iOS equivalent API at all (see
+  // add-widget-to-home.tsx's own comment), so iOS falls back to that
+  // screen's manual walkthrough instead of a no-op/crash here. See
+  // requestPinWidgetForEvent's own comment for why the eventId has to be
+  // stashed ahead of the OS prompt rather than passed through it directly.
+  async function handleAddWidget() {
+    if (Platform.OS !== 'android') {
+      router.push('/add-widget-to-home');
+      return;
+    }
     setRequestingHomeScreenWidget(true);
     try {
       const accepted = await requestPinWidgetForEvent(event!.id);
-      if (!accepted) {
+      if (accepted) {
+        Alert.alert(t('events.addWidgetSuccessTitle'), t('events.addWidgetSuccessMessage'));
+      } else {
         Alert.alert(t('addWidgetHome.unsupportedTitle'), t('addWidgetHome.unsupportedMessage'));
       }
     } finally {
@@ -369,22 +353,13 @@ export default function EventDetailScreen() {
 
         {/* Live widget preview — same MiniWidget the wizard's Appearance
             step shows, reflecting this event's saved cardTheme/accentColor
-            *and* its own widgetSize, not always "full" — this is what
-            adding it to the home screen at that size will look like. */}
+            — this is what adding it to the home screen will look like
+            (a single fixed Small size, see androidWidgetTask.tsx). */}
         <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
           <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm, alignSelf: 'flex-start' }]}>
             {t('widgets.widgetPreview')}
           </Text>
-          <MiniWidget event={event} size={event.widgetSize ?? 'medium'} />
-          {Platform.OS === 'android' && (
-            <Button
-              label={t('events.addToHomeScreen')}
-              variant="secondary"
-              onPress={handleAddToHomeScreen}
-              disabled={requestingHomeScreenWidget}
-              style={{ marginTop: spacing.md, alignSelf: 'stretch' }}
-            />
-          )}
+          <MiniWidget event={event} size="small" />
         </View>
       </ScrollView>
 
@@ -396,7 +371,12 @@ export default function EventDetailScreen() {
       >
         <View style={{ flexDirection: 'row' }}>
           <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
-          <Button label={t('events.addWidget')} onPress={handleAddWidget} style={{ flex: 1, marginLeft: 8 }} />
+          <Button
+            label={t('events.addWidget')}
+            onPress={handleAddWidget}
+            loading={requestingHomeScreenWidget}
+            style={{ flex: 1, marginLeft: 8 }}
+          />
         </View>
       </View>
     </SafeAreaView>

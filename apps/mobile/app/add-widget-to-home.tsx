@@ -90,7 +90,7 @@ export default function AddWidgetToHomeScreen() {
       <Text style={[typography.body, { color: colors.secondary, marginBottom: spacing.lg }]}>{t('addWidgetHome.subtitle')}</Text>
 
       <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
-        <MiniWidget event={PREVIEW_EVENT} size="large" />
+        <MiniWidget event={PREVIEW_EVENT} size="small" />
       </View>
 
       {isAndroid ? (

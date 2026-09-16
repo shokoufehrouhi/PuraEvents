@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 
 import { listEvents } from '../storage/events';
 import { accents } from '../theme/tokens';
+import type { CardTheme, EventCategory, RepeatRule, WidgetCornerStyle, WidgetTextStyle } from '../types/event';
 import { getNextOccurrence } from '../utils/recurrence';
 
 // What a widget instance (WidgetKit on iOS, AppWidget on Android) needs to
@@ -12,11 +13,6 @@ import { getNextOccurrence } from '../utils/recurrence';
 // written to the shared App Group (see iosWidgetSync.ts); Android's
 // headless widget task/configuration screen run inside this app's own JS,
 // so they can just call listUpcomingEventsForWidgets directly.
-//
-// Deliberately doesn't carry photo/theme — a widget only shows the flat
-// accent color, not an event's full custom-photo appearance (that would
-// need copying image bytes into the shared container too, a follow-up,
-// not done here).
 export interface WidgetEventSummary {
   id: string;
   title: string;
@@ -25,6 +21,20 @@ export interface WidgetEventSummary {
   nextOccurrenceISO: string;
   /** Matches accents' own literal hex strings (see theme/tokens.ts). */
   accentHex: `#${string}`;
+  category: EventCategory;
+  repeat: RepeatRule;
+  note?: string;
+  cardTheme: CardTheme;
+  /** Relative path (see persistImage.ts), not a ready-to-render URI —
+   *  Android's CountdownWidget resolves+downsizes it into a data: URI
+   *  itself (see widgetPhoto.ts) only when actually about to draw a
+   *  'custom' themed instance. iOS's widget.swift doesn't read this field
+   *  at all yet — its widget still only ever shows the flat accentHex
+   *  look, matching the earlier decision to leave iOS out of this pass. */
+  customPhotoUri?: string;
+  customOverlayOpacity?: number;
+  customCornerStyle?: WidgetCornerStyle;
+  customTextStyle?: WidgetTextStyle;
 }
 
 // Capped, not the full event list — a widget's own "choose an event"
@@ -51,5 +61,13 @@ export async function listUpcomingEventsForWidgets(): Promise<WidgetEventSummary
       title: event.title,
       nextOccurrenceISO: next.toISOString(),
       accentHex: accents[event.accentColor] ?? accents.violet,
+      category: event.category,
+      repeat: event.repeat,
+      note: event.note,
+      cardTheme: event.cardTheme,
+      customPhotoUri: event.customPhotoUri,
+      customOverlayOpacity: event.customOverlayOpacity,
+      customCornerStyle: event.customCornerStyle,
+      customTextStyle: event.customTextStyle,
     }));
 }

@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { requestWidgetUpdate } from 'react-native-android-widget';
 
-import { ANDROID_WIDGET_NAME, CountdownWidget } from './androidWidgetTask';
+import { ANDROID_WIDGET_NAME, buildCountdownWidgetElement } from './androidWidgetTask';
 import { getConfiguredEventId } from './androidWidgetConfig';
 import { syncIOSWidget } from './iosWidgetSync';
 import { listUpcomingEventsForWidgets } from './widgetEventSummary';
@@ -31,7 +31,7 @@ export async function syncHomeScreenWidget(): Promise<void> {
       renderWidget: async (widgetInfo) => {
         const configuredId = await getConfiguredEventId(widgetInfo.widgetId);
         const summary = events.find((e) => e.id === configuredId) ?? events[0] ?? null;
-        return <CountdownWidget summary={summary} />;
+        return buildCountdownWidgetElement(summary);
       },
       widgetNotFound: () => {},
     });

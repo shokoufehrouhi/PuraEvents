@@ -1,0 +1,67 @@
+diff --git a/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/RNWidgetUtil.java b/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/RNWidgetUtil.java
+index a057c09..c1b49d5 100644
+--- a/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/RNWidgetUtil.java
++++ b/node_modules/react-native-android-widget/android/src/main/java/com/reactnativeandroidwidget/RNWidgetUtil.java
+@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetProviderInfo;
+ import android.content.ComponentName;
+ import android.content.Context;
+ import android.util.DisplayMetrics;
++import android.util.Log;
+ import android.util.TypedValue;
+ 
+ import com.facebook.react.bridge.Arguments;
+@@ -44,8 +45,53 @@ public class RNWidgetUtil {
+         return pxValue / displayMetrics.density;
+     }
+ 
++    // PATCH (PuraEvents): some launchers (confirmed on MIUI) never populate
++    // per-instance AppWidgetOptions after requestPinAppWidget, leaving
++    // width/height at 0 indefinitely — which Bitmap.createBitmap
++    // downstream rejects with "width and height must be > 0", silently
++    // failing every render attempt. HARD_FALLBACK_DP is the very last
++    // resort if even AppWidgetProviderInfo comes back null (seen in
++    // testing — getAppWidgetInfo() isn't guaranteed non-null just because
++    // getAppWidgetOptions() returned something either), so this can no
++    // longer ever hand a 0 to Bitmap.createBitmap. Logged at .w so `adb
++    // logcat -s PuraEventsWidgetSize` shows exactly which path fired and
++    // why, since it was not obvious from the crash alone.
++    private static final int HARD_FALLBACK_DP = 110;
++    private static final String LOG_TAG = "PuraEventsWidgetSize";
++
+     private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
+-        return AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
++        int value = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
++        if (value > 0) {
++            Log.w(LOG_TAG, "widgetId=" + widgetId + " key=" + key + " fromOptions=" + value);
++            return value;
++        }
++
++        AppWidgetProviderInfo info = AppWidgetManager.getInstance(context).getAppWidgetInfo(widgetId);
++        if (info == null) {
++            Log.w(LOG_TAG, "widgetId=" + widgetId + " key=" + key + " options=0 providerInfo=null, using HARD_FALLBACK_DP=" + HARD_FALLBACK_DP);
++            return HARD_FALLBACK_DP;
++        }
++
++        // AppWidgetProviderInfo.minWidth/minHeight are in PIXELS (unlike
++        // most of this same class's own helpers, which work in dp) —
++        // confirmed via the log line right below: on this device
++        // (density ~2.75), a 110dp provider declared in app.json showed
++        // up here as minWidth=303, i.e. 110*2.75. Skipping pxToDp() here
++        // silently handed a "dp" value ~2-3x too large downstream, which
++        // (combined with the RemoteViews ImageView's scaleType="matrix" —
++        // draws at native size, no scaling) meant only the top-left
++        // corner of an oversized off-screen bitmap ever became visible in
++        // the actual (correctly small) on-screen widget — explains why a
++        // header rendered but everything below it never did, across every
++        // earlier test.
++        boolean wantsWidth = key.equals(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) || key.equals(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH);
++        int rawPx = wantsWidth ? info.minWidth : info.minHeight;
++        int fromProviderInfo = (int) pxToDp(context, rawPx);
++        Log.w(LOG_TAG, "widgetId=" + widgetId + " key=" + key + " options=0 providerInfo.minWidthPx=" + info.minWidth + " providerInfo.minHeightPx=" + info.minHeight + " usingDp=" + fromProviderInfo);
++        if (fromProviderInfo > 0) return fromProviderInfo;
++
++        Log.w(LOG_TAG, "widgetId=" + widgetId + " key=" + key + " providerInfo size was also <= 0, using HARD_FALLBACK_DP=" + HARD_FALLBACK_DP);
++        return HARD_FALLBACK_DP;
+     }
+ 
+     public static WritableArray getWidgetInfo(ReactApplicationContext context, String widgetName) {
