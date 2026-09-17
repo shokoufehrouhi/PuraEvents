@@ -2,7 +2,6 @@ import { Platform } from 'react-native';
 import { requestWidgetUpdate } from 'react-native-android-widget';
 
 import { ANDROID_WIDGET_NAME, buildCountdownWidgetElement } from './androidWidgetTask';
-import { getConfiguredEventId } from './androidWidgetConfig';
 import { syncIOSWidget } from './iosWidgetSync';
 import { listUpcomingEventsForWidgets } from './widgetEventSummary';
 
@@ -21,18 +20,14 @@ export async function syncHomeScreenWidget(): Promise<void> {
 
   if (Platform.OS === 'android') {
     const events = await listUpcomingEventsForWidgets();
-    // renderWidget is called once per *existing* instance, each with its
-    // own widgetId (WidgetInfo) — every instance re-resolves its own
-    // configured event (see androidWidgetTask.ts's identical logic) rather
-    // than all instances re-rendering the same "nearest upcoming" event,
-    // since different instances can be configured to different events.
+    // Every instance shows the same soonest-upcoming event — see
+    // androidWidgetTask.ts's resolveSummaryForWidget for why there's no
+    // more per-widgetId configuration to look up here.
+    const summary = events[0] ?? null;
+    const element = await buildCountdownWidgetElement(summary);
     await requestWidgetUpdate({
       widgetName: ANDROID_WIDGET_NAME,
-      renderWidget: async (widgetInfo) => {
-        const configuredId = await getConfiguredEventId(widgetInfo.widgetId);
-        const summary = events.find((e) => e.id === configuredId) ?? events[0] ?? null;
-        return buildCountdownWidgetElement(summary);
-      },
+      renderWidget: () => element,
       widgetNotFound: () => {},
     });
   }

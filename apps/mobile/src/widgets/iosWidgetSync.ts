@@ -1,6 +1,7 @@
 import { ExtensionStorage } from '@bacons/apple-targets';
 
 import { listUpcomingEventsForWidgets } from './widgetEventSummary';
+import { preparePhotoDataUri } from './widgetPhoto';
 
 // Must match app.json's ios.entitlements app-group *and* the same string
 // inside targets/widget/expo-target.config.js — both sides of the App
@@ -16,13 +17,27 @@ const STORAGE_KEY = 'events';
 // WidgetKit to reload. Call this whenever an event is created/updated/
 // deleted (see storage/events.ts) and once at app launch.
 //
-// Writes the *whole* upcoming-events list, not just the nearest one — each
-// widget instance can be configured (long-press → Edit Widget) to show any
-// one of them, via SelectEventIntent/EventEntity in widget.swift, which
-// resolves its own choice against this same list at render time.
+// Writes only the single soonest-upcoming event, not the whole list — every
+// widget instance always shows that same one (see widget.swift's Provider,
+// which just reads Shared.loadEvents().first), there's no more per-instance
+// choice to resolve against a fuller list.
 export async function syncIOSWidget(): Promise<void> {
   const events = await listUpcomingEventsForWidgets();
+  const soonest = events[0];
+  // Unlike Android (which resolves a 'custom' theme's photo on-demand, at
+  // render time, from inside this same app process — see widgetPhoto.ts's
+  // own callers), widget.swift runs as a fully separate process with no
+  // access to expo-image-manipulator or this app's file system at all, so
+  // the data: URI has to be pre-computed and handed across the App Group
+  // *before* WidgetKit ever renders anything. Only for a 'custom' themed
+  // event — every other theme is a flat accentHex fill the Swift side
+  // already draws without any photo, so there's no reason to inflate
+  // UserDefaults (loaded fully into the extension's own tight memory
+  // budget at launch) with data nothing will read.
+  const payload = soonest
+    ? [{ ...soonest, photoDataUri: soonest.cardTheme === 'custom' ? await preparePhotoDataUri(soonest.customPhotoUri) : null }]
+    : [];
   const storage = new ExtensionStorage(WIDGET_APP_GROUP);
-  storage.set(STORAGE_KEY, events.length ? JSON.stringify(events) : undefined);
+  storage.set(STORAGE_KEY, payload.length ? JSON.stringify(payload) : undefined);
   ExtensionStorage.reloadWidget();
 }

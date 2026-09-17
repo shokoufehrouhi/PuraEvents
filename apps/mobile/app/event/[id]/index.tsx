@@ -5,12 +5,11 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
 import { useGatedAction } from '../../../src/ads/adGate';
-import { AppAlertModal, type AppAlertState } from '../../../src/components/AppAlertModal';
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
 import { MiniWidget } from '../../../src/components/MiniWidget';
 import { ShareCard } from '../../../src/components/ShareCard';
@@ -26,10 +25,8 @@ import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
 import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
-import { openHomeScreenShortcutPermissionSettings } from '../../../src/utils/miuiPermissions';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
-import { requestPinWidgetForEvent } from '../../../src/widgets/androidWidgetTask';
 
 // A single "EVENT DETAILS"/"REMINDER"/"NOTE"/"APPEARANCE" row: icon badge +
 // two-line text. Purely informational, not tappable — editing any of this
@@ -81,14 +78,6 @@ export default function EventDetailScreen() {
   // — the ShareCard graphic, independent of the visible widget preview
   // below (see ShareCard.tsx's own fixed gift-card dimensions).
   const shareCaptureRef = useRef<ViewShotRef>(null);
-  // Only actually used on Android (see handleAddWidget) — no iOS
-  // equivalent exists, since Apple gives apps no API to place a widget
-  // themselves at all.
-  const [requestingHomeScreenWidget, setRequestingHomeScreenWidget] = useState(false);
-  // Success/declined/MIUI-permission-blocked result of handleAddWidget —
-  // shown via AppAlertModal (app-styled), not Alert.alert (a plain OS
-  // dialog that doesn't match the rest of the app).
-  const [widgetAlert, setWidgetAlert] = useState<AppAlertState | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -147,51 +136,6 @@ export default function EventDetailScreen() {
       // Capture/share failing (e.g. user dismissed the sheet) isn't worth
       // surfacing — same "just don't show the broken thing" posture as a
       // failed photo load elsewhere (see MiniWidget's own onError).
-    }
-  }
-
-  // Pins a real, honest-to-god CountdownWidget on the Home Screen already
-  // configured to show *this* event. Android only — react-native-android-
-  // widget's requestPinWidget calls straight into a native module that only
-  // exists on Android, and there's no iOS equivalent API at all (see
-  // add-widget-to-home.tsx's own comment), so iOS falls back to that
-  // screen's manual walkthrough instead of a no-op/crash here. See
-  // requestPinWidgetForEvent's own comment for why the eventId has to be
-  // stashed ahead of the OS prompt rather than passed through it directly.
-  async function handleAddWidget() {
-    if (Platform.OS !== 'android') {
-      router.push('/add-widget-to-home');
-      return;
-    }
-    setRequestingHomeScreenWidget(true);
-    try {
-      // requestPinWidgetForEvent's own native call, and the up-to-45s
-      // silentlyBlocked-detection wait inside it, both have no hard
-      // ceiling on their own — this outer timeout (comfortably above that
-      // 45s) means the full-screen loading state below always resolves to
-      // *something* rather than blocking the screen indefinitely on some
-      // device/launcher quirk (this flow has already run into plenty of
-      // MIUI unpredictability).
-      const result = await Promise.race([
-        requestPinWidgetForEvent(event!.id),
-        new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 70_000)),
-      ]);
-      if (result === 'added') {
-        setWidgetAlert({ title: t('events.addWidgetSuccessTitle'), message: t('events.addWidgetSuccessMessage'), variant: 'success' });
-      } else if (result === 'silentlyBlocked') {
-        setWidgetAlert({
-          title: t('events.addWidgetPermissionTitle'),
-          message: t('events.addWidgetPermissionMessage'),
-          variant: 'warning',
-          onSettings: openHomeScreenShortcutPermissionSettings,
-        });
-      } else if (result === 'timeout') {
-        setWidgetAlert({ title: t('events.addWidgetTimeoutTitle'), message: t('events.addWidgetTimeoutMessage'), variant: 'error' });
-      } else {
-        setWidgetAlert({ title: t('addWidgetHome.unsupportedTitle'), message: t('addWidgetHome.unsupportedMessage'), variant: 'error' });
-      }
-    } finally {
-      setRequestingHomeScreenWidget(false);
     }
   }
 
@@ -400,33 +344,11 @@ export default function EventDetailScreen() {
           { paddingHorizontal: spacing.md, paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.outline, backgroundColor: colors.background },
         ]}
       >
-        <View style={{ flexDirection: 'row' }}>
-          <Button label={t('events.share')} variant="secondary" onPress={handleShare} style={{ flex: 1, marginRight: 8 }} />
-          <Button
-            label={t('events.addWidget')}
-            onPress={handleAddWidget}
-            loading={requestingHomeScreenWidget}
-            style={{ flex: 1, marginLeft: 8 }}
-          />
-        </View>
+        {/* Add Widget moved to the Widgets tab (add-widget-to-home.tsx) —
+            one entry point for the real Home Screen widget, not a
+            per-event button here; see that screen's own comment. */}
+        <Button label={t('events.share')} variant="secondary" onPress={handleShare} />
       </View>
-
-      <AppAlertModal alert={widgetAlert} onClose={() => setWidgetAlert(null)} />
-
-      {/* Full-screen block, not just the button's own spinner (see
-          Button's loading prop below) — the OS-level pin flow this button
-          triggers can involve a real wait (see requestPinWidgetForEvent's
-          own comment on the 60s timeout), so this makes it obvious the
-          whole app is busy with it, not just that one button. Not
-          dismissible — there's nothing useful to cancel back into mid-wait. */}
-      <Modal visible={requestingHomeScreenWidget} transparent animationType="fade">
-        <View style={[styles.loadingOverlay, { backgroundColor: 'rgba(0,0,0,0.4)' }]}>
-          <View style={[styles.loadingCard, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg }]}>
-            <ActivityIndicator color={colors.primary} size="large" />
-            <Text style={[typography.bodyStrong, { color: colors.text, marginTop: spacing.md }]}>{t('events.addingWidget')}</Text>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -464,9 +386,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Fixed outside the ScrollView so Share/Add Widget always stay visible
-  // at the bottom of the screen — only the form content above scrolls.
+  // Fixed outside the ScrollView so Share always stays visible at the
+  // bottom of the screen — only the form content above scrolls.
   footer: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
-  loadingOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingCard: { alignItems: 'center', minWidth: 180 },
 });

@@ -266,6 +266,36 @@ export default function WidgetsScreen() {
           )}
         </View>
 
+        {/* Single entry point for the *real* Home Screen widget (WidgetKit/
+            AppWidget — see add-widget-to-home.tsx), independent of which
+            tab below is selected — this whole screen otherwise picks a
+            widget's *look*, a separate concept from actually placing an
+            instance on the Home Screen. Only one kind of widget exists now
+            (always the soonest-upcoming event, see androidWidgetTask.tsx's
+            resolveSummaryForWidget and widget.swift's resolveSelectedEvent),
+            so this is the only "add" entry point anywhere in the app —
+            there used to also be a per-event one on the event detail
+            screen, picking a specific event per widget instance; removed
+            along with that whole per-instance configuration. */}
+        <Pressable
+          onPress={() => router.push('/add-widget-to-home')}
+          style={[
+            styles.newCustomRow,
+            { borderRadius: radius.lg, marginTop: spacing.lg, backgroundColor: colors.surfaceAlt, borderColor: colors.outline, borderWidth: 1 },
+          ]}
+        >
+          <View style={[styles.newCustomIconBadge, { backgroundColor: colors.surface, borderRadius: 999 }]}>
+            <Ionicons name="add-circle" size={18} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('addWidgetHome.title')}</Text>
+            <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]} numberOfLines={2}>
+              {t('addWidgetHome.subtitle')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+        </Pressable>
+
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, marginTop: spacing.lg }]}>
           <Ionicons name="search" size={16} color={colors.secondary} />
           <TextInput
@@ -300,7 +330,7 @@ export default function WidgetsScreen() {
                 <Pressable key={key} onPress={() => applySelection({ cardTheme: key as CardTheme })}>
                   <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]}>{t(`events.cardTheme.${key}`)}</Text>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={{ ...sample, cardTheme: key }} size="small" />
+                    <MiniWidget event={{ ...sample, cardTheme: key }} size="gridSmall" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -393,7 +423,7 @@ export default function WidgetsScreen() {
                     ) : null}
                   </View>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={widgetDisplayEvent(widget)} size="small" />
+                    <MiniWidget event={widgetDisplayEvent(widget)} size="gridSmall" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -455,7 +485,7 @@ export default function WidgetsScreen() {
                       return (
                         <Pressable key={`${category}-${i}`} disabled={!url} onPress={() => url && pickCategoryPhoto(url)}>
                           <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
-                            <MiniWidget event={previewEvent} size="small" />
+                            <MiniWidget event={previewEvent} size="gridSmall" />
                             {!isPro && url ? (
                               <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
                                 <Ionicons name="lock-closed" size={11} color="#fff" />
@@ -506,9 +536,11 @@ const styles = StyleSheet.create({
   planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
-  // A wrapping grid of real-size (135×195dp, see MiniWidget's own DIMS)
-  // widget cards, not one full-width row each — see "My Widgets"/
-  // Categories rendering above. overflow:'hidden' clips MiniWidget's own
+  // A wrapping grid of 'gridSmall' cards (165×165dp — deliberately
+  // narrower than the real 175×175dp widget so two actually fit one row
+  // on a real phone width, see MiniWidget's own DIMS/Props comment), not
+  // one full-width row each — see "My Widgets"/Categories rendering
+  // above. overflow:'hidden' clips MiniWidget's own
   // corner radius to this frame's selection-border radius.
   list: { flexDirection: 'row', flexWrap: 'wrap' },
   widgetCardFrame: { overflow: 'hidden' },

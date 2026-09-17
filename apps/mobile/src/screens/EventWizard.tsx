@@ -328,6 +328,7 @@ export function EventWizard({ mode, eventId }: Props) {
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: spacing.md, paddingBottom: 48, ...responsiveContent }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Basics — always visible, matches the approved layout */}
         <Card>

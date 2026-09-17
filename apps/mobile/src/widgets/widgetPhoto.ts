@@ -11,13 +11,18 @@ import { resolvePhotoUri } from '../utils/persistImage';
 const MAX_WIDTH = 320;
 
 // Turns a locally-stored custom photo (see persistImage.ts's own relative-
-// path convention) into a data: URI — the only form of *local* image
-// react-native-android-widget's ImageWidget actually accepts (its
+// path convention) into a data: URI, resized down first for the
+// transaction-size reason above. Shared by both widget platforms, for two
+// different reasons: it's the only form of *local* image react-native-
+// android-widget's ImageWidget actually accepts on Android (its
 // ImageWidgetSource type is require()/http(s)/data:image only, no
-// file://), resized down first for the transaction-size reason above.
-// Returns null on any failure (missing file, decode error, ...) — the
-// caller falls back to the flat accent-gradient look the same way
-// MiniWidget's own onError handling does for a broken photo.
+// file://), and on iOS it's the only way to hand a photo across the App
+// Group at all — widget.swift runs as a separate process with no
+// filesystem/expo-image-manipulator access of its own (see
+// iosWidgetSync.ts's own caller). Returns null on any failure (missing
+// file, decode error, ...) — the caller falls back to the flat
+// accent-gradient look the same way MiniWidget's own onError handling
+// does for a broken photo.
 export async function preparePhotoDataUri(relativePath: string | undefined): Promise<string | null> {
   if (!relativePath) return null;
   const resolved = resolvePhotoUri(relativePath);

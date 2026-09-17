@@ -1,15 +1,12 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
 import {
   FlexWidget,
   ImageWidget,
   OverlapWidget,
-  registerWidgetConfigurationScreen,
   registerWidgetTaskHandler,
   requestPinWidget,
   TextWidget,
-  type WidgetConfigurationScreen,
   type WidgetTaskHandler,
 } from 'react-native-android-widget';
 
@@ -17,21 +14,13 @@ import { CARD_THEMES } from '../theme/cardThemes';
 import { getCategoryIcon } from '../theme/icons';
 import type { WidgetCornerStyle, WidgetTextStyle } from '../types/event';
 import { darken } from '../utils/color';
-import {
-  clearConfiguredEventId,
-  getConfiguredEventId,
-  peekPendingConfigureEventId,
-  setConfiguredEventId,
-  setPendingConfigureEventId,
-  takePendingConfigureEventId,
-} from './androidWidgetConfig';
 import { listUpcomingEventsForWidgets, type WidgetEventSummary } from './widgetEventSummary';
 import { preparePhotoDataUri } from './widgetPhoto';
 
 // The single app.json provider declaration (name matches its own
 // minWidth/minHeight there, tuned to this exact real on-screen footprint
-// — see that file's own comment) — registerWidgetTaskHandler/
-// registerWidgetConfigurationScreen below register once and handle it.
+// — see that file's own comment) — registerWidgetTaskHandler below
+// registers against it once and handles every instance.
 export const ANDROID_WIDGET_NAME = 'CountdownWidgetSmall';
 
 // Same presets as MiniWidget's own (see its comment) — kept as separate
@@ -53,7 +42,7 @@ const CATEGORY_LABELS: Record<WidgetEventSummary['category'], string> = {
   other: 'Other',
 };
 const REPEAT_LABELS: Record<WidgetEventSummary['repeat'], string> = {
-  none: 'Does not repeat',
+  none: 'No repeat',
   yearly: 'Yearly',
   monthly: 'Monthly',
   weekly: 'Weekly',
@@ -111,7 +100,11 @@ function CountdownCard({
     : {};
   const icon = getCategoryIcon(summary.category).image;
   const { days, hours, minutes } = countdownParts(summary.nextOccurrenceISO);
-  const iconSize = 16;
+  // Bumped up from an earlier 16px — the card grew from a narrow 110dp to
+  // a 175×175dp square (see app.json), so these no longer need to be this
+  // conservative to fit; sized to actually fill the room instead of
+  // floating in it.
+  const iconSize = 20;
   const countdownEntries: [number, string][] = [
     [days, 'D'],
     [hours, 'H'],
@@ -136,13 +129,13 @@ function CountdownCard({
           text={CATEGORY_LABELS[summary.category]}
           maxLines={1}
           truncate="END"
-          style={{ color: textColor, fontSize: 9, fontWeight: '800', width: 'wrap_content', ...photoTextShadow }}
+          style={{ color: textColor, fontSize: 12, fontWeight: '800', width: 'wrap_content', ...photoTextShadow }}
         />
       </FlexWidget>
       <TextWidget
         text={REPEAT_LABELS[summary.repeat]}
         maxLines={1}
-        style={{ color: secondaryColor, fontSize: 8, fontWeight: '700', width: 'wrap_content', ...photoTextShadow }}
+        style={{ color: secondaryColor, fontSize: 11, fontWeight: '700', width: 'wrap_content', ...photoTextShadow }}
       />
     </FlexWidget>,
     <FlexWidget key="body" style={{ width: 'match_parent' }}>
@@ -150,18 +143,18 @@ function CountdownCard({
         text={summary.title}
         maxLines={1}
         truncate="END"
-        style={{ color: textColor, fontSize: 12, fontWeight: titleWeight, ...photoTextShadow }}
+        style={{ color: textColor, fontSize: 16, fontWeight: titleWeight, ...photoTextShadow }}
       />
       <TextWidget
         text={dayjs(summary.nextOccurrenceISO).format('ddd, MMM D · HH:mm')}
         maxLines={1}
-        style={{ color: secondaryColor, fontSize: 9, fontWeight: '700', marginTop: 2, ...photoTextShadow }}
+        style={{ color: secondaryColor, fontSize: 12, fontWeight: '700', marginTop: 3, ...photoTextShadow }}
       />
-      <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', marginTop: 6 }}>
+      <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', marginTop: 8 }}>
         {countdownEntries.map(([value, label]) => (
-          <FlexWidget key={label} style={{ width: 'wrap_content', marginRight: 10 }}>
-            <TextWidget text={String(value)} style={{ color: textColor, fontSize: 15, fontWeight: '800', ...photoTextShadow }} />
-            <TextWidget text={label} style={{ color: secondaryColor, fontSize: 7, fontWeight: '700', ...photoTextShadow }} />
+          <FlexWidget key={label} style={{ width: 'wrap_content', marginRight: 14, alignItems: 'center' }}>
+            <TextWidget text={String(value)} style={{ color: textColor, fontSize: 20, fontWeight: '800', ...photoTextShadow }} />
+            <TextWidget text={label} style={{ color: secondaryColor, fontSize: 9, fontWeight: '700', ...photoTextShadow }} />
           </FlexWidget>
         ))}
       </FlexWidget>
@@ -170,7 +163,7 @@ function CountdownCard({
           text={summary.note}
           maxLines={1}
           truncate="END"
-          style={{ color: secondaryColor, fontSize: 9, fontWeight: '600', marginTop: 6, ...photoTextShadow }}
+          style={{ color: secondaryColor, fontSize: 14, fontWeight: '600', marginTop: 8, ...photoTextShadow }}
         />
       ) : null}
     </FlexWidget>,
@@ -254,89 +247,48 @@ export function CountdownWidget({
   return <CountdownCard summary={summary} photoDataUri={photoDataUri} />;
 }
 
-// Shared by every render call-site (the headless task handler below,
-// ConfigurationScreen's own pick(), and syncHomeScreenWidget.tsx, which
-// each hand JSX to react-native-android-widget a different way — a
-// callback vs. a returned value) so the "resolve the photo before
-// drawing" step — only actually needed for a 'custom' themed event,
-// everything else passes null straight through — isn't duplicated three
-// times.
+// Shared by every render call-site (the headless task handler below and
+// syncHomeScreenWidget.tsx, which each hand JSX to react-native-android-
+// widget a different way — a callback vs. a returned value) so the
+// "resolve the photo before drawing" step — only actually needed for a
+// 'custom' themed event, everything else passes null straight through —
+// isn't duplicated.
 export async function buildCountdownWidgetElement(summary: WidgetEventSummary | null): Promise<React.JSX.Element> {
   const photoDataUri = summary?.cardTheme === 'custom' ? await preparePhotoDataUri(summary.customPhotoUri) : null;
   return <CountdownWidget summary={summary} photoDataUri={photoDataUri} />;
 }
 
-async function renderSummaryWidget(summary: WidgetEventSummary | null, renderWidget: (el: React.JSX.Element) => void): Promise<void> {
-  renderWidget(await buildCountdownWidgetElement(summary));
-}
-
-// Which event a *specific* widget instance (identified by its own
-// widgetId — Android natively supports multiple independent instances of
-// one provider) is configured to show. Checks, in order: the real
-// per-widgetId choice (getConfiguredEventId, set once ConfigurationScreen's
-// own pick() has actually run); the still-unconsumed pending eventId
-// (peekPendingConfigureEventId) — set just before the OS "Add to Home
-// screen?" prompt (see requestPinWidgetForEvent) for the exact event this
-// new instance is *about* to be configured to, covering the case where
-// this handler's own WIDGET_ADDED fires before ConfigurationScreen's pick()
-// does (seen on MIUI — without this, that race rendered the soonest
-// *upcoming* event instead of the one actually requested, e.g. adding a
-// widget for event B showed event A's data if A happened to be sooner);
-// and only then the soonest upcoming event as a last resort (a widget
-// opened via the generic, no-specific-event Widgets tab button, or some
-// other edge case where nothing was ever pending).
-async function resolveSummaryForWidget(widgetId: number): Promise<WidgetEventSummary | null> {
+// Every instance of this provider always shows the same thing: whichever
+// event is soonest upcoming, app-wide — there's no per-widgetId
+// configuration any more (an earlier version let each instance be pinned to
+// a specific event via a configure Activity; deliberately simplified back
+// to one auto-updating "nearest event" widget, matching the same "no
+// per-instance choice" decision on iOS's widget.swift).
+async function resolveSummaryForWidget(): Promise<WidgetEventSummary | null> {
   const events = await listUpcomingEventsForWidgets();
-  const configuredId = await getConfiguredEventId(widgetId);
-  if (configuredId) {
-    const configured = events.find((e) => e.id === configuredId);
-    if (configured) return configured;
-  }
-  const pendingId = await peekPendingConfigureEventId();
-  if (pendingId) {
-    const pending = events.find((e) => e.id === pendingId);
-    if (pending) return pending;
-  }
   return events[0] ?? null;
 }
 
-// Fallback for launchers that bind a requestPinWidget()-created instance
-// directly and never fire the OS's own ACTION_APPWIDGET_CONFIGURE at all —
-// confirmed on MIUI's own Home via adb logcat: the widget gets bound and
-// added to the workspace straight away, with no configure Activity ever
-// started. ConfigurationScreen's own pick() (the only other place that
-// turns the pending eventId stashed by requestPinWidgetForEvent into a real
-// per-widgetId choice, via setConfiguredEventId) then never runs, so that
-// pending id sits unconsumed forever. The widget itself still renders the
-// right event (resolveSummaryForWidget's own peekPendingConfigureEventId
-// fallback covers that already), but requestPinWidgetForEvent's own
-// success/failure detection only knows the pin actually worked once that id
-// gets *consumed* — so it waits the full 45s and wrongly reports
-// 'silentlyBlocked' (a bogus MIUI-permission error) for a widget that was
-// actually added successfully. Called only after the WIDGET_ADDED retries
-// below, not immediately, so a launcher that *does* invoke
-// ConfigurationScreen normally still gets first claim on the pending id —
-// this is strictly a safety net for the ones that don't.
-async function commitPendingConfigureEventIfUnclaimed(
-  widgetId: number,
-  renderWidget: (el: React.JSX.Element) => void,
-): Promise<void> {
-  if (await getConfiguredEventId(widgetId)) return;
-  const pendingId = await takePendingConfigureEventId();
-  if (!pendingId) return;
-  const events = await listUpcomingEventsForWidgets();
-  const pending = events.find((e) => e.id === pendingId);
-  if (!pending) return;
-  await setConfiguredEventId(widgetId, pendingId);
-  renderWidget(await buildCountdownWidgetElement(pending));
+// A plain "when did a widget last get added" timestamp, not tied to any
+// particular widgetId or event — requestPinWidgetToHomeScreen below polls
+// this to tell a real pin from a MIUI-style silent block (see its own
+// comment). AsyncStorage, not an in-memory variable: widgetTaskHandler can
+// run as a headless JS task in its own isolate, separate from whichever
+// screen is doing the polling.
+const LAST_WIDGET_ADDED_AT_KEY = 'puraevents:androidWidgetLastAddedAt';
+
+async function markWidgetJustAdded(): Promise<void> {
+  await AsyncStorage.setItem(LAST_WIDGET_ADDED_AT_KEY, String(Date.now()));
 }
 
-const widgetTaskHandler: WidgetTaskHandler = async ({ widgetAction, widgetInfo, renderWidget }) => {
-  if (widgetAction === 'WIDGET_DELETED') {
-    await clearConfiguredEventId(widgetInfo.widgetId);
-    return;
-  }
-  const summary = await resolveSummaryForWidget(widgetInfo.widgetId);
+async function getLastWidgetAddedAt(): Promise<number> {
+  const raw = await AsyncStorage.getItem(LAST_WIDGET_ADDED_AT_KEY);
+  return raw ? Number(raw) : 0;
+}
+
+const widgetTaskHandler: WidgetTaskHandler = async ({ widgetAction, renderWidget }) => {
+  if (widgetAction === 'WIDGET_DELETED') return;
+  const summary = await resolveSummaryForWidget();
   const element = await buildCountdownWidgetElement(summary);
   renderWidget(element);
 
@@ -357,11 +309,11 @@ const widgetTaskHandler: WidgetTaskHandler = async ({ widgetAction, widgetInfo, 
   // library itself, and are cheap/idempotent (same data each time — the
   // photo's already resolved above, not redone per retry).
   if (widgetAction === 'WIDGET_ADDED') {
+    await markWidgetJustAdded();
     for (const delayMs of [500, 1200, 2500, 4500]) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
       renderWidget(element);
     }
-    await commitPendingConfigureEventIfUnclaimed(widgetInfo.widgetId, renderWidget);
   }
 };
 
@@ -375,123 +327,37 @@ export function initAndroidWidgetTaskHandler(): void {
   registerWidgetTaskHandler(widgetTaskHandler);
 }
 
-// Entry point for "add this event to my Home Screen" from the event detail
-// screen (app/event/[id]/index.tsx), as opposed to the generic, no-event
-// "Add to Home Screen" button on the Widgets tab (add-widget-to-home.tsx),
-// which leaves the ConfigurationScreen below to show its normal picker.
-// Stashing the eventId is the only option — requestPinWidget() only tells
-// us whether the user accepted the OS's own "Add to Home screen?" prompt,
-// never the widgetId of the instance it goes on to create (the OS decides
-// that itself, afterward), so there's no id yet to call
-// setConfiguredEventId with directly.
+// Entry point for the Widgets tab's "Add Widget" banner (add-widget-to-
+// home.tsx) — the only way left to pin a real instance, now that there's no
+// more per-event variant.
 //
 // 'declined': the OS-level request itself was rejected/unsupported (the
 // normal requestPinWidget() false case).
 // 'silentlyBlocked': requestPinWidget() resolved true — Android only
 // confirms the *request* reached the launcher, never whether the launcher
-// actually went through with it — but no widget was ever actually
-// configured. Confirmed on MIUI: its "Home screen shortcuts" permission
-// (off by default, buried in its Security app, not a normal Android
-// runtime permission a manifest entry or a permission prompt can grant)
-// can silently reject the pin, and requestPinWidget() still resolves
-// `true` regardless — there is no path for that rejection to reach JS at
-// all. Detected indirectly: if ConfigurationScreen's own pick() never ran
-// (never consumed the pending id we stashed) within a generous window,
-// nothing was actually added. The window has to be genuinely generous
-// (not the original ~8s) — a real, successful add can take a while too
-// (MIUI's own placement animation, or this app sitting backgrounded while
-// its home-screen confirmation is up), and a false "blocked" on a real
-// success is exactly as bad as a false "added" on a real block.
-// 'added': ConfigurationScreen's pick() consumed the pending id — a real
-// instance exists and was configured to this event.
-export async function requestPinWidgetForEvent(eventId: string): Promise<'added' | 'declined' | 'silentlyBlocked'> {
-  await setPendingConfigureEventId(eventId);
+// actually went through with it. Confirmed on MIUI via adb logcat: its
+// "Home screen shortcuts" permission (off by default, buried in its
+// Security app, not a normal Android runtime permission a manifest entry
+// or a permission prompt can grant) can silently reject the pin, and
+// requestPinWidget() still resolves `true` regardless — there is no path
+// for that rejection to reach JS at all. Detected indirectly: widgetTaskHandler's
+// own WIDGET_ADDED branch (confirmed to fire reliably even on launchers
+// that skip everything else, per that same adb logcat session) stamps
+// markWidgetJustAdded() the moment Android actually binds a new instance —
+// if that timestamp never moves past `startedAt` within a generous window,
+// nothing was actually added. The window has to be genuinely generous (not
+// a naive ~8s) — a real, successful add can take a while too (MIUI's own
+// placement animation, or this app sitting backgrounded while its
+// home-screen confirmation is up), and a false "blocked" on a real success
+// is exactly as bad as a false "added" on a real block.
+// 'added': a WIDGET_ADDED fired after this call started.
+export async function requestPinWidgetToHomeScreen(): Promise<'added' | 'declined' | 'silentlyBlocked'> {
+  const startedAt = Date.now();
   const accepted = await requestPinWidget({ widgetName: ANDROID_WIDGET_NAME });
-  if (!accepted) {
-    await takePendingConfigureEventId();
-    return 'declined';
-  }
+  if (!accepted) return 'declined';
   for (let i = 0; i < 45; i++) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const stillPending = await peekPendingConfigureEventId();
-    if (stillPending !== eventId) return 'added';
+    if ((await getLastWidgetAddedAt()) > startedAt) return 'added';
   }
-  await takePendingConfigureEventId();
   return 'silentlyBlocked';
-}
-
-// Shown once, automatically, the moment a new CountdownWidget instance is
-// dropped on the home screen (app.json's widgetFeatures: 'reconfigurable'
-// forces this rather than making it optional) — a plain event list, tap to
-// pick. Deliberately not using the app's own useTheme()/PreferencesProvider
-// styling: this runs as its own React root (registered separately from
-// app/_layout.tsx's tree, see AppRegistry.registerComponent in
-// register-widget-configuration-screen's own source), so that context
-// isn't available here — hardcoded colors instead.
-const ConfigurationScreen: WidgetConfigurationScreen = ({ widgetInfo, renderWidget, setResult }) => {
-  const [events, setEvents] = useState<WidgetEventSummary[] | null>(null);
-
-  async function pick(event: WidgetEventSummary) {
-    await setConfiguredEventId(widgetInfo.widgetId, event.id);
-    await renderSummaryWidget(event, renderWidget);
-    setResult('ok');
-  }
-
-  useEffect(() => {
-    // Both reads happen before any setState, so a pending-event match never
-    // gets a chance to render the list first — pick() runs and setResult()
-    // closes this screen before the user sees anything but the blank
-    // loading view below. A leftover pending id from some earlier,
-    // interrupted pin (e.g. the user backed out of the OS prompt) that no
-    // longer matches any *upcoming* event just falls through to the normal
-    // picker instead of silently doing nothing.
-    Promise.all([listUpcomingEventsForWidgets(), takePendingConfigureEventId()]).then(([loaded, pendingEventId]) => {
-      const pendingMatch = pendingEventId ? loaded.find((e) => e.id === pendingEventId) : undefined;
-      if (pendingMatch) {
-        pick(pendingMatch);
-        return;
-      }
-      setEvents(loaded);
-    });
-  }, []);
-
-  if (!events) return <View style={{ flex: 1, backgroundColor: '#151221' }} />;
-
-  if (events.length === 0) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#151221', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 15, textAlign: 'center' }}>
-          No upcoming events yet — create one in PuraEvents first, then add this widget again.
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <FlatList
-      style={{ flex: 1, backgroundColor: '#151221' }}
-      data={events}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <Pressable
-          onPress={() => pick(item)}
-          style={({ pressed }) => ({
-            padding: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: '#2B2640',
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={{ color: '#9992B8', fontSize: 13, marginTop: 2 }}>{dayjs(item.nextOccurrenceISO).format('MMM D, YYYY')}</Text>
-        </Pressable>
-      )}
-    />
-  );
-};
-
-export function initAndroidWidgetConfigurationScreen(): void {
-  registerWidgetConfigurationScreen(ConfigurationScreen);
 }

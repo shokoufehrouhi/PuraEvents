@@ -28,9 +28,11 @@ export interface WidgetEventSummary {
   /** Relative path (see persistImage.ts), not a ready-to-render URI —
    *  Android's CountdownWidget resolves+downsizes it into a data: URI
    *  itself (see widgetPhoto.ts) only when actually about to draw a
-   *  'custom' themed instance. iOS's widget.swift doesn't read this field
-   *  at all yet — its widget still only ever shows the flat accentHex
-   *  look, matching the earlier decision to leave iOS out of this pass. */
+   *  'custom' themed instance. iOS can't do that same on-demand resolve —
+   *  widget.swift runs as a separate process with no file-system/
+   *  expo-image-manipulator access — so iosWidgetSync.ts pre-resolves this
+   *  into its own `photoDataUri` field (not part of this shared shape)
+   *  before handing the summary across the App Group. */
   customPhotoUri?: string;
   customOverlayOpacity?: number;
   customCornerStyle?: WidgetCornerStyle;

@@ -35,8 +35,14 @@ interface Props {
   // widget's own fixed size (see androidWidgetTask.tsx / app.json's
   // minWidth/minHeight for CountdownWidgetSmall) — kept in sync with those
   // dp values so this preview always matches what actually lands on the
-  // Home Screen.
-  size: 'small' | 'full';
+  // Home Screen; used everywhere a *single* card is previewed (event
+  // detail, the wizard's Appearance step, custom-widget.tsx,
+  // add-widget-to-home.tsx). 'gridSmall' is for the two wrapping-grid
+  // screens only (Widgets tab, widget-picker.tsx) — deliberately narrower
+  // than 'small' so two cards actually fit one row on a real phone width;
+  // it trades exact real-widget-size accuracy for that, so it's scoped to
+  // just those two screens rather than replacing 'small' everywhere.
+  size: 'small' | 'gridSmall' | 'full';
 }
 
 // A fixed frame per size, not a minimum — same as how a real WidgetKit
@@ -44,7 +50,8 @@ interface Props {
 // 'full' is unrelated to this size class — it's the Preferences/Detail
 // screens' own full-width banner.
 const DIMS: Record<Props['size'], { width: number | '100%'; height?: number; minHeight?: number }> = {
-  small: { width: 135, height: 195 },
+  small: { width: 175, height: 175 },
+  gridSmall: { width: 165, height: 165 },
   full: { width: '100%', minHeight: 140 },
 };
 
@@ -87,13 +94,17 @@ export function MiniWidget({ event, size }: Props) {
   const secondaryColor = event.cardTheme === 'clean' ? preset.secondary : 'rgba(255,255,255,0.8)';
   const categoryLabel = t(`events.category.${event.category}`);
   const full = size === 'full';
-  const iconSize = full ? 28 : 16;
+  const iconSize = full ? 28 : 20;
   // 'full' scale — tuned for the wide Widgets-tab/picker cards.
-  // small scale — tuned to fit the real home-screen widget's own 135dp
-  // width (see androidWidgetTask.tsx, which mirrors this exact structure).
+  // small scale — tuned to fit the real home-screen widget's own 175×175dp
+  // square (see androidWidgetTask.tsx, which mirrors this exact structure;
+  // Android/launchers round minWidth up to a whole grid-cell count
+  // regardless of resizeMode, so an earlier narrower 110dp's actual
+  // reserved footprint on a real device left no room for a second
+  // widget in the same row).
   const s = full
     ? { label: 13, repeat: 12, title: 18, date: 13, number: 26, numberLabel: 10, note: 14 }
-    : { label: 9, repeat: 8, title: 12, date: 9, number: 15, numberLabel: 7, note: 9 };
+    : { label: 12, repeat: 11, title: 16, date: 12, number: 20, numberLabel: 9, note: 14 };
 
   // Same canonical widget-card format at every size (category+repeat
   // header, title, date+time line, D/H/M countdown, note) — per explicit

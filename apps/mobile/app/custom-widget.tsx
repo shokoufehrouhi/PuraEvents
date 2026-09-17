@@ -280,6 +280,8 @@ export default function CustomWidgetScreen() {
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.md }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
     >
       <View style={[styles.nameCard, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md }]}>
         <Text style={[typography.label, { color: colors.secondary, marginBottom: 8 }]}>{t('widgets.widgetName')}</Text>
@@ -289,6 +291,7 @@ export default function CustomWidgetScreen() {
           onChangeText={setWidgetName}
           placeholder={t('widgets.widgetNamePlaceholder')}
           placeholderTextColor={colors.secondary}
+          autoFocus
         />
       </View>
 

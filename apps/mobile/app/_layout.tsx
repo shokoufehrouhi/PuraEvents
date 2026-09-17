@@ -14,7 +14,7 @@ import { NotificationDetailModal } from '../src/components/NotificationDetailMod
 import { extractNotificationInfo, initNotificationLogListeners, requestNotificationPermissions, type NotificationInfo } from '../src/notifications';
 import { usePro } from '../src/subscription';
 import { PreferencesProvider, useTheme } from '../src/theme/PreferencesContext';
-import { initAndroidWidgetConfigurationScreen, initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
+import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 
 // Side-effect import: initializes i18next before any screen renders.
@@ -23,15 +23,12 @@ import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 // Track as a follow-up before shipping fa/ar as selectable languages.
 import '../src/i18n';
 
-// Module scope, not inside the component — both of these ultimately call
-// AppRegistry.register*, which needs to run once, as early as possible,
-// same reasoning as the i18n side-effect import above. A no-op on iOS.
-// The configuration screen registration matters even though it's a
-// separate Activity/React root from the rest of this app — its own JS
-// bundle still runs this same entry file first.
+// Module scope, not inside the component — ultimately calls
+// AppRegistry.registerHeadlessTask, which needs to run once, as early as
+// possible, same reasoning as the i18n side-effect import above. A no-op
+// on iOS.
 if (Platform.OS === 'android') {
   initAndroidWidgetTaskHandler();
-  initAndroidWidgetConfigurationScreen();
 }
 
 function Navigation() {

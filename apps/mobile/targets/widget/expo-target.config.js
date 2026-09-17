@@ -10,14 +10,19 @@ module.exports = (config) => ({
   colors: {
     $accent: '#6558D9',
   },
-  frameworks: ['SwiftUI', 'WidgetKit', 'AppIntents'],
-  // Higher than the main app's own 16.4 (docs/PROJECT.md §5.2) —
-  // AppIntentConfiguration (the "user picks which event this widget
-  // shows" API, see widget.swift) requires iOS 17+. This is a normal,
-  // well-understood tradeoff for a configurable widget: an extension's
-  // deployment target may exceed its host app's, it just means the
-  // widget itself won't be offered to a user on iOS 16.x — the main app
-  // stays fully usable there regardless.
+  // No 'AppIntents' any more — widget.swift dropped AppIntentConfiguration
+  // (the old "user picks which event this widget shows" Edit Widget
+  // picker) along with the per-instance choice it enabled, back to one
+  // plain TimelineProvider/StaticConfiguration. That didn't let
+  // deploymentTarget drop to match the main app's own 16.4 though (tried
+  // it, confirmed via a real device build): widget.swift's own
+  // .containerBackground(_:for:) — the modifier WidgetKit itself requires
+  // for a widget's background, replacing plain .background() — is an iOS
+  // 17+ API on its own, unrelated to AppIntents. Still higher than the
+  // host app, same normal/well-understood tradeoff as before: the widget
+  // just won't be offered on iOS 16.4–16.x, the main app stays fully
+  // usable there regardless.
+  frameworks: ['SwiftUI', 'WidgetKit'],
   deploymentTarget: '17.0',
   entitlements: {
     // Same App Group as app.json's ios.entitlements and
