@@ -315,7 +315,7 @@ export default function WidgetPickerScreen() {
                 <Pressable key={key} onPress={() => selectBuiltIn(key)}>
                   <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]}>{t(`events.cardTheme.${key}`)}</Text>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={{ ...previewBase, cardTheme: key }} size="gridSmall" />
+                    <MiniWidget event={{ ...previewBase, cardTheme: key }} size="small" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -388,7 +388,7 @@ export default function WidgetPickerScreen() {
                     ) : null}
                   </View>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={widgetDisplayEvent(widget)} size="gridSmall" />
+                    <MiniWidget event={widgetDisplayEvent(widget)} size="small" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -449,7 +449,7 @@ export default function WidgetPickerScreen() {
                       return (
                         <Pressable key={`${category}-${i}`} disabled={!url} onPress={() => url && pickCategoryPhoto(url)}>
                           <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
-                            <MiniWidget event={previewEvent} size="gridSmall" />
+                            <MiniWidget event={previewEvent} size="small" />
                             {!isPro && url ? (
                               <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
                                 <Ionicons name="lock-closed" size={11} color="#fff" />
@@ -482,10 +482,8 @@ export default function WidgetPickerScreen() {
 const styles = StyleSheet.create({
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
-  // A wrapping grid of 'gridSmall' cards (165×165dp — deliberately
-  // narrower than the real 175×175dp widget so two actually fit one row
-  // on a real phone width, see MiniWidget's own DIMS/Props comment), not
-  // one full-width row each — see "My Widgets"/Categories rendering
+  // A wrapping grid of real-size (165×165dp, see MiniWidget's own DIMS)
+  // widget cards, not one full-width row each — see "My Widgets"/Categories rendering
   // above. overflow:'hidden' clips MiniWidget's own
   // corner radius to this frame's selection-border radius.
   list: { flexDirection: 'row', flexWrap: 'wrap' },

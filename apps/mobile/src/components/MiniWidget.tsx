@@ -35,14 +35,9 @@ interface Props {
   // widget's own fixed size (see androidWidgetTask.tsx / app.json's
   // minWidth/minHeight for CountdownWidgetSmall) — kept in sync with those
   // dp values so this preview always matches what actually lands on the
-  // Home Screen; used everywhere a *single* card is previewed (event
-  // detail, the wizard's Appearance step, custom-widget.tsx,
-  // add-widget-to-home.tsx). 'gridSmall' is for the two wrapping-grid
-  // screens only (Widgets tab, widget-picker.tsx) — deliberately narrower
-  // than 'small' so two cards actually fit one row on a real phone width;
-  // it trades exact real-widget-size accuracy for that, so it's scoped to
-  // just those two screens rather than replacing 'small' everywhere.
-  size: 'small' | 'gridSmall' | 'full';
+  // Home Screen, everywhere a widget is previewed (single card or a
+  // wrapping grid alike).
+  size: 'small' | 'full';
 }
 
 // A fixed frame per size, not a minimum — same as how a real WidgetKit
@@ -50,8 +45,7 @@ interface Props {
 // 'full' is unrelated to this size class — it's the Preferences/Detail
 // screens' own full-width banner.
 const DIMS: Record<Props['size'], { width: number | '100%'; height?: number; minHeight?: number }> = {
-  small: { width: 175, height: 175 },
-  gridSmall: { width: 165, height: 165 },
+  small: { width: 165, height: 165 },
   full: { width: '100%', minHeight: 140 },
 };
 
@@ -96,7 +90,7 @@ export function MiniWidget({ event, size }: Props) {
   const full = size === 'full';
   const iconSize = full ? 28 : 20;
   // 'full' scale — tuned for the wide Widgets-tab/picker cards.
-  // small scale — tuned to fit the real home-screen widget's own 175×175dp
+  // small scale — tuned to fit the real home-screen widget's own 165×165dp
   // square (see androidWidgetTask.tsx, which mirrors this exact structure;
   // Android/launchers round minWidth up to a whole grid-cell count
   // regardless of resizeMode, so an earlier narrower 110dp's actual

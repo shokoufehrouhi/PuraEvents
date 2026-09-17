@@ -101,7 +101,7 @@ function CountdownCard({
   const icon = getCategoryIcon(summary.category).image;
   const { days, hours, minutes } = countdownParts(summary.nextOccurrenceISO);
   // Bumped up from an earlier 16px — the card grew from a narrow 110dp to
-  // a 175×175dp square (see app.json), so these no longer need to be this
+  // a 165×165dp square (see app.json), so these no longer need to be this
   // conservative to fit; sized to actually fill the room instead of
   // floating in it.
   const iconSize = 20;

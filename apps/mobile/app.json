@@ -76,8 +76,8 @@
               "name": "CountdownWidgetSmall",
               "label": "PuraEvents Countdown",
               "description": "See how many days are left until your next event, right on your home screen.",
-              "minWidth": "175dp",
-              "minHeight": "175dp",
+              "minWidth": "165dp",
+              "minHeight": "165dp",
               "updatePeriodMillis": 1800000
             }
           ]

@@ -1,15 +1,16 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
 import { useGatedAction } from '../../../src/ads/adGate';
+import { ConfirmModal, type ConfirmModalState } from '../../../src/components/ConfirmModal';
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
 import { MiniWidget } from '../../../src/components/MiniWidget';
 import { ShareCard } from '../../../src/components/ShareCard';
@@ -78,6 +79,9 @@ export default function EventDetailScreen() {
   // — the ShareCard graphic, independent of the visible widget preview
   // below (see ShareCard.tsx's own fixed gift-card dimensions).
   const shareCaptureRef = useRef<ViewShotRef>(null);
+  // Delete's confirm step — app-styled (ConfirmModal), not a plain OS
+  // Alert.alert, to match the rest of the app's look.
+  const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -102,22 +106,22 @@ export default function EventDetailScreen() {
   if (!event) return null;
 
   async function handleDelete() {
-    Alert.alert(t('events.deleteConfirmTitle'), t('events.deleteConfirmMessage', { title: event!.title }), [
-      { text: t('events.cancel'), style: 'cancel' },
-      {
-        text: t('events.delete'),
-        style: 'destructive',
-        // Gated on the confirmed delete itself, not on opening this
-        // confirm dialog — reviewing/cancelling stays available even when
-        // the ad gate is unavailable, only the actual mutation is blocked.
-        onPress: () =>
-          gate(async () => {
-            await cancelRemindersForEvent(event!.id);
-            await deleteEvent(event!.id);
-            router.back();
-          }),
-      },
-    ]);
+    setConfirm({
+      title: t('events.deleteConfirmTitle'),
+      message: t('events.deleteConfirmMessage', { title: event!.title }),
+      confirmLabel: t('events.delete'),
+      cancelLabel: t('events.cancel'),
+      destructive: true,
+      // Gated on the confirmed delete itself, not on opening this confirm
+      // dialog — reviewing/cancelling stays available even when the ad
+      // gate is unavailable, only the actual mutation is blocked.
+      onConfirm: () =>
+        gate(async () => {
+          await cancelRemindersForEvent(event!.id);
+          await deleteEvent(event!.id);
+          router.back();
+        }),
+    });
   }
 
   // Captures the hidden ShareCard below (see shareCaptureRef) as a PNG and
@@ -209,40 +213,18 @@ export default function EventDetailScreen() {
             </Text>
             <Text style={[typography.body, { color: colors.secondary, marginTop: 2 }]}>{dateTimeValue}</Text>
           </View>
-          {/* Opposite the title, same row — same spot Edit/Delete lived in
-              before Share/Add Widget took over the pinned footer (see
-              styles.footer below). Edit still routes to /upgrade instead
-              of the editor when frozen (over the free-plan "3 at once"
-              limit) — same lock-badge language as the Events tab's own
-              add button (app/(tabs)/index.tsx) — and dims when the event
-              is simply past, nothing left to edit. Feather's edit-3 (a
-              hollow diagonal pencil over a separate underline), per the
-              supplied reference icon — Ionicons has nothing with that
-              same silhouette. */}
-          <View style={{ flexDirection: 'row' }}>
-            <Pressable
-              onPress={goEdit}
-              disabled={isPast}
-              hitSlop={12}
-              accessibilityLabel={t('events.edit')}
-              style={[styles.headerButton, { backgroundColor: colors.surfaceAlt, opacity: isPast ? 0.4 : 1 }]}
-            >
-              <Feather name="edit-3" size={18} color={colors.text} />
-              {frozen && !isPast ? (
-                <View style={[styles.lockBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-                  <Ionicons name="lock-closed" size={9} color="#fff" />
-                </View>
-              ) : null}
-            </Pressable>
-            <Pressable
-              onPress={handleDelete}
-              hitSlop={12}
-              accessibilityLabel={t('events.delete')}
-              style={[styles.headerButton, { backgroundColor: colors.surfaceAlt, marginLeft: 10 }]}
-            >
-              <Ionicons name="trash-outline" size={20} color={colors.danger} />
-            </Pressable>
-          </View>
+          {/* Opposite the title, same row — Edit/Delete moved to the
+              pinned footer below (styles.footer) so they're reachable
+              without scrolling on a long event; Share took over this spot
+              instead, same single-icon-button treatment. */}
+          <Pressable
+            onPress={handleShare}
+            hitSlop={12}
+            accessibilityLabel={t('events.share')}
+            style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}
+          >
+            <Ionicons name="share-outline" size={20} color={colors.text} />
+          </Pressable>
         </View>
 
         {/* Rendered off-screen, never visible — ViewShot needs a real
@@ -344,11 +326,22 @@ export default function EventDetailScreen() {
           { paddingHorizontal: spacing.md, paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.outline, backgroundColor: colors.background },
         ]}
       >
-        {/* Add Widget moved to the Widgets tab (add-widget-to-home.tsx) —
-            one entry point for the real Home Screen widget, not a
-            per-event button here; see that screen's own comment. */}
-        <Button label={t('events.share')} variant="secondary" onPress={handleShare} />
+        {/* Edit/Delete, not Share — Share moved up to the title row (see
+            its own comment above); Add Widget moved to the Widgets tab
+            (add-widget-to-home.tsx) entirely, no per-event button here at
+            all. Edit still routes to /upgrade instead of the editor when
+            frozen (over the free-plan "3 at once" limit) and disables
+            when the event is simply past, nothing left to edit.
+            dangerOutline, not a solid danger fill, for Delete — sitting
+            right next to a non-destructive action, a solid red button
+            would be too loud (see Button.tsx's own comment). */}
+        <View style={{ flexDirection: 'row' }}>
+          <Button label={t('events.edit')} variant="secondary" onPress={goEdit} disabled={isPast} style={{ flex: 1, marginRight: 8 }} />
+          <Button label={t('events.delete')} variant="dangerOutline" onPress={handleDelete} style={{ flex: 1, marginLeft: 8 }} />
+        </View>
       </View>
+
+      <ConfirmModal state={confirm} onClose={() => setConfirm(null)} />
     </SafeAreaView>
   );
 }
@@ -373,20 +366,7 @@ const styles = StyleSheet.create({
   detailBadge: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   // Off-screen, not display:none — see the ViewShot host's own comment.
   shareCaptureHost: { position: 'absolute', top: 0, left: -9999 },
-  // Same badge as the Events tab's own add button (app/(tabs)/index.tsx) —
-  // a frozen Edit icon gets a small lock instead of a separate caption.
-  lockBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Fixed outside the ScrollView so Share always stays visible at the
-  // bottom of the screen — only the form content above scrolls.
+  // Fixed outside the ScrollView so Edit/Delete always stay visible at
+  // the bottom of the screen — only the form content above scrolls.
   footer: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
 });
