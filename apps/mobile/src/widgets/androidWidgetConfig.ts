@@ -68,3 +68,18 @@ export async function takePendingConfigureEventId(): Promise<string | null> {
   if (id) await AsyncStorage.removeItem(PENDING_KEY);
   return id;
 }
+
+// Non-consuming read, for the headless widgetTaskHandler's own WIDGET_ADDED
+// render (androidWidgetTask.tsx) — that handler and the ConfigurationScreen
+// are two independent JS entry points the OS can invoke in either order (on
+// MIUI in particular, WIDGET_ADDED can fire and start rendering before the
+// configure Activity's own pick() ever runs), and getConfiguredEventId is
+// still unset at that point since only pick() (via setConfiguredEventId)
+// ever writes it. Falling back straight to "soonest upcoming event"
+// (events[0]) there picked the *wrong* event whenever the one actually
+// being configured wasn't the soonest — checking this un-consumed pending
+// id first renders the *right* event immediately instead, without racing
+// or stealing the value ConfigurationScreen itself still needs to take.
+export async function peekPendingConfigureEventId(): Promise<string | null> {
+  return AsyncStorage.getItem(PENDING_KEY);
+}

@@ -61,6 +61,14 @@
     "addWidget": "Agregar widget",
     "addWidgetSuccessTitle": "Widget añadido",
     "addWidgetSuccessMessage": "Ya está en tu pantalla de inicio — puede que tengas que deslizar hasta la página donde aterrizó.",
+    "addWidgetPermissionTitle": "Activa un permiso primero",
+    "addWidgetPermissionMessage": "Tu teléfono bloqueó esto en silencio. Ve a Ajustes (o Seguridad) → Aplicaciones → PuraEvents → Permisos → \"Accesos directos de pantalla de inicio\" y actívalo, luego inténtalo de nuevo.",
+    "addWidgetTimeoutTitle": "Está tardando demasiado",
+    "addWidgetTimeoutMessage": "Agregar el widget está tardando más de lo esperado. Inténtalo de nuevo.",
+    "addingWidget": "Agregando widget…",
+    "firstRunPermissionTitle": "Un permiso rápido",
+    "firstRunPermissionMessage": "Para que puedas agregar widgets a tu pantalla de inicio, tu teléfono necesita tener activado \"Accesos directos de pantalla de inicio\" para PuraEvents. Toca Ajustes para activarlo ahora, o hazlo después — te lo recordaremos si intentas agregar un widget antes de activarlo.",
+    "openSettings": "Ajustes",
     "next": "Siguiente",
     "back": "Atrás",
     "stepBasics": "Datos básicos",
@@ -80,6 +88,12 @@
       "finance": "Finanzas",
       "health": "Salud",
       "other": "Otro"
+    },
+    "accent": {
+      "coral": "Coral",
+      "amber": "Ámbar",
+      "mint": "Menta",
+      "violet": "Violeta"
     },
     "repeat": {
       "none": "No se repite",
@@ -319,5 +333,11 @@
     "emptySubtitle": "Los eventos programados para este día aparecerán aquí.",
     "backTitle": "Inicio",
     "at": "a las"
+  },
+  "ads": {
+    "gateErrorTitle": "No se puede completar esto ahora",
+    "gateErrorMessage": "Esto necesita que se cargue un anuncio primero, y no fue posible (revisa tu conexión). Explorar sigue funcionando — inténtalo de nuevo en un momento.",
+    "gateRetry": "Reintentar",
+    "gateCancel": "Cancelar"
   }
 }

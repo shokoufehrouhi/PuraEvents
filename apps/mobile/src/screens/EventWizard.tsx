@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, ImageBackground, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useGatedAction } from '../ads/adGate';
 import { CivilCalendarPicker } from '../components/CivilCalendarPicker';
 import { EventIcon } from '../components/EventIcon';
 import { MiniWidget } from '../components/MiniWidget';
@@ -86,6 +87,7 @@ export function EventWizard({ mode, eventId }: Props) {
   const insets = useSafeAreaInsets();
   const { prefs } = usePreferences();
   const { isPro } = usePro();
+  const gate = useGatedAction();
 
   const [expanded, setExpanded] = useState<SectionKey | null>(null);
   const [accentOpen, setAccentOpen] = useState(false);
@@ -346,9 +348,7 @@ export function EventWizard({ mode, eventId }: Props) {
             style={[styles.dropdownField, { borderColor: colors.outline, borderRadius: radius.md }]}
           >
             <View style={[styles.dot, { backgroundColor: accents[accentColor] }]} />
-            <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10, textTransform: 'capitalize' }]}>
-              {accentColor}
-            </Text>
+            <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t(`events.accent.${accentColor}`)}</Text>
             <Ionicons name={accentOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
           </Pressable>
           {accentOpen ? (
@@ -660,7 +660,11 @@ export function EventWizard({ mode, eventId }: Props) {
       </ScrollView>
 
       <View style={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.md }}>
-        <Button label={mode === 'create' ? t('events.createEvent') : t('events.save')} onPress={handleSave} disabled={!canSave} />
+        <Button
+          label={mode === 'create' ? t('events.createEvent') : t('events.save')}
+          onPress={() => gate(handleSave)}
+          disabled={!canSave}
+        />
       </View>
     </View>
   );

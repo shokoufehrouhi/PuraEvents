@@ -20,8 +20,14 @@ export default function LanguagePickerScreen() {
   const { colors, spacing, typography } = useTheme();
 
   function pick(lang: SupportedLanguage) {
-    i18n.changeLanguage(lang);
+    // Navigate back first, then switch language on the next tick — every
+    // screen subscribes to the active language via useTranslation, so
+    // changeLanguage() re-renders the whole app tree, and doing that
+    // synchronously while react-native-screens is mid-pop-transition
+    // crashes with "ScreenStackFragment added into a non-stack container."
+    // Deferring the re-render past this navigation event avoids the race.
     router.back();
+    setTimeout(() => i18n.changeLanguage(lang), 0);
   }
 
   return (

@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '../src/components/ui/Button';
 import { Section } from '../src/components/ui/Section';
@@ -21,6 +22,7 @@ export default function ReminderPickerScreen() {
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { isPro } = usePro();
+  const insets = useSafeAreaInsets();
   const { current } = useLocalSearchParams<{ current?: string }>();
   const [selected, setSelected] = useState<number[]>(() => {
     let parsed: number[] = [];
@@ -59,7 +61,7 @@ export default function ReminderPickerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 + insets.bottom }}>
         <Section>
           {PRESET_REMINDER_OFFSETS.map((offset) => {
             const isSelected = selected.includes(offset);
@@ -82,7 +84,7 @@ export default function ReminderPickerScreen() {
       <View
         style={[
           styles.footer,
-          { padding: spacing.md, backgroundColor: colors.background, borderTopColor: colors.outline },
+          { padding: spacing.md, paddingBottom: insets.bottom + spacing.md, backgroundColor: colors.background, borderTopColor: colors.outline },
         ]}
       >
         <Button label={t('events.done')} onPress={done} style={{ borderRadius: radius.md }} />

@@ -8,6 +8,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useTranslation } from 'react-i18next';
 
+import { AdGateProvider } from '../src/ads/adGate';
+import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
 import { extractNotificationInfo, initNotificationLogListeners, requestNotificationPermissions, type NotificationInfo } from '../src/notifications';
 import { usePro } from '../src/subscription';
@@ -237,6 +239,7 @@ function Navigation() {
           check above). Same popup notification-history.tsx's own row tap
           opens. */}
       <NotificationDetailModal notification={tappedNotification} onClose={() => setTappedNotification(null)} />
+      <HomeScreenShortcutPrompt />
     </>
   );
 }
@@ -245,7 +248,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <PreferencesProvider>
-        <Navigation />
+        <AdGateProvider>
+          <Navigation />
+        </AdGateProvider>
       </PreferencesProvider>
     </SafeAreaProvider>
   );

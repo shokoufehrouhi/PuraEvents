@@ -61,6 +61,14 @@
     "addWidget": "Add Widget",
     "addWidgetSuccessTitle": "Widget Added",
     "addWidgetSuccessMessage": "It's now on your Home Screen — you may need to swipe to the page it landed on.",
+    "addWidgetPermissionTitle": "Turn on a permission first",
+    "addWidgetPermissionMessage": "Your phone blocked this silently. Go to Settings (or Security) → Apps → PuraEvents → Permissions → \"Home screen shortcuts\" and turn it on, then try again.",
+    "addWidgetTimeoutTitle": "Taking too long",
+    "addWidgetTimeoutMessage": "Adding the widget is taking longer than expected. Please try again.",
+    "addingWidget": "Adding widget…",
+    "firstRunPermissionTitle": "One quick permission",
+    "firstRunPermissionMessage": "To let you add widgets to your Home Screen, your phone needs \"Home screen shortcuts\" turned on for PuraEvents. Tap Settings to turn it on now, or do it later — you'll be reminded if you try to add a widget before it's on.",
+    "openSettings": "Settings",
     "next": "Next",
     "back": "Back",
     "stepBasics": "Basics",
@@ -80,6 +88,12 @@
       "finance": "Finance",
       "health": "Health",
       "other": "Other"
+    },
+    "accent": {
+      "coral": "Coral",
+      "amber": "Amber",
+      "mint": "Mint",
+      "violet": "Violet"
     },
     "repeat": {
       "none": "Does not repeat",
@@ -319,5 +333,11 @@
     "emptySubtitle": "Events scheduled for this day will appear here.",
     "backTitle": "Home",
     "at": "at"
+  },
+  "ads": {
+    "gateErrorTitle": "Can't complete this right now",
+    "gateErrorMessage": "This needs an ad to load first, and it couldn't (check your connection). Browsing still works — try again in a moment.",
+    "gateRetry": "Try Again",
+    "gateCancel": "Cancel"
   }
 }

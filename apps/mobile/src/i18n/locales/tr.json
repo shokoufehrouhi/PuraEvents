@@ -61,6 +61,14 @@
     "addWidget": "Widget Ekle",
     "addWidgetSuccessTitle": "Widget Eklendi",
     "addWidgetSuccessMessage": "Artık ana ekranında — eklendiği sayfaya kaydırman gerekebilir.",
+    "addWidgetPermissionTitle": "Önce bir izin aç",
+    "addWidgetPermissionMessage": "Telefonun bunu sessizce engelledi. Ayarlar'a (veya Güvenlik'e) → Uygulamalar → PuraEvents → İzinler → \"Ana ekran kısayolları\" bölümüne git ve aç, sonra tekrar dene.",
+    "addWidgetTimeoutTitle": "Bu çok uzun sürüyor",
+    "addWidgetTimeoutMessage": "Widget eklemek beklenenden uzun sürüyor. Lütfen tekrar dene.",
+    "addingWidget": "Widget ekleniyor…",
+    "firstRunPermissionTitle": "Hızlı bir izin",
+    "firstRunPermissionMessage": "Widget'ları Ana Ekranına ekleyebilmen için telefonunda PuraEvents için \"Ana ekran kısayolları\" açık olmalı. Şimdi açmak için Ayarlar'a dokun, ya da sonra yaparsın — açık olmadan bir widget eklemeye çalışırsan sana hatırlatırız.",
+    "openSettings": "Ayarlar",
     "next": "İleri",
     "back": "Geri",
     "stepBasics": "Temel Bilgiler",
@@ -80,6 +88,12 @@
       "finance": "Finans",
       "health": "Sağlık",
       "other": "Diğer"
+    },
+    "accent": {
+      "coral": "Mercan",
+      "amber": "Kehribar",
+      "mint": "Nane",
+      "violet": "Mor"
     },
     "repeat": {
       "none": "Tekrarlanmaz",
@@ -319,5 +333,11 @@
     "emptySubtitle": "Bu gün için planlanan etkinlikler burada görünecek.",
     "backTitle": "Ana Sayfa",
     "at": "saat"
+  },
+  "ads": {
+    "gateErrorTitle": "Bu şu anda tamamlanamıyor",
+    "gateErrorMessage": "Bunun için önce bir reklamın yüklenmesi gerekiyor ve yüklenemedi (bağlantını kontrol et). Gezinmek hâlâ çalışıyor — birazdan tekrar dene.",
+    "gateRetry": "Tekrar Dene",
+    "gateCancel": "İptal"
   }
 }

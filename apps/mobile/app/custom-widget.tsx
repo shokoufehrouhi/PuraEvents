@@ -29,7 +29,7 @@ import { getActiveWidgetIds } from '../src/utils/widgetAccess';
 const DEFAULT_SAMPLE: PurEvent = {
   id: 'sample',
   title: 'New York',
-  dateTimeISO: dayjs().add(15, 'day').toISOString(),
+  dateTimeISO: dayjs().add(3, 'day').toISOString(),
   timezone: 'America/New_York',
   category: 'travel',
   accentColor: 'coral',

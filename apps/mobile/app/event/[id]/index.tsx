@@ -5,10 +5,12 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
+import { useGatedAction } from '../../../src/ads/adGate';
+import { AppAlertModal, type AppAlertState } from '../../../src/components/AppAlertModal';
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
 import { MiniWidget } from '../../../src/components/MiniWidget';
 import { ShareCard } from '../../../src/components/ShareCard';
@@ -24,6 +26,7 @@ import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
 import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
+import { openHomeScreenShortcutPermissionSettings } from '../../../src/utils/miuiPermissions';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
 import { requestPinWidgetForEvent } from '../../../src/widgets/androidWidgetTask';
@@ -67,6 +70,7 @@ export default function EventDetailScreen() {
   const { colors, spacing, radius, typography } = useTheme();
   const { prefs } = usePreferences();
   const { isPro } = usePro();
+  const gate = useGatedAction();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [event, setEvent] = useState<PurEvent | null>(null);
@@ -81,6 +85,10 @@ export default function EventDetailScreen() {
   // equivalent exists, since Apple gives apps no API to place a widget
   // themselves at all.
   const [requestingHomeScreenWidget, setRequestingHomeScreenWidget] = useState(false);
+  // Success/declined/MIUI-permission-blocked result of handleAddWidget —
+  // shown via AppAlertModal (app-styled), not Alert.alert (a plain OS
+  // dialog that doesn't match the rest of the app).
+  const [widgetAlert, setWidgetAlert] = useState<AppAlertState | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -110,11 +118,15 @@ export default function EventDetailScreen() {
       {
         text: t('events.delete'),
         style: 'destructive',
-        onPress: async () => {
-          await cancelRemindersForEvent(event!.id);
-          await deleteEvent(event!.id);
-          router.back();
-        },
+        // Gated on the confirmed delete itself, not on opening this
+        // confirm dialog — reviewing/cancelling stays available even when
+        // the ad gate is unavailable, only the actual mutation is blocked.
+        onPress: () =>
+          gate(async () => {
+            await cancelRemindersForEvent(event!.id);
+            await deleteEvent(event!.id);
+            router.back();
+          }),
       },
     ]);
   }
@@ -153,11 +165,30 @@ export default function EventDetailScreen() {
     }
     setRequestingHomeScreenWidget(true);
     try {
-      const accepted = await requestPinWidgetForEvent(event!.id);
-      if (accepted) {
-        Alert.alert(t('events.addWidgetSuccessTitle'), t('events.addWidgetSuccessMessage'));
+      // requestPinWidgetForEvent's own native call, and the up-to-45s
+      // silentlyBlocked-detection wait inside it, both have no hard
+      // ceiling on their own — this outer timeout (comfortably above that
+      // 45s) means the full-screen loading state below always resolves to
+      // *something* rather than blocking the screen indefinitely on some
+      // device/launcher quirk (this flow has already run into plenty of
+      // MIUI unpredictability).
+      const result = await Promise.race([
+        requestPinWidgetForEvent(event!.id),
+        new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 70_000)),
+      ]);
+      if (result === 'added') {
+        setWidgetAlert({ title: t('events.addWidgetSuccessTitle'), message: t('events.addWidgetSuccessMessage'), variant: 'success' });
+      } else if (result === 'silentlyBlocked') {
+        setWidgetAlert({
+          title: t('events.addWidgetPermissionTitle'),
+          message: t('events.addWidgetPermissionMessage'),
+          variant: 'warning',
+          onSettings: openHomeScreenShortcutPermissionSettings,
+        });
+      } else if (result === 'timeout') {
+        setWidgetAlert({ title: t('events.addWidgetTimeoutTitle'), message: t('events.addWidgetTimeoutMessage'), variant: 'error' });
       } else {
-        Alert.alert(t('addWidgetHome.unsupportedTitle'), t('addWidgetHome.unsupportedMessage'));
+        setWidgetAlert({ title: t('addWidgetHome.unsupportedTitle'), message: t('addWidgetHome.unsupportedMessage'), variant: 'error' });
       }
     } finally {
       setRequestingHomeScreenWidget(false);
@@ -339,7 +370,7 @@ export default function EventDetailScreen() {
         <Section title={t('events.appearanceLabel')}>
           <DetailRow
             label={t('events.colorLabel')}
-            value={`${event.accentColor.charAt(0).toUpperCase()}${event.accentColor.slice(1)} · ${t(`events.category.${event.category}`)}`}
+            value={`${t(`events.accent.${event.accentColor}`)} · ${t(`events.category.${event.category}`)}`}
             badge={
               <LinearGradient
                 colors={[accents[event.accentColor], darken(accents[event.accentColor], 0.35)]}
@@ -379,6 +410,23 @@ export default function EventDetailScreen() {
           />
         </View>
       </View>
+
+      <AppAlertModal alert={widgetAlert} onClose={() => setWidgetAlert(null)} />
+
+      {/* Full-screen block, not just the button's own spinner (see
+          Button's loading prop below) — the OS-level pin flow this button
+          triggers can involve a real wait (see requestPinWidgetForEvent's
+          own comment on the 60s timeout), so this makes it obvious the
+          whole app is busy with it, not just that one button. Not
+          dismissible — there's nothing useful to cancel back into mid-wait. */}
+      <Modal visible={requestingHomeScreenWidget} transparent animationType="fade">
+        <View style={[styles.loadingOverlay, { backgroundColor: 'rgba(0,0,0,0.4)' }]}>
+          <View style={[styles.loadingCard, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg }]}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={[typography.bodyStrong, { color: colors.text, marginTop: spacing.md }]}>{t('events.addingWidget')}</Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -419,4 +467,6 @@ const styles = StyleSheet.create({
   // Fixed outside the ScrollView so Share/Add Widget always stay visible
   // at the bottom of the screen — only the form content above scrolls.
   footer: { paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
+  loadingOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingCard: { alignItems: 'center', minWidth: 180 },
 });

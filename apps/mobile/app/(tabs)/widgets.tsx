@@ -20,11 +20,17 @@ import { getCategoryPhotos } from '../../src/utils/categoryPhoto';
 import { persistRemoteImage } from '../../src/utils/persistImage';
 import { getActiveWidgetIds, isWidgetFrozen } from '../../src/utils/widgetAccess';
 
+// Fixed placeholder — same "New York" convention as custom-widget.tsx's own
+// DEFAULT_SAMPLE, per explicit request that this preview never show a real
+// event's data (it used to get overwritten by whichever real event was
+// soonest upcoming, which read as this screen silently editing a random
+// event the moment it opened).
 const SAMPLE_EVENT: PurEvent = {
   id: 'sample',
-  title: 'Tokyo Trip',
-  dateTimeISO: new Date(Date.now() + 18 * 86400000 + 6 * 3600000 + 24 * 60000).toISOString(),
-  timezone: 'Asia/Tokyo',
+  title: 'New York',
+  note: "Don't forget your passport",
+  dateTimeISO: dayjs().add(3, 'day').toISOString(),
+  timezone: 'UTC',
   category: 'travel',
   accentColor: 'coral',
   cardTheme: 'color',
@@ -42,15 +48,17 @@ const CATEGORY_PHOTO_COUNT = 4;
 
 // Categories' Pro photo tiles aren't tied to a real event yet, so they used
 // to show nothing but the photo + PRO badge — no day-count/title overlay at
-// all, unlike "My Widgets" cards right above them. Cycled across each
-// category's photos (4 per category, see fetchCategoryPhotos) purely for a
-// realistic, varied demo look — not persisted/real data.
-const SAMPLE_WIDGET_PREVIEWS: { title: string; days: number; note: string }[] = [
-  { title: 'Birthday', days: 2, note: 'Order the cake' },
-  { title: 'Meeting', days: 1, note: 'Bring the laptop' },
-  { title: 'Trip', days: 5, note: 'Pack the passport' },
-  { title: 'Reminder', days: 3, note: 'Check the guest list' },
-];
+// all, unlike "My Widgets" cards right above them. One fixed title/note per
+// category (not cycled per photo slot) — a believable event that category
+// would actually hold, not an arbitrary rotation — not persisted/real data.
+const CATEGORY_PREVIEWS: Record<EventCategory, { title: string; days: number; note: string }> = {
+  personal: { title: 'Birthday', days: 2, note: 'Order the cake' },
+  work: { title: 'Meeting', days: 1, note: 'Bring the laptop' },
+  travel: { title: 'New York', days: 3, note: "Don't forget your passport" },
+  finance: { title: 'Rent Due', days: 5, note: 'Check your budget' },
+  health: { title: 'Dentist Appointment', days: 4, note: 'Bring your insurance card' },
+  other: { title: 'Call with Alex', days: 2, note: 'Prepare talking points' },
+};
 
 // This IS the Choose Widget experience (Built-in / My Widgets / Categories,
 // search, "+ New custom") — a dedicated tab has room to embed it directly.
@@ -64,6 +72,9 @@ export default function WidgetsScreen() {
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { isPro } = usePro();
+  // Purely visual from here on — never overwritten by a real event (see
+  // SAMPLE_EVENT's own comment). Which real event a Built-in/Category
+  // selection actually applies to is tracked separately, below.
   const [sample, setSample] = useState<PurEvent>(SAMPLE_EVENT);
   const [tab, setTab] = useState<Tab>('mine');
   const [query, setQuery] = useState('');
@@ -72,25 +83,28 @@ export default function WidgetsScreen() {
   const [categoryPhotos, setCategoryPhotos] = useState<Partial<Record<EventCategory, string[]>>>({});
   const [sortBy, setSortBy] = useState<SortBy>('added');
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  // The event a Built-in theme/Category photo pick (see applySelection)
+  // actually writes onto — the soonest-upcoming real event, same
+  // "most-relevant" definition as before, just no longer conflated with
+  // the preview's own (now fixed) display data.
+  const [targetEventId, setTargetEventId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       listEvents().then((loaded) => {
         setEvents(loaded);
         const upcoming = loaded.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
-        if (upcoming) setSample(upcoming);
+        setTargetEventId(upcoming ? upcoming.id : null);
       });
       listWidgets().then(setWidgets);
     }, [])
   );
 
   // Each saved widget (see storage/widgets.ts) paired with whichever real
-  // event, if any, currently links to it (event.widgetId) — used for a
-  // realistic title/date/category/note in its preview card instead of the
-  // widget's own bare style fields, which don't include any of that. A
-  // widget nothing currently points at (its old event switched to a
-  // different photo, or it was never attached in the first place) still
-  // shows up here — falls back to a generic placeholder further down.
+  // event, if any, currently links to it (event.widgetId) — used only for
+  // this card's caption label and for search/sort below (see
+  // filteredMyWidgets/sortedMyWidgets), never for the card's own preview
+  // content (see widgetDisplayEvent's own comment for why).
   const widgetCards = useMemo(
     () => widgets.map((widget) => ({ widget, linkedEvent: events.find((e) => e.widgetId === widget.id) })),
     [widgets, events]
@@ -102,21 +116,20 @@ export default function WidgetsScreen() {
   // made ever looks deleted, just locked until Pro comes back.
   const activeWidgetIds = useMemo(() => getActiveWidgetIds(widgets, isPro), [widgets, isPro]);
 
-  function widgetDisplayEvent(widget: Widget, linkedEvent?: PurEvent): PurEvent {
-    const base: PurEvent =
-      linkedEvent ?? {
-        id: `widget-${widget.id}`,
-        title: widget.name || 'Widget',
-        dateTimeISO: dayjs().add(7, 'day').toISOString(),
-        timezone: 'UTC',
-        category: 'other',
-        accentColor: widget.accentColor ?? 'violet',
-        cardTheme: 'custom',
-        repeat: 'none',
-        reminders: [],
-        createdAt: widget.createdAt,
-        updatedAt: widget.updatedAt,
-      };
+  // "My Widgets" is a style/photo gallery, not a preview of whichever real
+  // event a widget happens to be linked to right now (the same widget can
+  // be linked to more than one, or none) — always the same fixed
+  // placeholder fields as SAMPLE_EVENT above, per explicit request
+  // (including the title: widget.name shows separately as this card's own
+  // caption label above it, not inside the card itself).
+  function widgetDisplayEvent(widget: Widget): PurEvent {
+    const base: PurEvent = {
+      ...SAMPLE_EVENT,
+      id: `widget-${widget.id}`,
+      accentColor: widget.accentColor ?? 'violet',
+      createdAt: widget.createdAt,
+      updatedAt: widget.updatedAt,
+    };
     return {
       ...base,
       cardTheme: 'custom',
@@ -145,8 +158,6 @@ export default function WidgetsScreen() {
     };
   }, []);
 
-  const isRealSample = sample.id !== 'sample';
-
   // widgetId defaults to cleared — Built-in/Categories picks (the only two
   // callers here) aren't reusing a saved widget, so any leftover widgetId
   // from whatever this event was showing before must go too, or it'd keep
@@ -156,7 +167,7 @@ export default function WidgetsScreen() {
   async function applySelection(selection: WidgetSelection) {
     const patch: WidgetSelection = { widgetId: undefined, ...selection };
     setSample((s) => ({ ...s, ...patch }));
-    if (isRealSample) await updateEvent(sample.id, patch);
+    if (targetEventId) await updateEvent(targetEventId, patch);
   }
 
   // Free plan: 1 saved widget total, gating only "+ New custom" (see
@@ -190,7 +201,7 @@ export default function WidgetsScreen() {
       router.push('/upgrade');
       return;
     }
-    router.push({ pathname: '/custom-widget', params: { eventId: isRealSample ? sample.id : '' } });
+    router.push({ pathname: '/custom-widget', params: { eventId: targetEventId ?? '' } });
   }
 
   async function pickCategoryPhoto(url: string) {
@@ -382,7 +393,7 @@ export default function WidgetsScreen() {
                     ) : null}
                   </View>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="small" />
+                    <MiniWidget event={widgetDisplayEvent(widget)} size="small" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -425,7 +436,7 @@ export default function WidgetsScreen() {
                         so a whole run of fallbacks isn't one flat color. */}
                     {Array.from({ length: CATEGORY_PHOTO_COUNT }).map((_, i) => {
                       const url = photos[i];
-                      const preview = SAMPLE_WIDGET_PREVIEWS[i % SAMPLE_WIDGET_PREVIEWS.length];
+                      const preview = CATEGORY_PREVIEWS[category];
                       const previewEvent: PurEvent = {
                         id: `preview-${category}-${i}`,
                         title: preview.title,

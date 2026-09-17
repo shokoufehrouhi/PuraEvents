@@ -20,6 +20,7 @@ import { darken } from '../utils/color';
 import {
   clearConfiguredEventId,
   getConfiguredEventId,
+  peekPendingConfigureEventId,
   setConfiguredEventId,
   setPendingConfigureEventId,
   takePendingConfigureEventId,
@@ -271,14 +272,63 @@ async function renderSummaryWidget(summary: WidgetEventSummary | null, renderWid
 
 // Which event a *specific* widget instance (identified by its own
 // widgetId — Android natively supports multiple independent instances of
-// one provider) is configured to show, falling back to the soonest
-// upcoming event if nothing's been picked yet (shouldn't normally happen,
-// since app.json's widgetFeatures: 'reconfigurable' forces the
-// ConfigurationScreen below before a new instance is ever added).
+// one provider) is configured to show. Checks, in order: the real
+// per-widgetId choice (getConfiguredEventId, set once ConfigurationScreen's
+// own pick() has actually run); the still-unconsumed pending eventId
+// (peekPendingConfigureEventId) — set just before the OS "Add to Home
+// screen?" prompt (see requestPinWidgetForEvent) for the exact event this
+// new instance is *about* to be configured to, covering the case where
+// this handler's own WIDGET_ADDED fires before ConfigurationScreen's pick()
+// does (seen on MIUI — without this, that race rendered the soonest
+// *upcoming* event instead of the one actually requested, e.g. adding a
+// widget for event B showed event A's data if A happened to be sooner);
+// and only then the soonest upcoming event as a last resort (a widget
+// opened via the generic, no-specific-event Widgets tab button, or some
+// other edge case where nothing was ever pending).
 async function resolveSummaryForWidget(widgetId: number): Promise<WidgetEventSummary | null> {
   const events = await listUpcomingEventsForWidgets();
   const configuredId = await getConfiguredEventId(widgetId);
-  return events.find((e) => e.id === configuredId) ?? events[0] ?? null;
+  if (configuredId) {
+    const configured = events.find((e) => e.id === configuredId);
+    if (configured) return configured;
+  }
+  const pendingId = await peekPendingConfigureEventId();
+  if (pendingId) {
+    const pending = events.find((e) => e.id === pendingId);
+    if (pending) return pending;
+  }
+  return events[0] ?? null;
+}
+
+// Fallback for launchers that bind a requestPinWidget()-created instance
+// directly and never fire the OS's own ACTION_APPWIDGET_CONFIGURE at all —
+// confirmed on MIUI's own Home via adb logcat: the widget gets bound and
+// added to the workspace straight away, with no configure Activity ever
+// started. ConfigurationScreen's own pick() (the only other place that
+// turns the pending eventId stashed by requestPinWidgetForEvent into a real
+// per-widgetId choice, via setConfiguredEventId) then never runs, so that
+// pending id sits unconsumed forever. The widget itself still renders the
+// right event (resolveSummaryForWidget's own peekPendingConfigureEventId
+// fallback covers that already), but requestPinWidgetForEvent's own
+// success/failure detection only knows the pin actually worked once that id
+// gets *consumed* — so it waits the full 45s and wrongly reports
+// 'silentlyBlocked' (a bogus MIUI-permission error) for a widget that was
+// actually added successfully. Called only after the WIDGET_ADDED retries
+// below, not immediately, so a launcher that *does* invoke
+// ConfigurationScreen normally still gets first claim on the pending id —
+// this is strictly a safety net for the ones that don't.
+async function commitPendingConfigureEventIfUnclaimed(
+  widgetId: number,
+  renderWidget: (el: React.JSX.Element) => void,
+): Promise<void> {
+  if (await getConfiguredEventId(widgetId)) return;
+  const pendingId = await takePendingConfigureEventId();
+  if (!pendingId) return;
+  const events = await listUpcomingEventsForWidgets();
+  const pending = events.find((e) => e.id === pendingId);
+  if (!pending) return;
+  await setConfiguredEventId(widgetId, pendingId);
+  renderWidget(await buildCountdownWidgetElement(pending));
 }
 
 const widgetTaskHandler: WidgetTaskHandler = async ({ widgetAction, widgetInfo, renderWidget }) => {
@@ -311,6 +361,7 @@ const widgetTaskHandler: WidgetTaskHandler = async ({ widgetAction, widgetInfo, 
       await new Promise((resolve) => setTimeout(resolve, delayMs));
       renderWidget(element);
     }
+    await commitPendingConfigureEventIfUnclaimed(widgetInfo.widgetId, renderWidget);
   }
 };
 
@@ -333,9 +384,40 @@ export function initAndroidWidgetTaskHandler(): void {
 // never the widgetId of the instance it goes on to create (the OS decides
 // that itself, afterward), so there's no id yet to call
 // setConfiguredEventId with directly.
-export async function requestPinWidgetForEvent(eventId: string): Promise<boolean> {
+//
+// 'declined': the OS-level request itself was rejected/unsupported (the
+// normal requestPinWidget() false case).
+// 'silentlyBlocked': requestPinWidget() resolved true — Android only
+// confirms the *request* reached the launcher, never whether the launcher
+// actually went through with it — but no widget was ever actually
+// configured. Confirmed on MIUI: its "Home screen shortcuts" permission
+// (off by default, buried in its Security app, not a normal Android
+// runtime permission a manifest entry or a permission prompt can grant)
+// can silently reject the pin, and requestPinWidget() still resolves
+// `true` regardless — there is no path for that rejection to reach JS at
+// all. Detected indirectly: if ConfigurationScreen's own pick() never ran
+// (never consumed the pending id we stashed) within a generous window,
+// nothing was actually added. The window has to be genuinely generous
+// (not the original ~8s) — a real, successful add can take a while too
+// (MIUI's own placement animation, or this app sitting backgrounded while
+// its home-screen confirmation is up), and a false "blocked" on a real
+// success is exactly as bad as a false "added" on a real block.
+// 'added': ConfigurationScreen's pick() consumed the pending id — a real
+// instance exists and was configured to this event.
+export async function requestPinWidgetForEvent(eventId: string): Promise<'added' | 'declined' | 'silentlyBlocked'> {
   await setPendingConfigureEventId(eventId);
-  return requestPinWidget({ widgetName: ANDROID_WIDGET_NAME });
+  const accepted = await requestPinWidget({ widgetName: ANDROID_WIDGET_NAME });
+  if (!accepted) {
+    await takePendingConfigureEventId();
+    return 'declined';
+  }
+  for (let i = 0; i < 45; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const stillPending = await peekPendingConfigureEventId();
+    if (stillPending !== eventId) return 'added';
+  }
+  await takePendingConfigureEventId();
+  return 'silentlyBlocked';
 }
 
 // Shown once, automatically, the moment a new CountdownWidget instance is

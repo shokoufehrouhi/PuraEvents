@@ -61,6 +61,14 @@
     "addWidget": "Widget hinzufügen",
     "addWidgetSuccessTitle": "Widget hinzugefügt",
     "addWidgetSuccessMessage": "Es ist jetzt auf deinem Home-Bildschirm — eventuell musst du zur Seite wischen, auf der es gelandet ist.",
+    "addWidgetPermissionTitle": "Erst eine Berechtigung aktivieren",
+    "addWidgetPermissionMessage": "Dein Handy hat das stillschweigend blockiert. Geh zu Einstellungen (oder Sicherheit) → Apps → PuraEvents → Berechtigungen → „Startbildschirm-Verknüpfungen“ und schalte sie ein, dann versuch es erneut.",
+    "addWidgetTimeoutTitle": "Das dauert zu lange",
+    "addWidgetTimeoutMessage": "Das Hinzufügen des Widgets dauert länger als erwartet. Bitte versuch es erneut.",
+    "addingWidget": "Widget wird hinzugefügt …",
+    "firstRunPermissionTitle": "Eine kurze Berechtigung",
+    "firstRunPermissionMessage": "Damit du Widgets zu deinem Home-Bildschirm hinzufügen kannst, muss dein Handy „Startbildschirm-Verknüpfungen“ für PuraEvents aktiviert haben. Tippe auf Einstellungen, um es jetzt zu aktivieren, oder mach es später — wir erinnern dich, falls du ein Widget hinzufügen willst, bevor es aktiviert ist.",
+    "openSettings": "Einstellungen",
     "next": "Weiter",
     "back": "Zurück",
     "stepBasics": "Basis",
@@ -80,6 +88,12 @@
       "finance": "Finanzen",
       "health": "Gesundheit",
       "other": "Sonstiges"
+    },
+    "accent": {
+      "coral": "Koralle",
+      "amber": "Bernstein",
+      "mint": "Minze",
+      "violet": "Violett"
     },
     "repeat": {
       "none": "Wiederholt sich nicht",
@@ -319,5 +333,11 @@
     "emptySubtitle": "Für diesen Tag geplante Ereignisse erscheinen hier.",
     "backTitle": "Start",
     "at": "um"
+  },
+  "ads": {
+    "gateErrorTitle": "Das geht gerade nicht",
+    "gateErrorMessage": "Dafür muss zuerst eine Anzeige geladen werden, was nicht geklappt hat (Verbindung prüfen). Stöbern funktioniert weiterhin — versuch es gleich noch einmal.",
+    "gateRetry": "Erneut versuchen",
+    "gateCancel": "Abbrechen"
   }
 }

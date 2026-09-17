@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EventIcon } from '../src/components/EventIcon';
 import { MiniWidget } from '../src/components/MiniWidget';
@@ -28,14 +29,17 @@ const CATEGORY_PHOTO_COUNT = 4;
 
 // Same demo overlay as the Widgets tab's own Categories section (see
 // app/(tabs)/widgets.tsx) — Pro photo tiles aren't tied to a real event, so
-// cycle a small set of varied sample title/day-count pairs across each
-// category's photos purely for a realistic look, not persisted/real data.
-const SAMPLE_WIDGET_PREVIEWS: { title: string; days: number; note: string }[] = [
-  { title: 'Birthday', days: 2, note: 'Order the cake' },
-  { title: 'Meeting', days: 1, note: 'Bring the laptop' },
-  { title: 'Trip', days: 5, note: 'Pack the passport' },
-  { title: 'Reminder', days: 3, note: 'Check the guest list' },
-];
+// one fixed title/note per category (not cycled per photo slot) — a
+// believable event that category would actually hold, not an arbitrary
+// rotation — not persisted/real data.
+const CATEGORY_PREVIEWS: Record<EventCategory, { title: string; days: number; note: string }> = {
+  personal: { title: 'Birthday', days: 2, note: 'Order the cake' },
+  work: { title: 'Meeting', days: 1, note: 'Bring the laptop' },
+  travel: { title: 'New York', days: 3, note: "Don't forget your passport" },
+  finance: { title: 'Rent Due', days: 5, note: 'Check your budget' },
+  health: { title: 'Dentist Appointment', days: 4, note: 'Bring your insurance card' },
+  other: { title: 'Call with Alex', days: 2, note: 'Prepare talking points' },
+};
 
 // Full-screen "gallery" replacement for the old inline swatch row — Pro can
 // hold more than 1 custom widget, so browsing/searching/picking one needs
@@ -49,6 +53,7 @@ export default function WidgetPickerScreen() {
   const router = useRouter();
   const { colors, spacing, radius, typography } = useTheme();
   const { isPro } = usePro();
+  const insets = useSafeAreaInsets();
   const { eventId, cardTheme: currentCardTheme, photoUri: currentPhotoUri, category: currentCategory } = useLocalSearchParams<{
     eventId?: string;
     cardTheme?: string;
@@ -84,9 +89,9 @@ export default function WidgetPickerScreen() {
   }, [eventId]);
 
   // Each saved widget paired with whichever real event, if any, currently
-  // links to it — see the identical pairing in app/(tabs)/widgets.tsx for
-  // why (a realistic preview card, and staying visible even when nothing
-  // currently points at it).
+  // links to it — used only for this card's caption label and for search
+  // below (filteredMyWidgets), never for the card's own preview content
+  // (see widgetDisplayEvent's own comment for why).
   const widgetCards = useMemo(
     () => widgets.map((widget) => ({ widget, linkedEvent: events.find((e) => e.widgetId === widget.id) })),
     [widgets, events]
@@ -96,21 +101,27 @@ export default function WidgetPickerScreen() {
   // the most recently *created* one(s) stay active — see widgetAccess.ts.
   const activeWidgetIds = useMemo(() => getActiveWidgetIds(widgets, isPro), [widgets, isPro]);
 
-  function widgetDisplayEvent(widget: Widget, linkedEvent?: PurEvent): PurEvent {
-    const base: PurEvent =
-      linkedEvent ?? {
-        id: `widget-${widget.id}`,
-        title: widget.name || 'Widget',
-        dateTimeISO: dayjs().add(7, 'day').toISOString(),
-        timezone: 'UTC',
-        category: 'other',
-        accentColor: widget.accentColor ?? 'violet',
-        cardTheme: 'custom',
-        repeat: 'none',
-        reminders: [],
-        createdAt: widget.createdAt,
-        updatedAt: widget.updatedAt,
-      };
+  // "My Widgets" is a style/photo gallery, not a preview of whichever real
+  // event a widget happens to be linked to right now (the same widget can
+  // be linked to more than one, or none) — always the same fixed
+  // placeholder fields as previewBase below, per explicit request
+  // (including the title: widget.name shows separately as this card's own
+  // caption label above it, not inside the card itself).
+  function widgetDisplayEvent(widget: Widget): PurEvent {
+    const base: PurEvent = {
+      id: `widget-${widget.id}`,
+      title: 'New York',
+      note: "Don't forget your passport",
+      dateTimeISO: dayjs().add(3, 'day').toISOString(),
+      timezone: 'UTC',
+      category: 'travel',
+      accentColor: widget.accentColor ?? 'violet',
+      cardTheme: 'custom',
+      repeat: 'none',
+      reminders: [],
+      createdAt: widget.createdAt,
+      updatedAt: widget.updatedAt,
+    };
     return {
       ...base,
       cardTheme: 'custom',
@@ -131,7 +142,7 @@ export default function WidgetPickerScreen() {
       id: 'preview',
       title: 'New York',
       note: "Don't forget your passport",
-      dateTimeISO: dayjs().add(15, 'day').toISOString(),
+      dateTimeISO: dayjs().add(3, 'day').toISOString(),
       timezone: 'UTC',
       category: (currentCategory as EventCategory) || 'travel',
       accentColor: 'coral',
@@ -268,7 +279,7 @@ export default function WidgetPickerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 + insets.bottom }}>
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md }]}>
           <Ionicons name="search" size={16} color={colors.secondary} />
           <TextInput
@@ -304,7 +315,7 @@ export default function WidgetPickerScreen() {
                 <Pressable key={key} onPress={() => selectBuiltIn(key)}>
                   <Text style={[typography.caption, { color: colors.secondary, marginBottom: 6 }]}>{t(`events.cardTheme.${key}`)}</Text>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={{ ...previewBase, cardTheme: key }} size="full" />
+                    <MiniWidget event={{ ...previewBase, cardTheme: key }} size="small" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -377,7 +388,7 @@ export default function WidgetPickerScreen() {
                     ) : null}
                   </View>
                   <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: selected ? 2 : 0, borderColor: colors.primary }]}>
-                    <MiniWidget event={widgetDisplayEvent(widget, linkedEvent)} size="full" />
+                    <MiniWidget event={widgetDisplayEvent(widget)} size="small" />
                     {selected ? (
                       <View style={styles.selectedBadge}>
                         <Ionicons name="checkmark-circle" size={22} color="#fff" />
@@ -419,7 +430,7 @@ export default function WidgetPickerScreen() {
                         so a whole run of fallbacks isn't one flat color. */}
                     {Array.from({ length: CATEGORY_PHOTO_COUNT }).map((_, i) => {
                       const url = photos[i];
-                      const preview = SAMPLE_WIDGET_PREVIEWS[i % SAMPLE_WIDGET_PREVIEWS.length];
+                      const preview = CATEGORY_PREVIEWS[category];
                       const previewEvent: PurEvent = {
                         id: `preview-${category}-${i}`,
                         title: preview.title,
@@ -438,7 +449,7 @@ export default function WidgetPickerScreen() {
                       return (
                         <Pressable key={`${category}-${i}`} disabled={!url} onPress={() => url && pickCategoryPhoto(url)}>
                           <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && staged.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
-                            <MiniWidget event={previewEvent} size="full" />
+                            <MiniWidget event={previewEvent} size="small" />
                             {!isPro && url ? (
                               <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
                                 <Ionicons name="lock-closed" size={11} color="#fff" />
@@ -461,7 +472,7 @@ export default function WidgetPickerScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.outline }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.outline, paddingBottom: insets.bottom + 16 }]}>
         <Button label={t('widgets.useSelectedWidget')} onPress={() => confirm(staged)} />
       </View>
     </View>
@@ -471,10 +482,11 @@ export default function WidgetPickerScreen() {
 const styles = StyleSheet.create({
   searchBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, height: 44 },
   searchInput: { flex: 1, marginLeft: 8, fontSize: 16, height: '100%' },
-  // One full-width MiniWidget card per row — see "My Widgets"/Categories
-  // rendering above. overflow:'hidden' clips MiniWidget's own corner
-  // radius to this frame's selection-border radius.
-  list: { flexDirection: 'column' },
+  // A wrapping grid of real-size (135×195dp, see MiniWidget's own DIMS)
+  // widget cards, not one full-width row each — see "My Widgets"/
+  // Categories rendering above. overflow:'hidden' clips MiniWidget's own
+  // corner radius to this frame's selection-border radius.
+  list: { flexDirection: 'row', flexWrap: 'wrap' },
   widgetCardFrame: { overflow: 'hidden' },
   newCustomRow: { width: '100%', flexDirection: 'row', alignItems: 'center', padding: 14, marginTop: 12 },
   newCustomIconBadge: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
