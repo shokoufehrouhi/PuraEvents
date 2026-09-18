@@ -20,7 +20,15 @@ export default function ThemePickerScreen() {
 
   function pick(value: AppearanceMode) {
     setPrefs({ appearance: value });
-    router.back();
+    // Deferred one frame, not called synchronously right after setPrefs —
+    // appearance is the one preference that recolors every screen's own
+    // headerStyle/contentStyle at once (via useTheme's colors, read all
+    // through app/_layout.tsx's Stack), and popping mid-way through that
+    // whole-stack re-render races react-native-screens' own fragment
+    // transaction, crashing with "ScreenStackFragment added into a
+    // non-stack container" (reproduced live switching Dark -> Light).
+    // Letting the recolor commit and paint first avoids the race.
+    requestAnimationFrame(() => router.back());
   }
 
   return (
