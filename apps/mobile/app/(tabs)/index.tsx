@@ -12,6 +12,7 @@ import { HeroCountdown } from '../../src/components/HeroCountdown';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents } from '../../src/storage/events';
+import { cacheHeroPhoto } from '../../src/storage/heroPhoto';
 import { unseenNotificationCount } from '../../src/storage/notificationLog';
 import { FREE_LIMITS, usePro } from '../../src/subscription';
 import { getCategoryIcon } from '../../src/theme/icons';
@@ -22,6 +23,7 @@ import type { PurEvent } from '../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence, getPreviousOccurrence } from '../../src/utils/recurrence';
+import { syncHomeScreenWidget } from '../../src/widgets/syncHomeScreenWidget';
 
 type PastFilter = '3m' | '6m' | '1y' | 'all';
 
@@ -161,11 +163,16 @@ export default function EventListScreen() {
   // hero banner, fetched once per app launch (mount, not per-focus — a new
   // one is wanted per run, not per tab visit). Failure (offline, no API
   // key, no results) just leaves it null and the hero card falls back to
-  // its normal flat theme color.
+  // its normal flat theme color. Also cached locally (see storage/
+  // heroPhoto.ts) and pushed to the home-screen widget — its own empty
+  // state (no upcoming events) shows this same photo instead of a fresh
+  // fetch of its own, which a background widget refresh shouldn't be doing.
   useEffect(() => {
     let cancelled = false;
     fetchLocationPhotoUrl().then((url) => {
-      if (!cancelled) setHeroPhotoUri(url);
+      if (cancelled) return;
+      setHeroPhotoUri(url);
+      if (url) cacheHeroPhoto(url).then(() => syncHomeScreenWidget().catch(() => {}));
     });
     return () => {
       cancelled = true;

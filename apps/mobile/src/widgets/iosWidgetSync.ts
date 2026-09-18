@@ -1,5 +1,6 @@
 import { ExtensionStorage } from '@bacons/apple-targets';
 
+import { getCachedHeroPhotoPath } from '../storage/heroPhoto';
 import { listUpcomingEventsForWidgets } from './widgetEventSummary';
 import { preparePhotoDataUri } from './widgetPhoto';
 
@@ -9,6 +10,11 @@ import { preparePhotoDataUri } from './widgetPhoto';
 // writing two different sandboxed containers with the same name.
 export const WIDGET_APP_GROUP = 'group.com.anonymous.puraevents.widget';
 const STORAGE_KEY = 'events';
+// Same "Today" banner photo the Events tab's own hero card shows (see
+// storage/heroPhoto.ts) — only ever written when there's no upcoming event
+// at all (see below); widget.swift's Shared.loadHeroPhotoDataUri() reads
+// this same key.
+const HERO_PHOTO_KEY = 'heroPhoto';
 
 // The iOS widget extension (targets/widget/widget.swift) is a completely
 // separate process from this app — it has no access to AsyncStorage, so
@@ -39,5 +45,10 @@ export async function syncIOSWidget(): Promise<void> {
     : [];
   const storage = new ExtensionStorage(WIDGET_APP_GROUP);
   storage.set(STORAGE_KEY, payload.length ? JSON.stringify(payload) : undefined);
+  // Same "no event → hero photo instead" empty state as Android's own
+  // buildCountdownWidgetElement — only resolved/written when there's
+  // actually no event to show, same reasoning as that function's own
+  // early-out.
+  storage.set(HERO_PHOTO_KEY, soonest ? undefined : (await preparePhotoDataUri(await getCachedHeroPhotoPath())) ?? undefined);
   ExtensionStorage.reloadWidget();
 }

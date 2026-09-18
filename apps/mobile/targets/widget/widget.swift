@@ -15,6 +15,11 @@ private enum Shared {
     // and this extension.
     static let appGroup = "group.com.anonymous.puraevents.widget"
     static let eventsKey = "events"
+    // Same "Today" banner photo the Events tab's own hero card shows —
+    // written by src/widgets/iosWidgetSync.ts only when there's no
+    // upcoming event at all, read here for the empty-state background
+    // (see content()'s own isEmpty branch).
+    static let heroPhotoKey = "heroPhoto"
 
     static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
@@ -76,6 +81,17 @@ private enum Shared {
         return formatter
     }()
 
+    // Separate from dateFormatter above (which is scoped to an *event's*
+    // own date) — the empty-state "Today" banner's own line always
+    // includes the year, matching EventHeroCard.tsx's own formatTodayLine
+    // (see content()'s own isEmpty branch below).
+    static let todayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "EEE, MMM d, yyyy · HH:mm"
+        return formatter
+    }()
+
     // photoDataUri is a "data:image/jpeg;base64,…" string (see
     // widgetPhoto.ts's preparePhotoDataUri, shared with Android) — strip
     // the prefix up to the first comma and decode the rest. Returns nil on
@@ -96,6 +112,10 @@ private enum Shared {
             let events = try? JSONDecoder().decode([EventSummary].self, from: data)
         else { return [] }
         return events
+    }
+
+    static func loadHeroPhotoDataUri() -> String? {
+        UserDefaults(suiteName: appGroup)?.string(forKey: heroPhotoKey)
     }
 
     static func parseISODate(_ iso: String) -> Date? {
@@ -124,6 +144,10 @@ struct NextEventEntry: TimelineEntry {
     let category: String?
     let repeatRule: String?
     let note: String?
+    // Only ever set alongside title == nil (see resolveCurrentEntry below)
+    // — the empty-state "Today" hero photo, not this event's own photo.
+    // Every has-an-event NextEventEntry(...) call below passes nil.
+    let heroPhotoDataUri: String?
 }
 
 // No AppIntents-based "Edit Widget" configuration any more — every instance
@@ -142,7 +166,7 @@ struct Provider: TimelineProvider {
         NextEventEntry(
             date: Date(), title: "New York Trip", accentHex: "#A39BE8",
             targetDate: Date().addingTimeInterval(60 * 60 * 24 * 5), photoDataUri: nil,
-            category: "travel", repeatRule: "none", note: "Don't forget your passport"
+            category: "travel", repeatRule: "none", note: "Don't forget your passport", heroPhotoDataUri: nil
         )
     }
 
@@ -165,7 +189,10 @@ struct Provider: TimelineProvider {
 
         guard let resolved, let targetDate = Shared.parseISODate(resolved.nextOccurrenceISO) else {
             completion(Timeline(
-                entries: [NextEventEntry(date: now, title: nil, accentHex: "#6558D9", targetDate: nil, photoDataUri: nil, category: nil, repeatRule: nil, note: nil)],
+                entries: [NextEventEntry(
+                    date: now, title: nil, accentHex: "#6558D9", targetDate: nil, photoDataUri: nil,
+                    category: nil, repeatRule: nil, note: nil, heroPhotoDataUri: Shared.loadHeroPhotoDataUri()
+                )],
                 policy: .after(calendar.date(byAdding: .hour, value: 1, to: now) ?? now)
             ))
             return
@@ -179,7 +206,8 @@ struct Provider: TimelineProvider {
             guard let entryDate = calendar.date(byAdding: .day, value: dayOffset, to: calendar.startOfDay(for: now)) else { continue }
             entries.append(NextEventEntry(
                 date: entryDate, title: resolved.title, accentHex: resolved.accentHex, targetDate: targetDate,
-                photoDataUri: resolved.photoDataUri, category: resolved.category, repeatRule: resolved.repeatRule, note: resolved.note
+                photoDataUri: resolved.photoDataUri, category: resolved.category, repeatRule: resolved.repeatRule,
+                note: resolved.note, heroPhotoDataUri: nil
             ))
         }
 
@@ -193,11 +221,15 @@ struct Provider: TimelineProvider {
 
     private func resolveCurrentEntry() -> NextEventEntry {
         guard let resolved = Shared.loadEvents().first, let targetDate = Shared.parseISODate(resolved.nextOccurrenceISO) else {
-            return NextEventEntry(date: Date(), title: nil, accentHex: "#6558D9", targetDate: nil, photoDataUri: nil, category: nil, repeatRule: nil, note: nil)
+            return NextEventEntry(
+                date: Date(), title: nil, accentHex: "#6558D9", targetDate: nil, photoDataUri: nil,
+                category: nil, repeatRule: nil, note: nil, heroPhotoDataUri: Shared.loadHeroPhotoDataUri()
+            )
         }
         return NextEventEntry(
             date: Date(), title: resolved.title, accentHex: resolved.accentHex, targetDate: targetDate,
-            photoDataUri: resolved.photoDataUri, category: resolved.category, repeatRule: resolved.repeatRule, note: resolved.note
+            photoDataUri: resolved.photoDataUri, category: resolved.category, repeatRule: resolved.repeatRule,
+            note: resolved.note, heroPhotoDataUri: nil
         )
     }
 }
@@ -258,10 +290,34 @@ struct PuraEventsWidgetEntryView: View {
         // the flat accentHex fill every other theme gets.
         let photoImage = Shared.decodeDataURIImage(entry.photoDataUri)
         let hasPhoto = photoImage != nil
+        // No event at all, not just "this event has no photo" — same
+        // on-brand violet skyline hero-fallback image the in-app Today
+        // banner (EventHeroCard.tsx) falls back to, bundled into this
+        // target's own Assets.xcassets (a widget extension can't reach
+        // into the main app bundle's assets), so the empty widget reads
+        // as the app's own "hero" look instead of a flat accent box.
+        let isEmpty = entry.title == nil || entry.targetDate == nil
         let scale = family == .systemSmall ? WidgetTypeScale.small : WidgetTypeScale.medium
         return ZStack {
             if let photoImage {
                 Image(uiImage: photoImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
+            } else if isEmpty, let heroImage = Shared.decodeDataURIImage(entry.heroPhotoDataUri) {
+                // Same "Today" banner photo the Events tab shows (see
+                // storage/heroPhoto.ts) — cached locally by the app and
+                // handed across the App Group, same as an event's own
+                // custom photo above, rather than this extension fetching
+                // Pexels itself on every background refresh.
+                Image(uiImage: heroImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
+            } else if isEmpty {
+                Image("hero-fallback")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: size.width, height: size.height)
@@ -369,11 +425,45 @@ struct PuraEventsWidgetEntryView: View {
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
-                Text("No upcoming events")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding()
+                // Content mirrors EventHeroCard.tsx's own no-event branch
+                // exactly (its own comment: "still show the Today banner
+                // ... just without a title/countdown") — "TODAY TRIPS"
+                // caption top-left, "Today" + the real current date/time
+                // bottom-left (a Spacer between them does the same job as
+                // that component's own card:{justifyContent:'space-
+                // between'}), name+logo small underneath, same as
+                // ShareCard.tsx's own subtle brand mark
+                // (src/components/ShareCard.tsx) — the hero photo itself
+                // is the point here, not a big logo taking over the card.
+                let shadow = Color.black.opacity(0.7)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("TODAY TRIPS")
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundColor(.white.opacity(0.85))
+                        .shadow(color: shadow, radius: 3, x: 0, y: 1)
+                    Spacer()
+                    Text("Today")
+                        .font(.system(size: 18, weight: .heavy))
+                        .foregroundColor(.white)
+                        .shadow(color: shadow, radius: 3, x: 0, y: 1)
+                    Text(Shared.todayDateFormatter.string(from: Date()))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .shadow(color: shadow, radius: 3, x: 0, y: 1)
+                    HStack(spacing: 5) {
+                        Image("app-icon")
+                            .resizable()
+                            .frame(width: 16, height: 16)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                        Text("PuraEvents")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .shadow(color: shadow, radius: 3, x: 0, y: 1)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
         }
     }

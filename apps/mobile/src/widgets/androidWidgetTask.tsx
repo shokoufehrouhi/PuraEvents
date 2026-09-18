@@ -10,6 +10,7 @@ import {
   type WidgetTaskHandler,
 } from 'react-native-android-widget';
 
+import { getCachedHeroPhotoPath } from '../storage/heroPhoto';
 import { CARD_THEMES } from '../theme/cardThemes';
 import { getCategoryIcon } from '../theme/icons';
 import type { WidgetCornerStyle, WidgetTextStyle } from '../types/event';
@@ -22,6 +23,15 @@ import { preparePhotoDataUri } from './widgetPhoto';
 // — see that file's own comment) — registerWidgetTaskHandler below
 // registers against it once and handles every instance.
 export const ANDROID_WIDGET_NAME = 'CountdownWidgetSmall';
+
+// Same "on-brand violet skyline" fallback EventHeroCard.tsx uses for the
+// in-app Today banner when there's no event to theme it with — reused here
+// (not a fresh asset) so the zero-events widget reads as the same "hero"
+// look instead of a second, different empty state. Plain require(), not a
+// data URI — same as getCategoryIcon's own icons below, react-native-
+// android-widget's ImageWidget accepts a bundled local asset directly.
+const HERO_FALLBACK_IMAGE = require('../../assets/images/hero-fallback.png');
+const APP_ICON_IMAGE = require('../../assets/icon.png');
 
 // Same presets as MiniWidget's own (see its comment) — kept as separate
 // copies rather than importing MiniWidget's file, since that file also
@@ -221,26 +231,64 @@ function CountdownCard({
 export function CountdownWidget({
   summary,
   photoDataUri = null,
+  heroPhotoDataUri = null,
 }: {
   summary: WidgetEventSummary | null;
   photoDataUri?: string | null;
+  // Same "Today" banner photo the Events tab's own hero card shows (see
+  // storage/heroPhoto.ts) — only ever passed when summary is null (see
+  // buildCountdownWidgetElement below), falls back to HERO_FALLBACK_IMAGE
+  // when unset (no cached photo yet, or it failed to resolve).
+  heroPhotoDataUri?: string | null;
 }) {
   if (!summary) {
+    // Same hero-photo-with-shadowed-text grammar as CountdownCard's own
+    // hasPhoto branch below (OverlapWidget stacking a photo under content,
+    // per-text shadow instead of a separate scrim layer) — this is the
+    // app's own "hero" look, not a plain empty-state box, per explicit
+    // request. Content mirrors EventHeroCard.tsx's own no-event branch
+    // exactly (its own comment: "still show the Today banner ... just
+    // without a title/countdown") — the "TODAY TRIPS" caption top-left,
+    // "Today" + the real current date/time bottom-left, same
+    // card:{justifyContent:'space-between'} split between the two. Name+
+    // logo sit small underneath that, like ShareCard.tsx's own subtle
+    // brand mark, rather than taking over the whole card. English-only
+    // (hardcoded date format, not formatEventDateLine/i18n) — same
+    // simplification CATEGORY_LABELS/REPEAT_LABELS above already make for
+    // this headless context.
+    const textShadow = { textShadowColor: 'rgba(0, 0, 0, 0.7)' as WidgetColor, textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } };
     return (
-      <FlexWidget
-        clickAction="OPEN_APP"
-        style={{
-          height: 'match_parent',
-          width: 'match_parent',
-          backgroundColor: '#2B2640',
-          borderRadius: 20,
-          padding: 12,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <TextWidget text="No upcoming events" style={{ color: '#FFFFFF', fontSize: 13, textAlign: 'center' }} />
-      </FlexWidget>
+      <OverlapWidget clickAction="OPEN_APP" style={{ height: 'match_parent', width: 'match_parent', borderRadius: 20, padding: 0, overflow: 'hidden' }}>
+        <ImageWidget
+          image={(heroPhotoDataUri as `data:image${string}`) || HERO_FALLBACK_IMAGE}
+          imageWidth={400}
+          imageHeight={400}
+          resizeMode="cover"
+          style={{ width: 'match_parent', height: 'match_parent' }}
+        />
+        <FlexWidget style={{ height: 'match_parent', width: 'match_parent', padding: 12, justifyContent: 'space-between' }}>
+          <TextWidget
+            text="TODAY TRIPS"
+            style={{ color: 'rgba(255, 255, 255, 0.85)' as WidgetColor, fontSize: 10, fontWeight: '900', ...textShadow }}
+          />
+          <FlexWidget style={{ width: 'wrap_content' }}>
+            <TextWidget text="Today" style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', ...textShadow }} />
+            <TextWidget
+              text={dayjs().format('ddd, MMM D, YYYY · HH:mm')}
+              style={{ color: 'rgba(255, 255, 255, 0.85)' as WidgetColor, fontSize: 11, fontWeight: '700', marginTop: 3, ...textShadow }}
+            />
+            <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'wrap_content', marginTop: 8 }}>
+              <ImageWidget
+                image={APP_ICON_IMAGE}
+                imageWidth={16}
+                imageHeight={16}
+                style={{ width: 16, height: 16, borderRadius: 4, marginRight: 5 }}
+              />
+              <TextWidget text="PuraEvents" style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700', ...textShadow }} />
+            </FlexWidget>
+          </FlexWidget>
+        </FlexWidget>
+      </OverlapWidget>
     );
   }
 
@@ -255,7 +303,11 @@ export function CountdownWidget({
 // isn't duplicated.
 export async function buildCountdownWidgetElement(summary: WidgetEventSummary | null): Promise<React.JSX.Element> {
   const photoDataUri = summary?.cardTheme === 'custom' ? await preparePhotoDataUri(summary.customPhotoUri) : null;
-  return <CountdownWidget summary={summary} photoDataUri={photoDataUri} />;
+  // Only worth resolving when there's actually an empty state to show it
+  // in — an upcoming event never reads this prop (see CountdownWidget
+  // above), so skip the extra AsyncStorage read/image resize otherwise.
+  const heroPhotoDataUri = summary ? null : await preparePhotoDataUri(await getCachedHeroPhotoPath());
+  return <CountdownWidget summary={summary} photoDataUri={photoDataUri} heroPhotoDataUri={heroPhotoDataUri} />;
 }
 
 // Every instance of this provider always shows the same thing: whichever
