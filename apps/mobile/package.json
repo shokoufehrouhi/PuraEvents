@@ -10,6 +10,7 @@
     "@umalqura/core": "^0.0.7",
     "dayjs": "^1.11.23",
     "expo": "~57.0.20",
+    "expo-audio": "~57.0.5",
     "expo-build-properties": "~57.0.17",
     "expo-constants": "~57.0.17",
     "expo-file-system": "~57.0.6",
@@ -28,8 +29,10 @@
     "react-i18next": "^17.0.13",
     "react-native": "0.86.3",
     "react-native-android-widget": "^0.22.1",
+    "react-native-google-mobile-ads": "16.0.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-share": "^12.3.1",
     "react-native-view-shot": "5.1.0"
   },
   "devDependencies": {
