@@ -11,6 +11,7 @@ import { useGatedAction } from '../ads/adGate';
 import { CivilCalendarPicker } from '../components/CivilCalendarPicker';
 import { EventIcon } from '../components/EventIcon';
 import { MiniWidget } from '../components/MiniWidget';
+import { VoiceRecorder } from '../components/VoiceRecorder';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
@@ -117,6 +118,10 @@ export function EventWizard({ mode, eventId }: Props) {
   // See sender on PurEvent — optional "from" line, bottom-right of the
   // Share card, independent of shareMessage.
   const [sender, setSender] = useState('');
+  // See customVoiceUri on PurEvent — optional recorded voice message, sent
+  // alongside the ShareCard graphic (see VoiceRecorder.tsx and
+  // event/[id]/index.tsx's own handleShare), independent of shareMessage.
+  const [customVoiceUri, setCustomVoiceUri] = useState<string | undefined>(undefined);
   // See notificationSound on PurEvent — the reminder notification's title/
   // body are always auto-generated (title/note/time-remaining, see
   // notifications/index.ts), never manually typed; only which sound plays
@@ -144,6 +149,7 @@ export function EventWizard({ mode, eventId }: Props) {
         setNote(e.note ?? '');
         setShareMessage(e.shareMessage ?? '');
         setSender(e.sender ?? '');
+        setCustomVoiceUri(e.customVoiceUri);
         setNotificationSound(e.notificationSound ?? 'default');
       });
     }
@@ -175,6 +181,7 @@ export function EventWizard({ mode, eventId }: Props) {
     note: isDraftEmpty ? "Don't forget your passport" : note.trim() || undefined,
     shareMessage: shareMessage.trim() || undefined,
     sender: sender.trim() || undefined,
+    customVoiceUri,
     notificationSound,
     createdAt: '',
     updatedAt: '',
@@ -283,6 +290,7 @@ export function EventWizard({ mode, eventId }: Props) {
         note: note.trim() || undefined,
         shareMessage: shareMessage.trim() || undefined,
         sender: sender.trim() || undefined,
+        customVoiceUri,
         notificationSound,
       };
 
@@ -310,7 +318,8 @@ export function EventWizard({ mode, eventId }: Props) {
     reminders.length === 0 ? t('events.noReminders') : `${reminders.length} ${t('events.remindersLabel').toLowerCase()}`;
   const appearanceSummary = t(`events.cardTheme.${cardTheme}`);
   const advancedSummary = note.trim() ? `${t(`events.repeat.${repeat}`)}, note added` : t(`events.repeat.${repeat}`);
-  const shareSummary = shareMessage.trim() || sender.trim() ? t('events.shareSummaryCustom') : t('events.shareSummaryAuto');
+  const shareSummary =
+    shareMessage.trim() || sender.trim() || customVoiceUri ? t('events.shareSummaryCustom') : t('events.shareSummaryAuto');
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -655,6 +664,10 @@ export function EventWizard({ mode, eventId }: Props) {
                 onChangeText={(text) => setSender(text.slice(0, SENDER_MAX_LENGTH))}
                 maxLength={SENDER_MAX_LENGTH}
               />
+
+              <View style={{ marginTop: 16 }}>
+                <VoiceRecorder uri={customVoiceUri} onChange={setCustomVoiceUri} />
+              </View>
             </AccordionRow>
           </Section>
         </View>

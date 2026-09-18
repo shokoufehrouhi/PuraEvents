@@ -78,6 +78,11 @@ export interface PurEvent {
   /** Optional "from" name shown bottom-right of the Share card (see
    *  components/ShareCard) — a single short line, unlike shareMessage. */
   sender?: string;
+  /** Local file path (relative to documentDirectory, see persistAudio.ts)
+   *  for an optional recorded voice message — sent alongside the ShareCard
+   *  graphic as a second attachment when the user shares this event (see
+   *  event/[id]/index.tsx's handleShare), not played anywhere else. */
+  customVoiceUri?: string;
   /** Which bundled alert sound plays for this event's reminders — see
    *  NotificationSoundKey. */
   notificationSound?: NotificationSoundKey;

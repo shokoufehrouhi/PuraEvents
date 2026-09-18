@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { NewEventInput, PurEvent } from '../types/event';
+import { deleteRecordedAudio } from '../utils/persistAudio';
 import { getNextOccurrenceISO } from '../utils/recurrence';
 import { syncHomeScreenWidget } from '../widgets/syncHomeScreenWidget';
 
@@ -87,5 +88,12 @@ export async function updateEvent(id: string, patch: Partial<NewEventInput>): Pr
 
 export async function deleteEvent(id: string): Promise<void> {
   const events = await readAll();
+  const deleted = events.find((e) => e.id === id);
   await writeAll(events.filter((e) => e.id !== id));
+  // customVoiceUri is exclusively this event's own recording (unlike
+  // customPhotoUri, which a saved Widget — see widgetId's own comment on
+  // PurEvent — can still share with other events, so that one isn't
+  // safe to blanket-delete here) — nothing else can still be pointing at
+  // it, so deleting the event is the one place this can't leak a file.
+  if (deleted?.customVoiceUri) deleteRecordedAudio(deleted.customVoiceUri);
 }
