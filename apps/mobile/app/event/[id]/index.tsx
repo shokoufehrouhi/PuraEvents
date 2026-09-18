@@ -11,7 +11,6 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Share from 'react-native-share';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
-import { useGatedAction } from '../../../src/ads/adGate';
 import { ConfirmModal, type ConfirmModalState } from '../../../src/components/ConfirmModal';
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
 import { MiniWidget } from '../../../src/components/MiniWidget';
@@ -71,7 +70,6 @@ export default function EventDetailScreen() {
   const { colors, spacing, radius, typography } = useTheme();
   const { prefs } = usePreferences();
   const { isPro } = usePro();
-  const gate = useGatedAction();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [event, setEvent] = useState<PurEvent | null>(null);
@@ -115,15 +113,20 @@ export default function EventDetailScreen() {
       confirmLabel: t('events.delete'),
       cancelLabel: t('events.cancel'),
       destructive: true,
-      // Gated on the confirmed delete itself, not on opening this confirm
-      // dialog — reviewing/cancelling stays available even when the ad
-      // gate is unavailable, only the actual mutation is blocked.
-      onConfirm: () =>
-        gate(async () => {
-          await cancelRemindersForEvent(event!.id);
-          await deleteEvent(event!.id);
-          router.back();
-        }),
+      // Not ad-gated (unlike Save, see EventWizard.tsx) — confirmed stuck
+      // on a real iPhone: the interstitial's own view controller presented
+      // black and never rendered/dismissed, permanently blocking every
+      // touch underneath with no way out except force-quitting. Deleting
+      // is also the one destructive, no-undo action in this app; gating it
+      // behind anything that can get stuck is worse than just not gating
+      // it. Revisit once react-native-google-mobile-ads' interaction with
+      // this app's react-native-screens stack is actually debugged
+      // (Xcode's view hierarchy debugger, not just device logs).
+      onConfirm: async () => {
+        await cancelRemindersForEvent(event!.id);
+        await deleteEvent(event!.id);
+        router.back();
+      },
     });
   }
 

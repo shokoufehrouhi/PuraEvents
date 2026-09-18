@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { AdGateProvider } from '../src/ads/adGate';
+import { AppOpenAdController } from '../src/ads/AppOpenAdController';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
 import { extractNotificationInfo, initNotificationLogListeners, requestNotificationPermissions, type NotificationInfo } from '../src/notifications';
@@ -237,6 +238,14 @@ function Navigation() {
           opens. */}
       <NotificationDetailModal notification={tappedNotification} onClose={() => setTappedNotification(null)} />
       <HomeScreenShortcutPrompt />
+      {/* Re-enabled — see AppOpenAdController.tsx's own comment: the
+          confirmed-live "AdActivity appears then immediately gets torn
+          down" bug is now understood to be a race between load()/show()
+          and the native SDK's own initialize() completing, not a fixed
+          defect in App Open ads specifically. Needs a fresh real-device
+          check regardless — if it reproduces again, disable this one line
+          rather than patching further blind. */}
+      <AppOpenAdController />
     </>
   );
 }
