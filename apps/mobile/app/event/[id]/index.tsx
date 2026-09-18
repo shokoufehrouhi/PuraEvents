@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
+import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
@@ -7,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import Share from 'react-native-share';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
 import { useGatedAction } from '../../../src/ads/adGate';
@@ -26,6 +28,7 @@ import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
 import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
+import { resolveAudioUri } from '../../../src/utils/persistAudio';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
 
@@ -130,12 +133,45 @@ export default function EventDetailScreen() {
   // manually-triggered rather than the auto-prompt-at-event-time version
   // described there (explicitly out of scope — the client shares it
   // manually themselves).
+  //
+  // No recorded voice message (see VoiceRecorder.tsx) — the common case —
+  // shares the single PNG the exact same way expo-sharing always has.
+  // With one, react-native-share's own `urls` (plural) takes over instead,
+  // since expo-sharing only ever hands off one file: both the image and
+  // the audio go out as one multi-attachment share action. react-native-
+  // share's `urls` only accepts base64 data URIs, not file:// paths (see
+  // its own type — unlike its single-file `url`), hence the manual
+  // base64 read below.
+  // Pro-only (docs/PROJECT.md §6.2) — a free user can still fill out every
+  // field in the Share step (message/sender/voice, see EventWizard.tsx),
+  // never blocks editing, only the actual action; tapping Share itself
+  // just routes to the paywall instead, same tappable-not-disabled
+  // pattern as goEdit.
   async function handleShare() {
+    if (!isPro) {
+      router.push('/upgrade');
+      return;
+    }
     try {
-      const uri = await shareCaptureRef.current?.capture?.();
-      if (!uri) return;
-      if (!(await Sharing.isAvailableAsync())) return;
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: event!.title });
+      const captured = await shareCaptureRef.current?.capture?.();
+      if (!captured) return;
+
+      const voiceUri = resolveAudioUri(event!.customVoiceUri);
+      if (!voiceUri) {
+        if (!(await Sharing.isAvailableAsync())) return;
+        await Sharing.shareAsync(captured, { mimeType: 'image/png', dialogTitle: event!.title });
+        return;
+      }
+
+      const [imageBase64, audioBase64] = await Promise.all([
+        FileSystem.readAsStringAsync(captured, { encoding: 'base64' }),
+        FileSystem.readAsStringAsync(voiceUri, { encoding: 'base64' }),
+      ]);
+      await Share.open({
+        urls: [`data:image/png;base64,${imageBase64}`, `data:audio/m4a;base64,${audioBase64}`],
+        filenames: [`${event!.title}.png`, `${event!.title}.m4a`],
+        failOnCancel: false,
+      });
     } catch {
       // Capture/share failing (e.g. user dismissed the sheet) isn't worth
       // surfacing — same "just don't show the broken thing" posture as a
