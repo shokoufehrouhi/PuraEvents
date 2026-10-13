@@ -9,7 +9,7 @@ import { Linking, Platform } from 'react-native';
 // on non-MIUI Android, so this always has a real Settings fallback below
 // rather than silently doing nothing if it can't resolve.
 const MIUI_PERMISSION_EDITOR_ACTION = 'miui.intent.action.APP_PERM_EDITOR';
-const PACKAGE_NAME = 'com.anonymous.puraevents';
+const PACKAGE_NAME = 'com.puraapps.puraevents';
 
 // "Settings" button for HomeScreenShortcutPrompt's first-run nudge — tries
 // to land the user directly on MIUI's own permission toggle; falls back to

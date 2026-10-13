@@ -9,10 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.puraevents",
+      "bundleIdentifier": "com.puraapps.puraevents",
       "entitlements": {
         "com.apple.security.application-groups": [
-          "group.com.anonymous.puraevents.widget"
+          "group.com.puraapps.puraevents.widget"
         ]
       }
     },
@@ -28,7 +28,7 @@
         "android.permission.RECORD_AUDIO",
         "com.android.launcher.permission.INSTALL_SHORTCUT"
       ],
-      "package": "com.anonymous.puraevents"
+      "package": "com.puraapps.puraevents"
     },
     "web": {
       "favicon": "./assets/favicon.png"

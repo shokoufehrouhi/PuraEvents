@@ -8,7 +8,7 @@ import { preparePhotoDataUri } from './widgetPhoto';
 // inside targets/widget/expo-target.config.js — both sides of the App
 // Group have to agree on this exact identifier or they end up reading/
 // writing two different sandboxed containers with the same name.
-export const WIDGET_APP_GROUP = 'group.com.anonymous.puraevents.widget';
+export const WIDGET_APP_GROUP = 'group.com.puraapps.puraevents.widget';
 const STORAGE_KEY = 'events';
 // Same "Today" banner photo the Events tab's own hero card shows (see
 // storage/heroPhoto.ts) — only ever written when there's no upcoming event

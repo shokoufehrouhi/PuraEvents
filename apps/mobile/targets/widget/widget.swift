@@ -13,7 +13,7 @@ private enum Shared {
     // src/widgets/iosWidgetSync.ts's WIDGET_APP_GROUP exactly — this is the
     // only channel data crosses between the main app (a separate process)
     // and this extension.
-    static let appGroup = "group.com.anonymous.puraevents.widget"
+    static let appGroup = "group.com.puraapps.puraevents.widget"
     static let eventsKey = "events"
     // Same "Today" banner photo the Events tab's own hero card shows —
     // written by src/widgets/iosWidgetSync.ts only when there's no
