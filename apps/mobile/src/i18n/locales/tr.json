@@ -165,7 +165,8 @@
     "about": "Hakkında",
     "helpFeedback": "Yardım ve geri bildirim",
     "rateApp": "PuraEvents'i değerlendir",
-    "version": "Sürüm"
+    "version": "Sürüm",
+    "manageSubscription": "Yönet"
   },
   "notificationHistory": {
     "newCount": "{{count}} yeni",
@@ -256,7 +257,16 @@
     "privacyLink": "Gizlilik",
     "continue": "Devam et",
     "maybeLater": "Belki sonra",
-    "autoRenewNote": "Aboneliğin otomatik olarak yenilenir. Hesap ayarlarından istediğin zaman yönetebilir veya iptal edebilirsin."
+    "autoRenewNote": "Aboneliğin otomatik olarak yenilenir. Hesap ayarlarından istediğin zaman yönetebilir veya iptal edebilirsin.",
+    "storeUnavailableTitle": "Mağaza kullanılamıyor",
+    "storeUnavailableMessage": "Şu anda mağazaya ulaşılamadı. Bağlantını kontrol edip tekrar dene.",
+    "purchaseSuccessTitle": "Pro'ya hoş geldin!",
+    "purchaseSuccessMessage": "Tüm Pro özellikleri artık açık.",
+    "purchaseErrorTitle": "Satın alma başarısız",
+    "restoreSuccessTitle": "Satın alımlar geri yüklendi",
+    "restoreSuccessMessage": "Pro erişimin geri geldi.",
+    "restoreNoneTitle": "Geri yüklenecek bir şey yok",
+    "restoreNoneMessage": "Bu hesapta etkin bir Pro satın alımı bulunamadı."
   },
   "compare": {
     "title": "PuraEvents Pro",

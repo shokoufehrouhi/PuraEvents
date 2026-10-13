@@ -13,7 +13,7 @@ import { AppOpenAdController } from '../src/ads/AppOpenAdController';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
 import { extractNotificationInfo, initNotificationLogListeners, requestNotificationPermissions, type NotificationInfo } from '../src/notifications';
-import { usePro } from '../src/subscription';
+import { initSubscriptions, usePro } from '../src/subscription';
 import { PreferencesProvider, useTheme } from '../src/theme/PreferencesContext';
 import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
@@ -31,6 +31,10 @@ import '../src/i18n';
 if (Platform.OS === 'android') {
   initAndroidWidgetTaskHandler();
 }
+
+// Same module-scope reasoning — RevenueCat must be configured before any
+// screen's usePro()/paywall touches it.
+initSubscriptions();
 
 function Navigation() {
   const { t } = useTranslation();

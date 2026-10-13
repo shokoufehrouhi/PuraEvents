@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeroCountdown } from '../src/components/HeroCountdown';
-import { FREE_LIMITS } from '../src/subscription';
+import { FREE_LIMITS, hasFreeTrial, isStoreAvailable, loadProOffering, purchasePro, restorePro } from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
 import { fetchLocationPhotoUrl, getLocalPlaceName } from '../src/utils/locationPhoto';
 import { PRESET_REMINDER_OFFSETS } from '../src/utils/reminders';
@@ -37,17 +38,19 @@ const PREVIEW_TARGET_ISO = new Date(Date.now() + 18 * 86400000 + 6 * 3600000 + 2
 
 type PlanId = 'monthly' | 'yearly' | 'lifetime';
 
-const PLANS: { id: PlanId; price: string; sub?: string }[] = [
-  { id: 'monthly', price: '$2.99' },
-  { id: 'yearly', price: '$14.99', sub: '$1.25/mo · Save 58%' },
-  { id: 'lifetime', price: '$29.99' },
-];
+const PLAN_IDS: PlanId[] = ['monthly', 'yearly', 'lifetime'];
+
+// PROJECT.md §6.4's list prices — only shown until the real, localized
+// store prices arrive from RevenueCat (or if the store can't be reached,
+// in which case Continue reports that instead of buying anything).
+const FALLBACK_PRICES: Record<PlanId, string> = { monthly: '$2.99', yearly: '$14.99', lifetime: '$29.99' };
+const FALLBACK_YEARLY_SUB = '$1.25/mo · Save 58%';
 
 // PuraEvents Pro comparison + purchase screen. Deliberately fits one
 // screen with no scrolling — every row/tile below is sized to add up
 // within a standard device height, not left to a ScrollView to sort out.
-// RevenueCat isn't wired yet (Phase 3, docs/PROJECT.md §5.1/§9) —
-// Continue/trial toggle are real, honest placeholders.
+// Purchases go through RevenueCat (see src/subscription) against the
+// dashboard's "current" offering.
 export default function UpgradeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -65,6 +68,42 @@ export default function UpgradeScreen() {
   const [zone] = useState(() => SAMPLE_TRIP_ZONES[Math.floor(Math.random() * SAMPLE_TRIP_ZONES.length)]);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const cityName = getLocalPlaceName(zone);
+  const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+  const [busy, setBusy] = useState<'purchase' | 'restore' | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadProOffering().then((result) => {
+      if (!cancelled) setOffering(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const packages: Record<PlanId, PurchasesPackage | null> = {
+    monthly: offering?.monthly ?? null,
+    yearly: offering?.annual ?? null,
+    lifetime: offering?.lifetime ?? null,
+  };
+  const priceFor = (id: PlanId) => packages[id]?.product.priceString ?? FALLBACK_PRICES[id];
+  // Before the offering loads, assume PROJECT.md §6.3's setup (trial on
+  // the subscriptions, never on Lifetime); after, trust what the store
+  // actually has configured.
+  const trialAvailableFor = (id: PlanId) => (offering ? hasFreeTrial(packages[id]) : id !== 'lifetime');
+  const anyTrial = PLAN_IDS.some(trialAvailableFor);
+
+  const yearlyProduct = packages.yearly?.product;
+  const monthlyProduct = packages.monthly?.product;
+  const yearlySub =
+    yearlyProduct && monthlyProduct
+      ? [
+          yearlyProduct.pricePerMonthString ? `${yearlyProduct.pricePerMonthString}/mo` : null,
+          `Save ${Math.round((1 - yearlyProduct.price / (monthlyProduct.price * 12)) * 100)}%`,
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      : FALLBACK_YEARLY_SUB;
 
   useEffect(() => {
     let cancelled = false;
@@ -91,27 +130,62 @@ export default function UpgradeScreen() {
     [t('compare.ads'), t('compare.yes'), t('compare.no')],
   ];
 
-  const selectedPlan = PLANS.find((p) => p.id === plan)!;
+  const selectedPrice = priceFor(plan);
   // "$2.99/ month" / "$14.99/ year" / "$29.99 once" — matches this same
   // screen's own pre-existing perMonth/perYear concatenation convention,
   // just also covering the one-time Lifetime case those two don't.
   const priceLine =
     plan === 'monthly'
-      ? `${selectedPlan.price}${t('paywall.perMonth')}`
+      ? `${selectedPrice}${t('paywall.perMonth')}`
       : plan === 'yearly'
-        ? `${selectedPlan.price}${t('paywall.perYear')}`
-        : `${selectedPlan.price} ${t('paywall.once')}`;
+        ? `${selectedPrice}${t('paywall.perYear')}`
+        : `${selectedPrice} ${t('paywall.once')}`;
   const footerText = trial ? t('paywall.trialThen', { priceLine }) : t('paywall.chargeNow', { priceLine });
   const continueLabel = trial ? t('paywall.startTrial') : t('paywall.continue');
 
-  function handleContinue() {
-    // Real, honest placeholder (see the file-level comment) — the copy
-    // already reflects what would actually happen once RevenueCat is
-    // wired up: a trial charges nothing today, a direct purchase does.
-    const message = trial
-      ? `Free trial starts today, no charge. You'll be billed ${priceLine} after 7 days unless you cancel first.`
-      : `You'll be charged ${priceLine} today.`;
-    Alert.alert('Not wired up yet', `${message} (Purchases go live once RevenueCat is integrated — Phase 3.)`);
+  function showStoreUnavailable() {
+    Alert.alert(t('paywall.storeUnavailableTitle'), t('paywall.storeUnavailableMessage'));
+  }
+
+  async function handleContinue() {
+    const pkg = packages[plan];
+    if (!pkg) {
+      showStoreUnavailable();
+      return;
+    }
+    setBusy('purchase');
+    try {
+      const outcome = await purchasePro(pkg, { withTrial: trial });
+      if (outcome === 'purchased') {
+        Alert.alert(t('paywall.purchaseSuccessTitle'), t('paywall.purchaseSuccessMessage'));
+        router.back();
+      }
+    } catch (e) {
+      Alert.alert(t('paywall.purchaseErrorTitle'), (e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleRestore() {
+    if (!isStoreAvailable()) {
+      showStoreUnavailable();
+      return;
+    }
+    setBusy('restore');
+    try {
+      const restored = await restorePro();
+      if (restored) {
+        Alert.alert(t('paywall.restoreSuccessTitle'), t('paywall.restoreSuccessMessage'));
+        router.back();
+      } else {
+        Alert.alert(t('paywall.restoreNoneTitle'), t('paywall.restoreNoneMessage'));
+      }
+    } catch (e) {
+      Alert.alert(t('paywall.purchaseErrorTitle'), (e as Error).message);
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
@@ -165,31 +239,32 @@ export default function UpgradeScreen() {
       </View>
 
       <View style={styles.plans}>
-        {PLANS.map((p) => {
-          const selected = plan === p.id;
-          // See the trial useEffect above — Lifetime has no "after the
-          // trial" plan to convert into, so it's not a choice while trial
-          // is on, not just quietly auto-switched away from.
-          const disabled = trial && p.id === 'lifetime';
+        {PLAN_IDS.map((id) => {
+          const selected = plan === id;
+          // A plan without a trial (always Lifetime — a one-time purchase
+          // has no "after the trial" plan to convert into) isn't a choice
+          // while trial is on, not just quietly auto-switched away from.
+          const disabled = trial && !trialAvailableFor(id);
+          const sub = id === 'yearly' ? yearlySub : undefined;
           return (
             <Pressable
-              key={p.id}
-              onPress={() => !disabled && setPlan(p.id)}
+              key={id}
+              onPress={() => !disabled && setPlan(id)}
               style={[
                 styles.planTile,
                 { borderColor: selected ? colors.primary : colors.outline, backgroundColor: colors.surface, opacity: disabled ? 0.4 : 1 },
               ]}
             >
-              {p.id === 'yearly' ? (
+              {id === 'yearly' ? (
                 <View style={[styles.bestBadge, { backgroundColor: colors.primary }]}>
                   <Text style={styles.bestBadgeText}>{t('paywall.bestValue')}</Text>
                 </View>
               ) : null}
-              <Text style={[styles.planLabel, { color: colors.text }]}>{t(`paywall.${p.id}`)}</Text>
-              <Text style={[styles.planPrice, { color: colors.text }]}>{p.price}</Text>
-              {p.sub ? (
+              <Text style={[styles.planLabel, { color: colors.text }]}>{t(`paywall.${id}`)}</Text>
+              <Text style={[styles.planPrice, { color: colors.text }]}>{priceFor(id)}</Text>
+              {sub ? (
                 <Text style={[styles.planSub, { color: colors.secondary }]} numberOfLines={1}>
-                  {p.sub}
+                  {sub}
                 </Text>
               ) : null}
               {/* Always rendered, not just when selected — an appearing/
@@ -206,24 +281,32 @@ export default function UpgradeScreen() {
         })}
       </View>
 
-      <View style={[styles.trialRow, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-        <Ionicons name="gift-outline" size={20} color={colors.primary} />
-        <View style={styles.trialText}>
-          <Text style={[styles.trialLabel, { color: colors.text }]}>{t('paywall.startTrial')}</Text>
-          <Text style={[styles.trialSub, { color: colors.secondary }]}>{t('paywall.noChargeToday')}</Text>
+      {/* Hidden (not disabled) when the store has no trial configured on
+          any plan — an always-off toggle would just be noise. */}
+      {anyTrial ? (
+        <View style={[styles.trialRow, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+          <Ionicons name="gift-outline" size={20} color={colors.primary} />
+          <View style={styles.trialText}>
+            <Text style={[styles.trialLabel, { color: colors.text }]}>{t('paywall.startTrial')}</Text>
+            <Text style={[styles.trialSub, { color: colors.secondary }]}>{t('paywall.noChargeToday')}</Text>
+          </View>
+          <Switch
+            value={trial}
+            onValueChange={(v) => {
+              setTrial(v);
+              if (v && !trialAvailableFor(plan)) setPlan(trialAvailableFor('yearly') ? 'yearly' : 'monthly');
+            }}
+            trackColor={{ true: colors.primary }}
+          />
         </View>
-        <Switch
-          value={trial}
-          onValueChange={(v) => {
-            setTrial(v);
-            if (v && plan === 'lifetime') setPlan('yearly');
-          }}
-          trackColor={{ true: colors.primary }}
-        />
-      </View>
+      ) : null}
 
-      <Pressable onPress={handleContinue} style={[styles.continueBtn, { backgroundColor: colors.primary }]}>
-        <Text style={styles.continueText}>{continueLabel}</Text>
+      <Pressable
+        onPress={handleContinue}
+        disabled={busy !== null}
+        style={[styles.continueBtn, { backgroundColor: colors.primary, opacity: busy === 'restore' ? 0.6 : 1 }]}
+      >
+        {busy === 'purchase' ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.continueText}>{continueLabel}</Text>}
       </Pressable>
       <Pressable onPress={() => router.back()} hitSlop={8} style={styles.maybeLater}>
         <Text style={[styles.maybeLaterText, { color: colors.secondary }]}>{t('paywall.maybeLater')}</Text>
@@ -232,7 +315,7 @@ export default function UpgradeScreen() {
       <Text style={[styles.footerNote, { color: colors.secondary }]}>{footerText}</Text>
 
       <View style={styles.linksRow}>
-        <Text style={[styles.linkText, { color: colors.primary }]} onPress={handleContinue}>
+        <Text style={[styles.linkText, { color: colors.primary }]} onPress={busy ? undefined : handleRestore}>
           {t('paywall.restorePurchases')}
         </Text>
         <Text style={{ color: colors.secondary }}>|</Text>

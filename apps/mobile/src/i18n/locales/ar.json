@@ -165,7 +165,8 @@
     "about": "حول",
     "helpFeedback": "المساعدة والملاحظات",
     "rateApp": "تقييم بيورا إيفنتس",
-    "version": "الإصدار"
+    "version": "الإصدار",
+    "manageSubscription": "إدارة"
   },
   "notificationHistory": {
     "newCount": "{{count}} جديد",
@@ -256,7 +257,16 @@
     "privacyLink": "الخصوصية",
     "continue": "متابعة",
     "maybeLater": "ربما لاحقًا",
-    "autoRenewNote": "يتجدد اشتراكك تلقائيًا. يمكنك إدارته أو إلغاؤه في أي وقت من إعدادات حسابك."
+    "autoRenewNote": "يتجدد اشتراكك تلقائيًا. يمكنك إدارته أو إلغاؤه في أي وقت من إعدادات حسابك.",
+    "storeUnavailableTitle": "المتجر غير متاح",
+    "storeUnavailableMessage": "تعذّر الاتصال بالمتجر الآن. تحقّق من اتصالك وحاول مرة أخرى.",
+    "purchaseSuccessTitle": "مرحبًا بك في Pro!",
+    "purchaseSuccessMessage": "تم فتح جميع ميزات Pro.",
+    "purchaseErrorTitle": "فشل الشراء",
+    "restoreSuccessTitle": "تمت استعادة المشتريات",
+    "restoreSuccessMessage": "عاد اشتراكك في Pro.",
+    "restoreNoneTitle": "لا شيء لاستعادته",
+    "restoreNoneMessage": "لم نعثر على عملية شراء Pro نشطة في هذا الحساب."
   },
   "compare": {
     "title": "بيورا إيفنتس برو",

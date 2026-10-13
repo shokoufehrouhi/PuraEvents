@@ -36,7 +36,10 @@ const AD_UNIT_ID = __DEV__
 // specific cause. If it reproduces again, disable in app/_layout.tsx the
 // same way as before rather than patching further here blind.
 export function AppOpenAdController() {
-  const { isPro } = usePro();
+  // isReady: a Pro user's status comes from RevenueCat asynchronously at
+  // launch — without waiting for it, they'd briefly look Free and get the
+  // cold-start ad anyway.
+  const { isPro, isReady } = usePro();
   const { isLoaded, isClosed, load, show } = useAppOpenAd(AD_UNIT_ID);
   // Only the very first load (cold start) should auto-show — every load
   // after that is either a reload following a shown-and-closed ad (see the
@@ -50,12 +53,12 @@ export function AppOpenAdController() {
   useEffect(() => {
     let cancelled = false;
     mobileAdsInitPromise.then(() => {
-      if (!cancelled && !isPro) load();
+      if (!cancelled && isReady && !isPro) load();
     });
     return () => {
       cancelled = true;
     };
-  }, [isPro, load]);
+  }, [isReady, isPro, load]);
 
   // Same "ad's done with the screen, get the next one ready" reasoning as
   // adGate.tsx's own isClosed effect.
@@ -64,10 +67,10 @@ export function AppOpenAdController() {
   }, [isClosed, load]);
 
   useEffect(() => {
-    if (isPro || shownOnColdStart.current || !isLoaded) return;
+    if (!isReady || isPro || shownOnColdStart.current || !isLoaded) return;
     shownOnColdStart.current = true;
     show();
-  }, [isPro, isLoaded, show]);
+  }, [isReady, isPro, isLoaded, show]);
 
   useForeground(() => {
     if (!isPro && isLoaded) show();

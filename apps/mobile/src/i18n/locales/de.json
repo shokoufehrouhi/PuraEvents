@@ -165,7 +165,8 @@
     "about": "Über",
     "helpFeedback": "Hilfe & Feedback",
     "rateApp": "PuraEvents bewerten",
-    "version": "Version"
+    "version": "Version",
+    "manageSubscription": "Verwalten"
   },
   "notificationHistory": {
     "newCount": "{{count}} neu",
@@ -256,7 +257,16 @@
     "privacyLink": "Datenschutz",
     "continue": "Weiter",
     "maybeLater": "Vielleicht später",
-    "autoRenewNote": "Dein Abo verlängert sich automatisch. Du kannst es jederzeit in den Kontoeinstellungen verwalten oder kündigen."
+    "autoRenewNote": "Dein Abo verlängert sich automatisch. Du kannst es jederzeit in den Kontoeinstellungen verwalten oder kündigen.",
+    "storeUnavailableTitle": "Store nicht verfügbar",
+    "storeUnavailableMessage": "Der Store ist gerade nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+    "purchaseSuccessTitle": "Willkommen bei Pro!",
+    "purchaseSuccessMessage": "Alle Pro-Funktionen sind jetzt freigeschaltet.",
+    "purchaseErrorTitle": "Kauf fehlgeschlagen",
+    "restoreSuccessTitle": "Käufe wiederhergestellt",
+    "restoreSuccessMessage": "Dein Pro-Zugang ist wieder aktiv.",
+    "restoreNoneTitle": "Nichts wiederherzustellen",
+    "restoreNoneMessage": "Wir haben keinen aktiven Pro-Kauf für dieses Konto gefunden."
   },
   "compare": {
     "title": "PuraEvents Pro",

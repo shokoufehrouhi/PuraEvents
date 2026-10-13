@@ -30,6 +30,7 @@
     "react-native": "0.86.3",
     "react-native-android-widget": "^0.22.1",
     "react-native-google-mobile-ads": "16.0.0",
+    "react-native-purchases": "^10.13.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-share": "^12.3.1",

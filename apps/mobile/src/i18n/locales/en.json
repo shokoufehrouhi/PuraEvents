@@ -165,7 +165,8 @@
     "about": "About",
     "helpFeedback": "Help & feedback",
     "rateApp": "Rate PuraEvents",
-    "version": "Version"
+    "version": "Version",
+    "manageSubscription": "Manage"
   },
   "notificationHistory": {
     "newCount": "{{count}} new",
@@ -256,7 +257,16 @@
     "privacyLink": "Privacy",
     "continue": "Continue",
     "maybeLater": "Maybe later",
-    "autoRenewNote": "Your subscription renews automatically. Manage or cancel anytime in your account settings."
+    "autoRenewNote": "Your subscription renews automatically. Manage or cancel anytime in your account settings.",
+    "storeUnavailableTitle": "Store unavailable",
+    "storeUnavailableMessage": "Couldn't reach the store right now. Check your connection and try again.",
+    "purchaseSuccessTitle": "Welcome to Pro!",
+    "purchaseSuccessMessage": "All Pro features are now unlocked.",
+    "purchaseErrorTitle": "Purchase failed",
+    "restoreSuccessTitle": "Purchases restored",
+    "restoreSuccessMessage": "Your Pro access is back.",
+    "restoreNoneTitle": "Nothing to restore",
+    "restoreNoneMessage": "We couldn't find an active Pro purchase on this account."
   },
   "compare": {
     "title": "PuraEvents Pro",

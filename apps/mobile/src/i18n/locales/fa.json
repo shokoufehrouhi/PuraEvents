@@ -165,7 +165,8 @@
     "about": "درباره",
     "helpFeedback": "راهنما و بازخورد",
     "rateApp": "امتیاز به پیوراویدنتس",
-    "version": "نسخه"
+    "version": "نسخه",
+    "manageSubscription": "مدیریت"
   },
   "notificationHistory": {
     "newCount": "{{count}} جدید",
@@ -256,7 +257,16 @@
     "privacyLink": "حریم خصوصی",
     "continue": "ادامه",
     "maybeLater": "شاید بعداً",
-    "autoRenewNote": "اشتراک شما به‌صورت خودکار تمدید می‌شود. هر زمان می‌توانید از تنظیمات حساب مدیریت یا لغو کنید."
+    "autoRenewNote": "اشتراک شما به‌صورت خودکار تمدید می‌شود. هر زمان می‌توانید از تنظیمات حساب مدیریت یا لغو کنید.",
+    "storeUnavailableTitle": "فروشگاه در دسترس نیست",
+    "storeUnavailableMessage": "الان ارتباط با فروشگاه برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.",
+    "purchaseSuccessTitle": "به Pro خوش آمدید!",
+    "purchaseSuccessMessage": "همه‌ی امکانات Pro برای شما فعال شد.",
+    "purchaseErrorTitle": "خرید انجام نشد",
+    "restoreSuccessTitle": "خریدها بازیابی شد",
+    "restoreSuccessMessage": "دسترسی Pro شما دوباره فعال شد.",
+    "restoreNoneTitle": "خریدی برای بازیابی نیست",
+    "restoreNoneMessage": "هیچ خرید فعال Pro روی این حساب پیدا نشد."
   },
   "compare": {
     "title": "پیوراویدنتس پرو",
