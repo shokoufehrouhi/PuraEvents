@@ -154,15 +154,22 @@ export type PurchaseOutcome = 'purchased' | 'cancelled';
 // On iOS an eligible intro offer is always applied by Apple itself.
 export async function purchasePro(pkg: PurchasesPackage, { withTrial }: { withTrial: boolean }): Promise<PurchaseOutcome> {
   try {
+    // Only route around the default (trial) offer when there is one —
+    // purchaseSubscriptionOption is Play-Store-only, so a product without a
+    // trial (or RevenueCat's Test Store) must go through purchasePackage.
     const basePlan = pkg.product.subscriptionOptions?.find((option) => option.isBasePlan);
     const result =
-      Platform.OS === 'android' && !withTrial && basePlan
+      Platform.OS === 'android' && !withTrial && hasFreeTrial(pkg) && basePlan
         ? await Purchases.purchaseSubscriptionOption(basePlan)
         : await Purchases.purchasePackage(pkg);
     applyCustomerInfo(result.customerInfo);
     return 'purchased';
   } catch (e) {
-    if ((e as PurchasesError).userCancelled) return 'cancelled';
+    const error = e as PurchasesError;
+    if (error.userCancelled) return 'cancelled';
+    // RevenueCat's own message is generic ("Unknown error…") — the store's
+    // real reason is only in underlyingErrorMessage.
+    console.warn('[subscription] Purchase failed:', error.code, error.message, error.underlyingErrorMessage);
     throw e;
   }
 }
