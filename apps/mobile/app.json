@@ -97,6 +97,7 @@
         }
       ],
       "./plugins/withShareDownloadPaths",
+    "./plugins/withReleaseSigning",
       [
         "react-native-google-mobile-ads",
         {
