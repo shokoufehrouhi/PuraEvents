@@ -371,7 +371,8 @@
     "upgradeDone": "You're now on the Yearly plan.",
     "downgradeDone": "Your plan will switch to Monthly at your next renewal.",
     "lifetimeDone": "You now have lifetime access. Remember to cancel your old subscription in {{store}}.",
-    "downgradeNowMessage": "Your plan switches to Monthly ({{price}}) right away. The unused time from your Yearly plan is converted into Monthly time, so you won't be charged again until that credit runs out.",
-    "downgradeNowDone": "You're now on the Monthly plan. Your unused Yearly time has been credited."
+    "downgradeNowMessage": "Your plan switches to Monthly right away, but you won't be charged again until {{date}}, when your Yearly period ends. After that you pay {{price}}.",
+    "downgradeNowDone": "You're now on the Monthly plan. Your next charge is on your old renewal date.",
+    "upgradeNowMessage": "You'll be charged {{price}} now and your plan switches to Yearly right away. The unused time left on your Monthly plan is added on top."
   }
 }

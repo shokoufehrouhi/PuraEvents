@@ -189,10 +189,12 @@ export default function UpgradeScreen() {
     const kind = plan === 'lifetime' ? 'lifetime' : currentPlan === 'monthly' ? 'upgrade' : 'downgrade';
     const message =
       kind === 'upgrade'
-        ? t('manage.upgradeMessage', { price: priceLine })
+        ? Platform.OS === 'android'
+          ? t('manage.upgradeNowMessage', { price: priceLine })
+          : t('manage.upgradeMessage', { price: priceLine })
         : kind === 'downgrade'
           ? Platform.OS === 'android'
-            ? t('manage.downgradeNowMessage', { price: priceLine })
+            ? t('manage.downgradeNowMessage', { price: priceLine, date: expiresAt ? dayjs(expiresAt).format('MMM D, YYYY') : '' })
             : t('manage.downgradeMessage', { price: priceLine, date: expiresAt ? dayjs(expiresAt).format('MMM D, YYYY') : '' })
           : t('manage.lifetimeMessage', { price: priceLine, store: STORE_NAME });
     setConfirm({

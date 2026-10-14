@@ -371,7 +371,8 @@
     "upgradeDone": "Ahora tienes el plan Anual.",
     "downgradeDone": "Tu plan cambiará a Mensual en la próxima renovación.",
     "lifetimeDone": "Ahora tienes acceso de por vida. Recuerda cancelar tu suscripción anterior en {{store}}.",
-    "downgradeNowMessage": "Tu plan cambia a Mensual ({{price}}) de inmediato. El tiempo no usado de tu plan Anual se convierte en tiempo Mensual, así que no se te cobrará de nuevo hasta que se agote ese crédito.",
-    "downgradeNowDone": "Ahora tienes el plan Mensual. Se ha abonado el tiempo no usado de tu plan Anual."
+    "downgradeNowMessage": "Tu plan cambia a Mensual de inmediato, pero no se te cobrará de nuevo hasta el {{date}}, cuando termina tu periodo Anual. Después pagas {{price}}.",
+    "downgradeNowDone": "Ahora tienes el plan Mensual. Tu próximo cobro será en tu fecha de renovación anterior.",
+    "upgradeNowMessage": "Se te cobrará {{price}} ahora y tu plan cambia a Anual de inmediato. El tiempo que te queda del plan Mensual se suma."
   }
 }
