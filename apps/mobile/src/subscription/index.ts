@@ -67,9 +67,13 @@ function subscribe(listener: () => void) {
 // Product ids carry the period in their name on both stores (iOS:
 // puraevents_pro_yearly; Android: puraevents_pro:yearly, i.e.
 // subscription:basePlan) — see .env.example for the full set.
-function planTypeFor(productIdentifier: string, expirationDate: string | null): PlanType {
+// On Android the entitlement's productIdentifier is just the subscription
+// ("puraevents_pro"); the period lives in productPlanIdentifier (the base
+// plan, "yearly"/"monthly"). iOS has no plan id but puts the period in the
+// product id itself ("puraevents_pro_yearly") — so check both.
+function planTypeFor(productIdentifier: string, planIdentifier: string | null, expirationDate: string | null): PlanType {
   if (!expirationDate) return 'lifetime';
-  return /year|annual/i.test(productIdentifier) ? 'yearly' : 'monthly';
+  return /year|annual/i.test(`${planIdentifier ?? ''} ${productIdentifier}`) ? 'yearly' : 'monthly';
 }
 
 function applyCustomerInfo(info: CustomerInfo) {
@@ -78,7 +82,7 @@ function applyCustomerInfo(info: CustomerInfo) {
     setState({ isPro: false, isReady: true });
     return;
   }
-  const planType = planTypeFor(entitlement.productIdentifier, entitlement.expirationDate);
+  const planType = planTypeFor(entitlement.productIdentifier, entitlement.productPlanIdentifier, entitlement.expirationDate);
   setState({
     isPro: true,
     planType,
