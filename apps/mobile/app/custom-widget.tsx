@@ -351,7 +351,9 @@ export default function CustomWidgetScreen() {
       <Button
         label={t('widgets.saveCustomWidget')}
         onPress={handleSave}
-        disabled={!sample.customPhotoUri}
+        // A widget needs both a photo and a name — Save stays disabled
+        // until the name has some non-whitespace text.
+        disabled={!sample.customPhotoUri || !widgetName.trim()}
         style={{ marginTop: spacing.lg }}
       />
     </ScrollView>
