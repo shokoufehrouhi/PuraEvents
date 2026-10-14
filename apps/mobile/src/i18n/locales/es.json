@@ -370,6 +370,8 @@
     "doneTitle": "Plan actualizado",
     "upgradeDone": "Ahora tienes el plan Anual.",
     "downgradeDone": "Tu plan cambiará a Mensual en la próxima renovación.",
-    "lifetimeDone": "Ahora tienes acceso de por vida. Recuerda cancelar tu suscripción anterior en {{store}}."
+    "lifetimeDone": "Ahora tienes acceso de por vida. Recuerda cancelar tu suscripción anterior en {{store}}.",
+    "downgradeNowMessage": "Tu plan cambia a Mensual ({{price}}) de inmediato. El tiempo no usado de tu plan Anual se convierte en tiempo Mensual, así que no se te cobrará de nuevo hasta que se agote ese crédito.",
+    "downgradeNowDone": "Ahora tienes el plan Mensual. Se ha abonado el tiempo no usado de tu plan Anual."
   }
 }

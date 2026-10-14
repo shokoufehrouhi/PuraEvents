@@ -201,9 +201,11 @@ export async function purchasePro(pkg: PurchasesPackage, { withTrial }: { withTr
 export type PlanChange = 'upgrade' | 'downgrade';
 
 // Switches an active subscription to another one (monthly <-> yearly).
-// Android needs the old product and a proration mode: an upgrade applies
-// now, crediting the unused time; a downgrade waits until the current
-// period ends. iOS handles both itself within the subscription group.
+// Android needs the old product and a proration mode. Both directions
+// apply now with the unused time credited toward the new plan — DEFERRED
+// (downgrade at renewal) was rejected by Play with a generic "something
+// went wrong" in testing. iOS handles both itself within the group (an
+// Apple downgrade still waits for the next renewal).
 export async function changePlan(pkg: PurchasesPackage, fromProductId: string, change: PlanChange): Promise<PurchaseOutcome> {
   if (Platform.OS !== 'android') return runPurchase(() => Purchases.purchasePackage(pkg));
   return runPurchase(() =>
@@ -211,8 +213,7 @@ export async function changePlan(pkg: PurchasesPackage, fromProductId: string, c
       // Google identifies the old subscription by its subscription id,
       // without the ":basePlan" suffix RevenueCat adds.
       oldProductIdentifier: fromProductId.split(':')[0],
-      prorationMode:
-        change === 'upgrade' ? Purchases.PRORATION_MODE.IMMEDIATE_WITH_TIME_PRORATION : Purchases.PRORATION_MODE.DEFERRED,
+      prorationMode: Purchases.PRORATION_MODE.IMMEDIATE_WITH_TIME_PRORATION,
     })
   );
 }

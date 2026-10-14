@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -191,7 +191,9 @@ export default function UpgradeScreen() {
       kind === 'upgrade'
         ? t('manage.upgradeMessage', { price: priceLine })
         : kind === 'downgrade'
-          ? t('manage.downgradeMessage', { price: priceLine, date: expiresAt ? dayjs(expiresAt).format('MMM D, YYYY') : '' })
+          ? Platform.OS === 'android'
+            ? t('manage.downgradeNowMessage', { price: priceLine })
+            : t('manage.downgradeMessage', { price: priceLine, date: expiresAt ? dayjs(expiresAt).format('MMM D, YYYY') : '' })
           : t('manage.lifetimeMessage', { price: priceLine, store: STORE_NAME });
     setConfirm({
       title: t('manage.confirmTitle'),
@@ -209,7 +211,9 @@ export default function UpgradeScreen() {
           if (outcome === 'purchased') {
             setAlert({
               title: t('manage.doneTitle'),
-              message: t(`manage.${kind}Done`, { store: STORE_NAME }),
+              message: t(kind === 'downgrade' && Platform.OS === 'android' ? 'manage.downgradeNowDone' : `manage.${kind}Done`, {
+                store: STORE_NAME,
+              }),
               variant: 'success',
               leave: true,
             });

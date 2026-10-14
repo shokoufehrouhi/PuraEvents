@@ -370,6 +370,8 @@
     "doneTitle": "Plan aktualisiert",
     "upgradeDone": "Du hast jetzt den Jahresplan.",
     "downgradeDone": "Dein Plan wechselt bei der nächsten Verlängerung zu Monatlich.",
-    "lifetimeDone": "Du hast jetzt lebenslangen Zugang. Denk daran, dein altes Abo in {{store}} zu kündigen."
+    "lifetimeDone": "Du hast jetzt lebenslangen Zugang. Denk daran, dein altes Abo in {{store}} zu kündigen.",
+    "downgradeNowMessage": "Dein Plan wechselt sofort zu Monatlich ({{price}}). Die ungenutzte Zeit deines Jahresplans wird in Monatszeit umgerechnet – du zahlst erst wieder, wenn dieses Guthaben aufgebraucht ist.",
+    "downgradeNowDone": "Du hast jetzt den Monatsplan. Deine ungenutzte Jahreszeit wurde angerechnet."
   }
 }

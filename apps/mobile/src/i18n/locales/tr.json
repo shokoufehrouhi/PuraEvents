@@ -370,6 +370,8 @@
     "doneTitle": "Plan güncellendi",
     "upgradeDone": "Artık Yıllık plandasın.",
     "downgradeDone": "Planın bir sonraki yenilemede Aylık olarak değişecek.",
-    "lifetimeDone": "Artık ömür boyu erişimin var. Eski aboneliğini {{store}}'da iptal etmeyi unutma."
+    "lifetimeDone": "Artık ömür boyu erişimin var. Eski aboneliğini {{store}}'da iptal etmeyi unutma.",
+    "downgradeNowMessage": "Planın hemen Aylık ({{price}}) olarak değişir. Yıllık planından kullanılmayan süre Aylık süreye çevrilir; bu kredi bitene kadar tekrar ücret alınmaz.",
+    "downgradeNowDone": "Artık Aylık plandasın. Yıllık planından kullanılmayan süre hesabına aktarıldı."
   }
 }
