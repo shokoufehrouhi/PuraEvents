@@ -85,8 +85,11 @@ export function ShareCard({ event }: Props) {
       </View>
 
       {/* Same wordmark posture as a real gift card's own corner branding —
-          subtle, bottom-left. */}
-      <Text style={[styles.brand, { color: secondaryColor }]}>PuraEvents</Text>
+          subtle, bottom-left: the app icon, then the name. */}
+      <View style={styles.brandRow}>
+        <Image source={require('../../assets/images/app-logo.png')} style={styles.brandLogo} />
+        <Text style={[styles.brand, { color: secondaryColor }]}>PuraEvents</Text>
+      </View>
     </View>
   );
 }
@@ -107,5 +110,7 @@ const styles = StyleSheet.create({
   messageBox: { marginTop: 16 },
   message: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
   sender: { fontSize: 11, fontWeight: '700', marginTop: 4, textAlign: 'right' },
-  brand: { alignSelf: 'flex-start', fontSize: 9, fontWeight: '700', letterSpacing: 0.5, opacity: 0.8 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4 },
+  brandLogo: { width: 14, height: 14 },
+  brand: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5, opacity: 0.8 },
 });
