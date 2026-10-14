@@ -353,5 +353,23 @@
     "gateErrorMessage": "This needs an ad to load first, and it couldn't (check your connection). Browsing still works — try again in a moment.",
     "gateRetry": "Try Again",
     "gateCancel": "Cancel"
+  },
+  "manage": {
+    "currentPlan": "Current plan",
+    "currentBadge": "CURRENT",
+    "lifetimeActive": "Lifetime access — nothing to renew or cancel.",
+    "changePlan": "Change plan",
+    "close": "Close",
+    "storeLink": "Cancel or manage in {{store}}",
+    "confirmTitle": "Change your plan?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "upgradeMessage": "Your plan switches to Yearly ({{price}}) right away. The unused time from your Monthly plan is credited toward it.",
+    "downgradeMessage": "You keep Yearly until {{date}}. After that, your plan switches to Monthly ({{price}}).",
+    "lifetimeMessage": "You'll pay {{price}} for lifetime access. Your current subscription is NOT cancelled automatically — cancel it in {{store}} afterwards so you aren't charged again.",
+    "doneTitle": "Plan updated",
+    "upgradeDone": "You're now on the Yearly plan.",
+    "downgradeDone": "Your plan will switch to Monthly at your next renewal.",
+    "lifetimeDone": "You now have lifetime access. Remember to cancel your old subscription in {{store}}."
   }
 }

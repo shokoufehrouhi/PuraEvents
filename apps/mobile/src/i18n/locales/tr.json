@@ -353,5 +353,23 @@
     "gateErrorMessage": "Bunun için önce bir reklamın yüklenmesi gerekiyor ve yüklenemedi (bağlantını kontrol et). Gezinmek hâlâ çalışıyor — birazdan tekrar dene.",
     "gateRetry": "Tekrar Dene",
     "gateCancel": "İptal"
+  },
+  "manage": {
+    "currentPlan": "Mevcut plan",
+    "currentBadge": "MEVCUT",
+    "lifetimeActive": "Ömür boyu erişim — yenilenecek veya iptal edilecek bir şey yok.",
+    "changePlan": "Planı değiştir",
+    "close": "Kapat",
+    "storeLink": "{{store}}'da iptal et veya yönet",
+    "confirmTitle": "Planın değiştirilsin mi?",
+    "confirm": "Onayla",
+    "cancel": "Vazgeç",
+    "upgradeMessage": "Planın hemen Yıllık ({{price}}) olarak değişir. Aylık planından kullanılmayan süre bu plana aktarılır.",
+    "downgradeMessage": "Yıllık plan {{date}} tarihine kadar devam eder. Ardından planın Aylık ({{price}}) olarak değişir.",
+    "lifetimeMessage": "Ömür boyu erişim için {{price}} ödersin. Mevcut aboneliğin otomatik olarak İPTAL EDİLMEZ — tekrar ücret alınmaması için satın aldıktan sonra {{store}}'da iptal et.",
+    "doneTitle": "Plan güncellendi",
+    "upgradeDone": "Artık Yıllık plandasın.",
+    "downgradeDone": "Planın bir sonraki yenilemede Aylık olarak değişecek.",
+    "lifetimeDone": "Artık ömür boyu erişimin var. Eski aboneliğini {{store}}'da iptal etmeyi unutma."
   }
 }

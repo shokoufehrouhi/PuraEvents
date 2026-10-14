@@ -21,6 +21,9 @@ export interface SubscriptionState {
   // (required by both stores' auto-renewing subscription rules, see
   // PROJECT.md §9). Null for Lifetime, which has nothing to manage.
   managementURL?: string | null;
+  // Store product id behind the active entitlement (e.g. Android
+  // "puraevents_pro:monthly") — what a plan change replaces.
+  productIdentifier?: string;
   // False until the first CustomerInfo arrives (from RevenueCat's own
   // on-device cache, so this is near-instant and works offline) — lets
   // anything that would otherwise misfire for a Pro user during that
@@ -81,6 +84,7 @@ function applyCustomerInfo(info: CustomerInfo) {
     planType,
     expiresAt: entitlement.expirationDate ?? undefined,
     managementURL: planType === 'lifetime' ? null : info.managementURL,
+    productIdentifier: entitlement.productIdentifier,
     isReady: true,
   });
 }
@@ -149,19 +153,20 @@ export function hasFreeTrial(pkg: PurchasesPackage | null | undefined): boolean 
 
 export type PurchaseOutcome = 'purchased' | 'cancelled';
 
-// withTrial only has teeth on Android, where a subscription's base plan
-// (no trial) and its free-trial offer are separate purchasable options.
-// On iOS an eligible intro offer is always applied by Apple itself.
-export async function purchasePro(pkg: PurchasesPackage, { withTrial }: { withTrial: boolean }): Promise<PurchaseOutcome> {
+// Where cancelling actually happens — neither store lets an app cancel a
+// subscription itself. Falls back to the store's own subscriptions page
+// when RevenueCat has no customer-specific managementURL yet.
+export const STORE_NAME = Platform.OS === 'ios' ? 'App Store' : 'Google Play';
+export function subscriptionManagementUrl(managementURL?: string | null): string {
+  return (
+    managementURL ??
+    (Platform.OS === 'ios' ? 'https://apps.apple.com/account/subscriptions' : 'https://play.google.com/store/account/subscriptions')
+  );
+}
+
+async function runPurchase(purchase: () => Promise<{ customerInfo: CustomerInfo }>): Promise<PurchaseOutcome> {
   try {
-    // Only route around the default (trial) offer when there is one —
-    // purchaseSubscriptionOption is Play-Store-only, so a product without a
-    // trial (or RevenueCat's Test Store) must go through purchasePackage.
-    const basePlan = pkg.product.subscriptionOptions?.find((option) => option.isBasePlan);
-    const result =
-      Platform.OS === 'android' && !withTrial && hasFreeTrial(pkg) && basePlan
-        ? await Purchases.purchaseSubscriptionOption(basePlan)
-        : await Purchases.purchasePackage(pkg);
+    const result = await purchase();
     applyCustomerInfo(result.customerInfo);
     return 'purchased';
   } catch (e) {
@@ -172,6 +177,40 @@ export async function purchasePro(pkg: PurchasesPackage, { withTrial }: { withTr
     console.warn('[subscription] Purchase failed:', error.code, error.message, error.underlyingErrorMessage);
     throw e;
   }
+}
+
+// withTrial only has teeth on Android, where a subscription's base plan
+// (no trial) and its free-trial offer are separate purchasable options.
+// On iOS an eligible intro offer is always applied by Apple itself.
+export async function purchasePro(pkg: PurchasesPackage, { withTrial }: { withTrial: boolean }): Promise<PurchaseOutcome> {
+  // Only route around the default (trial) offer when there is one —
+  // purchaseSubscriptionOption is Play-Store-only, so a product without a
+  // trial (or RevenueCat's Test Store) must go through purchasePackage.
+  const basePlan = pkg.product.subscriptionOptions?.find((option) => option.isBasePlan);
+  return runPurchase(() =>
+    Platform.OS === 'android' && !withTrial && hasFreeTrial(pkg) && basePlan
+      ? Purchases.purchaseSubscriptionOption(basePlan)
+      : Purchases.purchasePackage(pkg)
+  );
+}
+
+export type PlanChange = 'upgrade' | 'downgrade';
+
+// Switches an active subscription to another one (monthly <-> yearly).
+// Android needs the old product and a proration mode: an upgrade applies
+// now, crediting the unused time; a downgrade waits until the current
+// period ends. iOS handles both itself within the subscription group.
+export async function changePlan(pkg: PurchasesPackage, fromProductId: string, change: PlanChange): Promise<PurchaseOutcome> {
+  if (Platform.OS !== 'android') return runPurchase(() => Purchases.purchasePackage(pkg));
+  return runPurchase(() =>
+    Purchases.purchasePackage(pkg, null, {
+      // Google identifies the old subscription by its subscription id,
+      // without the ":basePlan" suffix RevenueCat adds.
+      oldProductIdentifier: fromProductId.split(':')[0],
+      prorationMode:
+        change === 'upgrade' ? Purchases.PRORATION_MODE.IMMEDIATE_WITH_TIME_PRORATION : Purchases.PRORATION_MODE.DEFERRED,
+    })
+  );
 }
 
 // Resolves to whether Pro is active afterwards — false means there was

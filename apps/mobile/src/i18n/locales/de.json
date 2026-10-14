@@ -353,5 +353,23 @@
     "gateErrorMessage": "Dafür muss zuerst eine Anzeige geladen werden, was nicht geklappt hat (Verbindung prüfen). Stöbern funktioniert weiterhin — versuch es gleich noch einmal.",
     "gateRetry": "Erneut versuchen",
     "gateCancel": "Abbrechen"
+  },
+  "manage": {
+    "currentPlan": "Aktueller Plan",
+    "currentBadge": "AKTUELL",
+    "lifetimeActive": "Lebenslanger Zugang – nichts zu verlängern oder zu kündigen.",
+    "changePlan": "Plan ändern",
+    "close": "Schließen",
+    "storeLink": "In {{store}} kündigen oder verwalten",
+    "confirmTitle": "Plan ändern?",
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen",
+    "upgradeMessage": "Dein Plan wechselt sofort zu Jährlich ({{price}}). Die ungenutzte Zeit deines Monatsplans wird angerechnet.",
+    "downgradeMessage": "Du behältst Jährlich bis {{date}}. Danach wechselt dein Plan zu Monatlich ({{price}}).",
+    "lifetimeMessage": "Du zahlst {{price}} für lebenslangen Zugang. Dein aktuelles Abo wird NICHT automatisch gekündigt – kündige es danach in {{store}}, damit du nicht erneut belastet wirst.",
+    "doneTitle": "Plan aktualisiert",
+    "upgradeDone": "Du hast jetzt den Jahresplan.",
+    "downgradeDone": "Dein Plan wechselt bei der nächsten Verlängerung zu Monatlich.",
+    "lifetimeDone": "Du hast jetzt lebenslangen Zugang. Denk daran, dein altes Abo in {{store}} zu kündigen."
   }
 }

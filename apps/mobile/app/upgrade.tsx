@@ -1,14 +1,27 @@
 import { Ionicons } from '@expo/vector-icons';
+import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
+import { ConfirmModal, type ConfirmModalState } from '../src/components/ConfirmModal';
 import { HeroCountdown } from '../src/components/HeroCountdown';
-import { FREE_LIMITS, hasFreeTrial, isStoreAvailable, loadProOffering, purchasePro, restorePro } from '../src/subscription';
+import {
+  changePlan,
+  FREE_LIMITS,
+  hasFreeTrial,
+  isStoreAvailable,
+  loadProOffering,
+  purchasePro,
+  restorePro,
+  STORE_NAME,
+  subscriptionManagementUrl,
+  usePro,
+} from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
 import { fetchLocationPhotoUrl, getLocalPlaceName } from '../src/utils/locationPhoto';
 import { PRESET_REMINDER_OFFSETS } from '../src/utils/reminders';
@@ -51,13 +64,23 @@ const FALLBACK_YEARLY_SUB = '$1.25/mo\nSave 58%';
 // screen with no scrolling — every row/tile below is sized to add up
 // within a standard device height, not left to a ScrollView to sort out.
 // Purchases go through RevenueCat (see src/subscription) against the
-// dashboard's "current" offering.
+// dashboard's "current" offering. For a user who's already Pro (Settings →
+// Manage) the same screen becomes "manage plan": the comparison table
+// stays, plus a line naming their current plan, and switching plans always goes
+// through a warning confirm spelling out what will happen first.
 export default function UpgradeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const [plan, setPlan] = useState<PlanId>('yearly');
+  const { isPro, planType: currentPlan, expiresAt, productIdentifier, managementURL } = usePro();
+  // Fixed at mount: a successful purchase flips isPro while its success
+  // popup is still up, and the screen shouldn't re-lay itself out under it.
+  const [manage] = useState(isPro);
+  const [plan, setPlan] = useState<PlanId>(() =>
+    !manage ? 'yearly' : currentPlan === 'monthly' ? 'yearly' : currentPlan === 'yearly' ? 'monthly' : 'lifetime'
+  );
+  const hasLifetime = manage && currentPlan === 'lifetime';
   // Off by default — a trial is opt-in, not a default state the user has
   // to notice and turn off. Turning it on picks the plan it converts to
   // after the 7 days (Lifetime doesn't apply — a one-time purchase has
@@ -74,6 +97,7 @@ export default function UpgradeScreen() {
   // App-styled result popup instead of Alert.alert; `leave` closes the
   // paywall once the user dismisses a success message.
   const [alert, setAlert] = useState<(AppAlertState & { leave?: boolean }) | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,7 +177,57 @@ export default function UpgradeScreen() {
     setAlert({ title: t('paywall.storeUnavailableTitle'), message: t('paywall.storeUnavailableMessage'), variant: 'warning' });
   }
 
+  // Monthly <-> yearly is a store-side plan change; anything -> lifetime is
+  // a separate one-time purchase that leaves the old subscription running
+  // until the user cancels it in the store — hence the explicit warning.
+  function handleChangePlan() {
+    const pkg = packages[plan];
+    if (!pkg) {
+      showStoreUnavailable();
+      return;
+    }
+    const kind = plan === 'lifetime' ? 'lifetime' : currentPlan === 'monthly' ? 'upgrade' : 'downgrade';
+    const message =
+      kind === 'upgrade'
+        ? t('manage.upgradeMessage', { price: priceLine })
+        : kind === 'downgrade'
+          ? t('manage.downgradeMessage', { price: priceLine, date: expiresAt ? dayjs(expiresAt).format('MMM D, YYYY') : '' })
+          : t('manage.lifetimeMessage', { price: priceLine, store: STORE_NAME });
+    setConfirm({
+      title: t('manage.confirmTitle'),
+      message,
+      confirmLabel: t('manage.confirm'),
+      cancelLabel: t('manage.cancel'),
+      warning: true,
+      onConfirm: async () => {
+        setBusy('purchase');
+        try {
+          const outcome =
+            kind === 'lifetime' || !productIdentifier
+              ? await purchasePro(pkg, { withTrial: false })
+              : await changePlan(pkg, productIdentifier, kind);
+          if (outcome === 'purchased') {
+            setAlert({
+              title: t('manage.doneTitle'),
+              message: t(`manage.${kind}Done`, { store: STORE_NAME }),
+              variant: 'success',
+              leave: true,
+            });
+          }
+        } catch (e) {
+          setAlert({ title: t('paywall.purchaseErrorTitle'), message: (e as Error).message, variant: 'error' });
+        } finally {
+          setBusy(null);
+        }
+      },
+    });
+  }
+
   async function handleContinue() {
+    if (manage) {
+      handleChangePlan();
+      return;
+    }
     const pkg = packages[plan];
     if (!pkg) {
       showStoreUnavailable();
@@ -242,6 +316,20 @@ export default function UpgradeScreen() {
             </View>
           ))}
         </View>
+        {manage ? (
+          <Text style={[styles.currentPlanLine, { color: colors.secondary }]}>
+            {[
+              `${t('manage.currentPlan')}: ${currentPlan ? t(`paywall.${currentPlan}`) : t('compare.pro')}`,
+              hasLifetime
+                ? t('manage.lifetimeActive')
+                : expiresAt
+                  ? t('settings.renewsOn', { date: dayjs(expiresAt).format('MMM D, YYYY') })
+                  : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
+        ) : null}
 
         <View style={styles.plans}>
           {PLAN_IDS.map((id) => {
@@ -249,7 +337,10 @@ export default function UpgradeScreen() {
             // A plan without a trial (always Lifetime — a one-time purchase
             // has no "after the trial" plan to convert into) isn't a choice
             // while trial is on, not just quietly auto-switched away from.
-            const disabled = trial && !trialAvailableFor(id);
+            const isCurrent = manage && id === currentPlan;
+            // Manage mode: the plan the user already has (or every plan,
+            // once they own Lifetime) isn't something to switch to.
+            const disabled = manage ? isCurrent || hasLifetime : trial && !trialAvailableFor(id);
             const sub = id === 'yearly' ? yearlySub : undefined;
             return (
               <Pressable
@@ -257,10 +348,18 @@ export default function UpgradeScreen() {
                 onPress={() => !disabled && setPlan(id)}
                 style={[
                   styles.planTile,
-                  { borderColor: selected ? colors.primary : colors.outline, backgroundColor: colors.surface, opacity: disabled ? 0.4 : 1 },
+                  {
+                    borderColor: selected && !disabled ? colors.primary : colors.outline,
+                    backgroundColor: colors.surface,
+                    opacity: disabled && !isCurrent ? 0.4 : 1,
+                  },
                 ]}
               >
-                {id === 'yearly' ? (
+                {isCurrent ? (
+                  <View style={[styles.bestBadge, { backgroundColor: colors.mint }]}>
+                    <Text style={styles.bestBadgeText}>{t('manage.currentBadge')}</Text>
+                  </View>
+                ) : id === 'yearly' ? (
                   <View style={[styles.bestBadge, { backgroundColor: colors.primary }]}>
                     <Text style={styles.bestBadgeText}>{t('paywall.bestValue')}</Text>
                   </View>
@@ -278,8 +377,12 @@ export default function UpgradeScreen() {
                     Reserving the same slot on all three and just toggling
                     its fill keeps every tile the same size regardless of
                     selection. */}
-                <View style={[styles.planCheck, { backgroundColor: selected ? colors.primary : 'transparent' }]}>
-                  {selected ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}
+                <View style={styles.planCheckSlot}>
+                  {selected && !disabled ? (
+                    <View style={[styles.planCheck, { backgroundColor: colors.primary }]}>
+                      <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                    </View>
+                  ) : null}
                 </View>
               </Pressable>
             );
@@ -288,7 +391,7 @@ export default function UpgradeScreen() {
 
         {/* Hidden (not disabled) when the store has no trial configured on
             any plan — an always-off toggle would just be noise. */}
-        {anyTrial ? (
+        {!manage && anyTrial ? (
           <View style={[styles.trialRow, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
             <Ionicons name="gift-outline" size={20} color={colors.primary} />
             <View style={styles.trialText}>
@@ -306,18 +409,39 @@ export default function UpgradeScreen() {
           </View>
         ) : null}
 
-        <Pressable
-          onPress={handleContinue}
-          disabled={busy !== null}
-          style={[styles.continueBtn, { backgroundColor: colors.primary, opacity: busy === 'restore' ? 0.6 : 1 }]}
-        >
-          {busy === 'purchase' ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.continueText}>{continueLabel}</Text>}
-        </Pressable>
+        {!hasLifetime ? (
+          <Pressable
+            onPress={handleContinue}
+            disabled={busy !== null}
+            style={[styles.continueBtn, { backgroundColor: colors.primary, opacity: busy === 'restore' ? 0.6 : 1 }]}
+          >
+            {busy === 'purchase' ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.continueText}>{manage ? t('manage.changePlan') : continueLabel}</Text>
+            )}
+          </Pressable>
+        ) : null}
         <Pressable onPress={() => router.back()} hitSlop={8} style={styles.maybeLater}>
-          <Text style={[styles.maybeLaterText, { color: colors.secondary }]}>{t('paywall.maybeLater')}</Text>
+          <Text style={[styles.maybeLaterText, { color: colors.secondary }]}>
+            {manage ? t('manage.close') : t('paywall.maybeLater')}
+          </Text>
         </Pressable>
 
-        <Text style={[styles.footerNote, { color: colors.secondary }]}>{footerText}</Text>
+        {/* Cancelling only ever happens in the store itself (both stores'
+            rules) — manage mode links there instead of the charge note. */}
+        {manage ? (
+          hasLifetime ? null : (
+            <Text
+              style={[styles.footerNote, { color: colors.primary, fontWeight: '600' }]}
+              onPress={() => Linking.openURL(subscriptionManagementUrl(managementURL))}
+            >
+              {t('manage.storeLink', { store: STORE_NAME })}
+            </Text>
+          )
+        ) : (
+          <Text style={[styles.footerNote, { color: colors.secondary }]}>{footerText}</Text>
+        )}
 
         <View style={styles.linksRow}>
           <Text style={[styles.linkText, { color: colors.primary }]} onPress={busy ? undefined : handleRestore}>
@@ -333,6 +457,7 @@ export default function UpgradeScreen() {
           </Text>
         </View>
       </View>
+      <ConfirmModal state={confirm} onClose={() => setConfirm(null)} />
       <AppAlertModal
         alert={alert}
         onClose={() => {
@@ -369,9 +494,17 @@ const styles = StyleSheet.create({
   bestBadge: { position: 'absolute', top: -9, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
   bestBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
   planLabel: { fontSize: 13, fontWeight: '700' },
+  currentPlanLine: { textAlign: 'center', fontSize: 13, fontWeight: '600' },
   planPrice: { fontSize: 15, fontWeight: '800', marginTop: 4 },
   planSub: { fontSize: 10, marginTop: 2, textAlign: 'center' },
-  planCheck: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  // The filled circle is mounted fresh on selection rather than toggling a
+  // fixed view's backgroundColor from transparent — Android drew the
+  // latter as a square, ignoring borderRadius. The slot keeps every tile
+  // the same height either way.
+  // marginTop: 'auto' pins the check to the tile's bottom so all three line
+  // up even though Yearly's extra "/mo · save" lines make its text taller.
+  planCheckSlot: { width: 18, height: 26, paddingTop: 8, marginTop: 'auto' },
+  planCheck: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   trialRow: { flexDirection: 'row', alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 10 },
   trialText: { flex: 1, marginLeft: 10 },
   trialLabel: { fontSize: 13, fontWeight: '700' },

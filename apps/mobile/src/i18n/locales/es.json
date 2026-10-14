@@ -353,5 +353,23 @@
     "gateErrorMessage": "Esto necesita que se cargue un anuncio primero, y no fue posible (revisa tu conexión). Explorar sigue funcionando — inténtalo de nuevo en un momento.",
     "gateRetry": "Reintentar",
     "gateCancel": "Cancelar"
+  },
+  "manage": {
+    "currentPlan": "Plan actual",
+    "currentBadge": "ACTUAL",
+    "lifetimeActive": "Acceso de por vida: nada que renovar ni cancelar.",
+    "changePlan": "Cambiar plan",
+    "close": "Cerrar",
+    "storeLink": "Cancelar o gestionar en {{store}}",
+    "confirmTitle": "¿Cambiar tu plan?",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "upgradeMessage": "Tu plan cambia a Anual ({{price}}) de inmediato. El tiempo no usado de tu plan Mensual se abona a este.",
+    "downgradeMessage": "Mantienes el plan Anual hasta el {{date}}. Después, tu plan cambia a Mensual ({{price}}).",
+    "lifetimeMessage": "Pagarás {{price}} por acceso de por vida. Tu suscripción actual NO se cancela automáticamente: cancélala en {{store}} después para que no se te vuelva a cobrar.",
+    "doneTitle": "Plan actualizado",
+    "upgradeDone": "Ahora tienes el plan Anual.",
+    "downgradeDone": "Tu plan cambiará a Mensual en la próxima renovación.",
+    "lifetimeDone": "Ahora tienes acceso de por vida. Recuerda cancelar tu suscripción anterior en {{store}}."
   }
 }
