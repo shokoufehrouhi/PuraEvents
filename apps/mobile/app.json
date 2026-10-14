@@ -28,7 +28,8 @@
         "android.permission.RECORD_AUDIO",
         "com.android.launcher.permission.INSTALL_SHORTCUT"
       ],
-      "package": "com.puraapps.puraevents"
+      "package": "com.puraapps.puraevents",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
