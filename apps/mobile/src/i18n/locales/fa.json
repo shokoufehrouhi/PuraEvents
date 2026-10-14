@@ -1,5 +1,5 @@
 {
-  "appName": "پیوراویدنتس",
+  "appName": "PuraEvents",
   "tabs": {
     "events": "رویدادها",
     "widgets": "ویجت‌ها",
@@ -139,7 +139,7 @@
   },
   "settings": {
     "title": "تنظیمات",
-    "proPlan": "پیوراویدنتس پرو",
+    "proPlan": "PuraEvents Pro",
     "freePlan": "پلن رایگان",
     "renewsOn": "تمدید در {{date}}",
     "viewPlans": "مشاهده‌ی پلن‌ها",
@@ -164,7 +164,7 @@
     "termsOfUse": "شرایط استفاده",
     "about": "درباره",
     "helpFeedback": "راهنما و بازخورد",
-    "rateApp": "امتیاز به پیوراویدنتس",
+    "rateApp": "امتیاز به PuraEvents",
     "version": "نسخه",
     "manageSubscription": "مدیریت"
   },
@@ -242,7 +242,7 @@
     "featureCloudSync": "همگام‌سازی ابری و رویداد گروهی",
     "monthly": "ماهانه",
     "yearly": "سالانه",
-    "lifetime": "یک‌باره",
+    "lifetime": "دائمی",
     "bestValue": "بهترین ارزش",
     "perMonth": "در ماه",
     "perYear": "در سال",
@@ -269,10 +269,10 @@
     "restoreNoneMessage": "هیچ خرید فعال Pro روی این حساب پیدا نشد."
   },
   "compare": {
-    "title": "پیوراویدنتس پرو",
+    "title": "PuraEvents Pro",
     "tripTitle": "سفر {{city}}",
-    "subtitle": "همه‌ی چیزی که دوست داری، قدرتمندتر.",
-    "subtitleLine1": "همه‌ی چیزی که دوست داری،",
+    "subtitle": "همه‌ی چیزی که در PuraEvents دوست داری، قدرتمندتر.",
+    "subtitleLine1": "همه‌ی چیزی که در PuraEvents دوست داری،",
     "subtitleLine2": "قدرتمندتر",
     "free": "رایگان",
     "pro": "پرو",
@@ -358,10 +358,10 @@
     "currentPlan": "پلن فعلی",
     "currentBadge": "فعلی",
     "lifetimeActive": "دسترسی مادام‌العمر — چیزی برای تمدید یا لغو وجود ندارد.",
-    "changePlan": "تغییر پلن",
+    "changePlan": "تغییر اشتراک",
     "close": "بستن",
     "storeLink": "لغو یا مدیریت در {{store}}",
-    "confirmTitle": "پلن را تغییر می‌دهید؟",
+    "confirmTitle": "اشتراک را تغییر می‌دهید؟",
     "confirm": "تأیید",
     "cancel": "انصراف",
     "upgradeMessage": "پلن شما همین حالا به سالانه ({{price}}) تغییر می‌کند. زمان استفاده‌نشده از پلن ماهانه برایتان حساب می‌شود.",

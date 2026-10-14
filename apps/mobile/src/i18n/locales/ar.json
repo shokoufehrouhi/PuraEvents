@@ -1,5 +1,5 @@
 {
-  "appName": "بيورا إيفنتس",
+  "appName": "PuraEvents",
   "tabs": {
     "events": "الأحداث",
     "widgets": "الودجات",
@@ -139,7 +139,7 @@
   },
   "settings": {
     "title": "الإعدادات",
-    "proPlan": "بيورا إيفنتس برو",
+    "proPlan": "PuraEvents Pro",
     "freePlan": "الخطة المجانية",
     "renewsOn": "يتجدد في {{date}}",
     "viewPlans": "عرض الخطط",
@@ -164,7 +164,7 @@
     "termsOfUse": "شروط الاستخدام",
     "about": "حول",
     "helpFeedback": "المساعدة والملاحظات",
-    "rateApp": "تقييم بيورا إيفنتس",
+    "rateApp": "تقييم PuraEvents",
     "version": "الإصدار",
     "manageSubscription": "إدارة"
   },
@@ -269,10 +269,10 @@
     "restoreNoneMessage": "لم نعثر على عملية شراء Pro نشطة في هذا الحساب."
   },
   "compare": {
-    "title": "بيورا إيفنتس برو",
+    "title": "PuraEvents Pro",
     "tripTitle": "رحلة {{city}}",
-    "subtitle": "كل ما تحبه في بيورا إيفنتس، بقوة أكبر.",
-    "subtitleLine1": "كل ما تحبه في بيورا إيفنتس،",
+    "subtitle": "كل ما تحبه في PuraEvents، بقوة أكبر.",
+    "subtitleLine1": "كل ما تحبه في PuraEvents،",
     "subtitleLine2": "بقوة أكبر",
     "free": "مجاني",
     "pro": "برو",
