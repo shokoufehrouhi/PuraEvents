@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { HeroCountdown } from '../src/components/HeroCountdown';
 import { FREE_LIMITS, hasFreeTrial, isStoreAvailable, loadProOffering, purchasePro, restorePro } from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
@@ -44,7 +45,7 @@ const PLAN_IDS: PlanId[] = ['monthly', 'yearly', 'lifetime'];
 // store prices arrive from RevenueCat (or if the store can't be reached,
 // in which case Continue reports that instead of buying anything).
 const FALLBACK_PRICES: Record<PlanId, string> = { monthly: '$2.99', yearly: '$14.99', lifetime: '$29.99' };
-const FALLBACK_YEARLY_SUB = '$1.25/mo · Save 58%';
+const FALLBACK_YEARLY_SUB = '$1.25/mo\nSave 58%';
 
 // PuraEvents Pro comparison + purchase screen. Deliberately fits one
 // screen with no scrolling — every row/tile below is sized to add up
@@ -70,6 +71,9 @@ export default function UpgradeScreen() {
   const cityName = getLocalPlaceName(zone);
   const [offering, setOffering] = useState<PurchasesOffering | null>(null);
   const [busy, setBusy] = useState<'purchase' | 'restore' | null>(null);
+  // App-styled result popup instead of Alert.alert; `leave` closes the
+  // paywall once the user dismisses a success message.
+  const [alert, setAlert] = useState<(AppAlertState & { leave?: boolean }) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +106,9 @@ export default function UpgradeScreen() {
           `Save ${Math.round((1 - yearlyProduct.price / (monthlyProduct.price * 12)) * 100)}%`,
         ]
           .filter(Boolean)
-          .join(' · ')
+          // Two lines, not one joined by ' · ' — localized prices like
+          // "TRY74.16/mo" are too wide for one line in a third-width tile.
+          .join('\n')
       : FALLBACK_YEARLY_SUB;
 
   useEffect(() => {
@@ -144,7 +150,7 @@ export default function UpgradeScreen() {
   const continueLabel = trial ? t('paywall.startTrial') : t('paywall.continue');
 
   function showStoreUnavailable() {
-    Alert.alert(t('paywall.storeUnavailableTitle'), t('paywall.storeUnavailableMessage'));
+    setAlert({ title: t('paywall.storeUnavailableTitle'), message: t('paywall.storeUnavailableMessage'), variant: 'warning' });
   }
 
   async function handleContinue() {
@@ -157,11 +163,10 @@ export default function UpgradeScreen() {
     try {
       const outcome = await purchasePro(pkg, { withTrial: trial });
       if (outcome === 'purchased') {
-        Alert.alert(t('paywall.purchaseSuccessTitle'), t('paywall.purchaseSuccessMessage'));
-        router.back();
+        setAlert({ title: t('paywall.purchaseSuccessTitle'), message: t('paywall.purchaseSuccessMessage'), variant: 'success', leave: true });
       }
     } catch (e) {
-      Alert.alert(t('paywall.purchaseErrorTitle'), (e as Error).message);
+      setAlert({ title: t('paywall.purchaseErrorTitle'), message: (e as Error).message, variant: 'error' });
     } finally {
       setBusy(null);
     }
@@ -176,158 +181,167 @@ export default function UpgradeScreen() {
     try {
       const restored = await restorePro();
       if (restored) {
-        Alert.alert(t('paywall.restoreSuccessTitle'), t('paywall.restoreSuccessMessage'));
-        router.back();
+        setAlert({ title: t('paywall.restoreSuccessTitle'), message: t('paywall.restoreSuccessMessage'), variant: 'success', leave: true });
       } else {
-        Alert.alert(t('paywall.restoreNoneTitle'), t('paywall.restoreNoneMessage'));
+        setAlert({ title: t('paywall.restoreNoneTitle'), message: t('paywall.restoreNoneMessage'), variant: 'warning' });
       }
     } catch (e) {
-      Alert.alert(t('paywall.purchaseErrorTitle'), (e as Error).message);
+      setAlert({ title: t('paywall.purchaseErrorTitle'), message: (e as Error).message, variant: 'error' });
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom + 10 }]}>
-      <View style={styles.heroRow}>
-        <View style={[styles.heroCard, { borderRadius: 18, backgroundColor: colors.surface }]}>
-          <Image source={photoUrl ? { uri: photoUrl } : FALLBACK_IMAGE} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          <View style={[StyleSheet.absoluteFill, styles.heroScrim]} />
-          <View style={styles.heroContent}>
-            <Text style={styles.heroTitle} numberOfLines={1}>
-              {t('compare.tripTitle', { city: cityName })}
-            </Text>
-            <HeroCountdown
-              targetISO={PREVIEW_TARGET_ISO}
-              textColor="#FFFFFF"
-              labelColor="rgba(255,255,255,0.75)"
-              numberSize={22}
-              labelSize={9}
-              compact
+    <>
+      <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom + 10 }]}>
+        <View style={styles.heroRow}>
+          <View style={[styles.heroCard, { borderRadius: 18, backgroundColor: colors.surface }]}>
+            <Image source={photoUrl ? { uri: photoUrl } : FALLBACK_IMAGE} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <View style={[StyleSheet.absoluteFill, styles.heroScrim]} />
+            <View style={styles.heroContent}>
+              <Text style={styles.heroTitle} numberOfLines={1}>
+                {t('compare.tripTitle', { city: cityName })}
+              </Text>
+              <HeroCountdown
+                targetISO={PREVIEW_TARGET_ISO}
+                textColor="#FFFFFF"
+                labelColor="rgba(255,255,255,0.75)"
+                numberSize={22}
+                labelSize={9}
+                compact
+              />
+            </View>
+          </View>
+          <View style={styles.heroSubtitleWrap}>
+            <Text style={[styles.heroSubtitleLine1, { color: colors.text }]}>{t('compare.subtitleLine1')}</Text>
+            <Text style={[styles.heroSubtitleLine2, { color: colors.primary }]}>{t('compare.subtitleLine2')}</Text>
+          </View>
+        </View>
+
+        <View style={[styles.table, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+          <View style={styles.compareHeaderRow}>
+            <Text style={{ flex: 1.4 }} />
+            <Text style={[styles.headerCell, { color: colors.secondary }]}>{t('compare.free')}</Text>
+            <Text style={[styles.headerCell, { color: colors.primary }]}>{t('compare.pro')}</Text>
+          </View>
+          {rows.map(([label, free, pro], i) => (
+            <View
+              key={label}
+              style={[styles.compareRow, { borderColor: colors.outline, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth }]}
+            >
+              <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
+                {label}
+              </Text>
+              <Text style={[styles.rowValue, { color: colors.secondary }]} numberOfLines={2}>
+                {free}
+              </Text>
+              <Text style={[styles.rowValue, { color: colors.primary, fontWeight: '700' }]} numberOfLines={2}>
+                {pro}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.plans}>
+          {PLAN_IDS.map((id) => {
+            const selected = plan === id;
+            // A plan without a trial (always Lifetime — a one-time purchase
+            // has no "after the trial" plan to convert into) isn't a choice
+            // while trial is on, not just quietly auto-switched away from.
+            const disabled = trial && !trialAvailableFor(id);
+            const sub = id === 'yearly' ? yearlySub : undefined;
+            return (
+              <Pressable
+                key={id}
+                onPress={() => !disabled && setPlan(id)}
+                style={[
+                  styles.planTile,
+                  { borderColor: selected ? colors.primary : colors.outline, backgroundColor: colors.surface, opacity: disabled ? 0.4 : 1 },
+                ]}
+              >
+                {id === 'yearly' ? (
+                  <View style={[styles.bestBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.bestBadgeText}>{t('paywall.bestValue')}</Text>
+                  </View>
+                ) : null}
+                <Text style={[styles.planLabel, { color: colors.text }]}>{t(`paywall.${id}`)}</Text>
+                <Text style={[styles.planPrice, { color: colors.text }]}>{priceFor(id)}</Text>
+                {sub ? (
+                  <Text style={[styles.planSub, { color: colors.secondary }]} numberOfLines={2}>
+                    {sub}
+                  </Text>
+                ) : null}
+                {/* Always rendered, not just when selected — an appearing/
+                    disappearing element here would grow/shrink whichever
+                    tile is tapped, throwing the row's equal heights off.
+                    Reserving the same slot on all three and just toggling
+                    its fill keeps every tile the same size regardless of
+                    selection. */}
+                <View style={[styles.planCheck, { backgroundColor: selected ? colors.primary : 'transparent' }]}>
+                  {selected ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Hidden (not disabled) when the store has no trial configured on
+            any plan — an always-off toggle would just be noise. */}
+        {anyTrial ? (
+          <View style={[styles.trialRow, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+            <Ionicons name="gift-outline" size={20} color={colors.primary} />
+            <View style={styles.trialText}>
+              <Text style={[styles.trialLabel, { color: colors.text }]}>{t('paywall.startTrial')}</Text>
+              <Text style={[styles.trialSub, { color: colors.secondary }]}>{t('paywall.noChargeToday')}</Text>
+            </View>
+            <Switch
+              value={trial}
+              onValueChange={(v) => {
+                setTrial(v);
+                if (v && !trialAvailableFor(plan)) setPlan(trialAvailableFor('yearly') ? 'yearly' : 'monthly');
+              }}
+              trackColor={{ true: colors.primary }}
             />
           </View>
-        </View>
-        <View style={styles.heroSubtitleWrap}>
-          <Text style={[styles.heroSubtitleLine1, { color: colors.text }]}>{t('compare.subtitleLine1')}</Text>
-          <Text style={[styles.heroSubtitleLine2, { color: colors.primary }]}>{t('compare.subtitleLine2')}</Text>
+        ) : null}
+
+        <Pressable
+          onPress={handleContinue}
+          disabled={busy !== null}
+          style={[styles.continueBtn, { backgroundColor: colors.primary, opacity: busy === 'restore' ? 0.6 : 1 }]}
+        >
+          {busy === 'purchase' ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.continueText}>{continueLabel}</Text>}
+        </Pressable>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.maybeLater}>
+          <Text style={[styles.maybeLaterText, { color: colors.secondary }]}>{t('paywall.maybeLater')}</Text>
+        </Pressable>
+
+        <Text style={[styles.footerNote, { color: colors.secondary }]}>{footerText}</Text>
+
+        <View style={styles.linksRow}>
+          <Text style={[styles.linkText, { color: colors.primary }]} onPress={busy ? undefined : handleRestore}>
+            {t('paywall.restorePurchases')}
+          </Text>
+          <Text style={{ color: colors.secondary }}>|</Text>
+          <Text style={[styles.linkText, { color: colors.primary }]} onPress={() => router.push('/terms')}>
+            {t('paywall.terms')}
+          </Text>
+          <Text style={{ color: colors.secondary }}>|</Text>
+          <Text style={[styles.linkText, { color: colors.primary }]} onPress={() => router.push('/privacy')}>
+            {t('paywall.privacyLink')}
+          </Text>
         </View>
       </View>
-
-      <View style={[styles.table, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-        <View style={styles.compareHeaderRow}>
-          <Text style={{ flex: 1.4 }} />
-          <Text style={[styles.headerCell, { color: colors.secondary }]}>{t('compare.free')}</Text>
-          <Text style={[styles.headerCell, { color: colors.primary }]}>{t('compare.pro')}</Text>
-        </View>
-        {rows.map(([label, free, pro], i) => (
-          <View
-            key={label}
-            style={[styles.compareRow, { borderColor: colors.outline, borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth }]}
-          >
-            <Text style={[styles.rowLabel, { color: colors.text }]} numberOfLines={1}>
-              {label}
-            </Text>
-            <Text style={[styles.rowValue, { color: colors.secondary }]} numberOfLines={2}>
-              {free}
-            </Text>
-            <Text style={[styles.rowValue, { color: colors.primary, fontWeight: '700' }]} numberOfLines={2}>
-              {pro}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.plans}>
-        {PLAN_IDS.map((id) => {
-          const selected = plan === id;
-          // A plan without a trial (always Lifetime — a one-time purchase
-          // has no "after the trial" plan to convert into) isn't a choice
-          // while trial is on, not just quietly auto-switched away from.
-          const disabled = trial && !trialAvailableFor(id);
-          const sub = id === 'yearly' ? yearlySub : undefined;
-          return (
-            <Pressable
-              key={id}
-              onPress={() => !disabled && setPlan(id)}
-              style={[
-                styles.planTile,
-                { borderColor: selected ? colors.primary : colors.outline, backgroundColor: colors.surface, opacity: disabled ? 0.4 : 1 },
-              ]}
-            >
-              {id === 'yearly' ? (
-                <View style={[styles.bestBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.bestBadgeText}>{t('paywall.bestValue')}</Text>
-                </View>
-              ) : null}
-              <Text style={[styles.planLabel, { color: colors.text }]}>{t(`paywall.${id}`)}</Text>
-              <Text style={[styles.planPrice, { color: colors.text }]}>{priceFor(id)}</Text>
-              {sub ? (
-                <Text style={[styles.planSub, { color: colors.secondary }]} numberOfLines={1}>
-                  {sub}
-                </Text>
-              ) : null}
-              {/* Always rendered, not just when selected — an appearing/
-                  disappearing element here would grow/shrink whichever
-                  tile is tapped, throwing the row's equal heights off.
-                  Reserving the same slot on all three and just toggling
-                  its fill keeps every tile the same size regardless of
-                  selection. */}
-              <View style={[styles.planCheck, { backgroundColor: selected ? colors.primary : 'transparent' }]}>
-                {selected ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* Hidden (not disabled) when the store has no trial configured on
-          any plan — an always-off toggle would just be noise. */}
-      {anyTrial ? (
-        <View style={[styles.trialRow, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-          <Ionicons name="gift-outline" size={20} color={colors.primary} />
-          <View style={styles.trialText}>
-            <Text style={[styles.trialLabel, { color: colors.text }]}>{t('paywall.startTrial')}</Text>
-            <Text style={[styles.trialSub, { color: colors.secondary }]}>{t('paywall.noChargeToday')}</Text>
-          </View>
-          <Switch
-            value={trial}
-            onValueChange={(v) => {
-              setTrial(v);
-              if (v && !trialAvailableFor(plan)) setPlan(trialAvailableFor('yearly') ? 'yearly' : 'monthly');
-            }}
-            trackColor={{ true: colors.primary }}
-          />
-        </View>
-      ) : null}
-
-      <Pressable
-        onPress={handleContinue}
-        disabled={busy !== null}
-        style={[styles.continueBtn, { backgroundColor: colors.primary, opacity: busy === 'restore' ? 0.6 : 1 }]}
-      >
-        {busy === 'purchase' ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.continueText}>{continueLabel}</Text>}
-      </Pressable>
-      <Pressable onPress={() => router.back()} hitSlop={8} style={styles.maybeLater}>
-        <Text style={[styles.maybeLaterText, { color: colors.secondary }]}>{t('paywall.maybeLater')}</Text>
-      </Pressable>
-
-      <Text style={[styles.footerNote, { color: colors.secondary }]}>{footerText}</Text>
-
-      <View style={styles.linksRow}>
-        <Text style={[styles.linkText, { color: colors.primary }]} onPress={busy ? undefined : handleRestore}>
-          {t('paywall.restorePurchases')}
-        </Text>
-        <Text style={{ color: colors.secondary }}>|</Text>
-        <Text style={[styles.linkText, { color: colors.primary }]} onPress={() => router.push('/terms')}>
-          {t('paywall.terms')}
-        </Text>
-        <Text style={{ color: colors.secondary }}>|</Text>
-        <Text style={[styles.linkText, { color: colors.primary }]} onPress={() => router.push('/privacy')}>
-          {t('paywall.privacyLink')}
-        </Text>
-      </View>
-    </View>
+      <AppAlertModal
+        alert={alert}
+        onClose={() => {
+          const leave = alert?.leave;
+          setAlert(null);
+          if (leave) router.back();
+        }}
+      />
+    </>
   );
 }
 
@@ -356,7 +370,7 @@ const styles = StyleSheet.create({
   bestBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
   planLabel: { fontSize: 13, fontWeight: '700' },
   planPrice: { fontSize: 15, fontWeight: '800', marginTop: 4 },
-  planSub: { fontSize: 10, marginTop: 2 },
+  planSub: { fontSize: 10, marginTop: 2, textAlign: 'center' },
   planCheck: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   trialRow: { flexDirection: 'row', alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 10 },
   trialText: { flex: 1, marginLeft: 10 },
