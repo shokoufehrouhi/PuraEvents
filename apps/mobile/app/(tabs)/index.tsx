@@ -226,7 +226,9 @@ export default function EventListScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
+      {/* Same top inset as the Widgets/Settings tabs' ScrollView padding,
+          so the title sits at the same height on all three. */}
+      <View style={[styles.header, { paddingHorizontal: spacing.md, paddingTop: spacing.md }]}>
         <View style={styles.headerTitleRow}>
           <Text style={[typography.title, styles.headerTitle, { color: colors.text }]}>{t('appName')}</Text>
           {/* Same plan badge as the Widgets tab's own header (see
@@ -432,7 +434,7 @@ const styles = StyleSheet.create({
   pastFilterValue: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   filterSheet: { paddingVertical: 8, marginHorizontal: 16, marginBottom: 24 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
   headerTitle: { fontSize: 28, fontWeight: '700' },
   planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },

@@ -56,14 +56,13 @@ function CustomTabBar({ state, descriptors, navigation }: TabBarProps) {
 
           return (
             <Pressable key={route.key} onPress={onPress} style={styles.item}>
-              <View
-                style={[
-                  styles.bubble,
-                  focused
-                    ? { backgroundColor: colors.primary, shadowColor: colors.primary }
-                    : { backgroundColor: 'transparent' },
-                ]}
-              >
+              <View style={styles.bubble}>
+                {/* The filled circle is its own view, mounted only while
+                    selected — restyling one persistent view (fill +
+                    elevation toggled on) made Android drop borderRadius
+                    and draw a square; and elevation on the unselected,
+                    transparent bubble left a pale halo under the icon. */}
+                {focused ? <View style={[styles.bubbleFill, { backgroundColor: colors.primary, shadowColor: colors.primary }]} /> : null}
                 <Ionicons name={focused ? icon.active : icon.inactive} size={22} color={focused ? colors.onPrimary : colors.secondary} />
               </View>
               <Text
@@ -114,6 +113,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bubbleFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
