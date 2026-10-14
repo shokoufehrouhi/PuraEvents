@@ -377,7 +377,6 @@
   },
   "dataExport": {
     "rowLabel": "Verileri dışa aktar",
-    "chooseTitle": "Şu biçimde dışa aktar",
     "chooseMessage": "Her iki biçim de daha sonra PuraEvents'e geri aktarılabilir.",
     "excelLabel": "Excel (.xlsx)",
     "excelDescription": "Etkinliklerinin okunabilir bir tablosu",
@@ -397,7 +396,12 @@
     "colReminders": "Hatırlatıcılar",
     "colNote": "Not",
     "colShareMessage": "Paylaşım mesajı",
-    "colSender": "Gönderen"
+    "colSender": "Gönderen",
+    "saveLabel": "Cihaza kaydet",
+    "shareLabel": "Paylaş",
+    "savedTitle": "İndirilenlere kaydedildi",
+    "savedMessage": "{{name}} İndirilenler klasörüne kaydedildi.",
+    "title": "Verileri dışa aktar"
   },
   "dataImport": {
     "rowLabel": "Verileri içe aktar",

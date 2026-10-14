@@ -377,7 +377,6 @@
   },
   "dataExport": {
     "rowLabel": "خروجی گرفتن از داده‌ها",
-    "chooseTitle": "خروجی با فرمت",
     "chooseMessage": "هر دو فرمت را بعداً می‌توانید دوباره به PuraEvents وارد کنید.",
     "excelLabel": "اکسل (.xlsx)",
     "excelDescription": "جدولی خوانا از رویدادهای شما",
@@ -397,7 +396,12 @@
     "colReminders": "یادآورها",
     "colNote": "یادداشت",
     "colShareMessage": "پیام اشتراک‌گذاری",
-    "colSender": "از طرف"
+    "colSender": "از طرف",
+    "saveLabel": "ذخیره روی دستگاه",
+    "shareLabel": "اشتراک‌گذاری",
+    "savedTitle": "در دانلودها ذخیره شد",
+    "savedMessage": "فایل {{name}} در پوشه‌ی دانلودهای گوشی ذخیره شد.",
+    "title": "خروجی گرفتن از داده‌ها"
   },
   "dataImport": {
     "rowLabel": "وارد کردن داده‌ها",

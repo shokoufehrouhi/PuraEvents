@@ -377,7 +377,6 @@
   },
   "dataExport": {
     "rowLabel": "تصدير البيانات",
-    "chooseTitle": "التصدير بصيغة",
     "chooseMessage": "يمكن استيراد الصيغتين مرة أخرى إلى PuraEvents لاحقًا.",
     "excelLabel": "إكسل (.xlsx)",
     "excelDescription": "جدول واضح لأحداثك",
@@ -397,7 +396,12 @@
     "colReminders": "التذكيرات",
     "colNote": "ملاحظة",
     "colShareMessage": "رسالة المشاركة",
-    "colSender": "من"
+    "colSender": "من",
+    "saveLabel": "حفظ على الجهاز",
+    "shareLabel": "مشاركة",
+    "savedTitle": "تم الحفظ في التنزيلات",
+    "savedMessage": "تم حفظ {{name}} في مجلد التنزيلات.",
+    "title": "تصدير البيانات"
   },
   "dataImport": {
     "rowLabel": "استيراد البيانات",

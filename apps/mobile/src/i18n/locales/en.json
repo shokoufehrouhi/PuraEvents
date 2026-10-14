@@ -377,7 +377,6 @@
   },
   "dataExport": {
     "rowLabel": "Export data",
-    "chooseTitle": "Export as",
     "chooseMessage": "Both formats can be imported back into PuraEvents later.",
     "excelLabel": "Excel (.xlsx)",
     "excelDescription": "A readable spreadsheet of your events",
@@ -397,7 +396,12 @@
     "colReminders": "Reminders",
     "colNote": "Note",
     "colShareMessage": "Share message",
-    "colSender": "From"
+    "colSender": "From",
+    "saveLabel": "Save to device",
+    "shareLabel": "Share",
+    "savedTitle": "Saved to Downloads",
+    "savedMessage": "{{name}} was saved to your Downloads folder.",
+    "title": "Export data"
   },
   "dataImport": {
     "rowLabel": "Import data",

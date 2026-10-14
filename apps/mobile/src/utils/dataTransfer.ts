@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import type { TFunction } from 'i18next';
 import * as XLSX from 'xlsx';
 
+import { saveToDownloads } from '../../modules/save-to-downloads';
 import { ACCENT_KEYS, type AccentKey } from '../theme/tokens';
 import type { CardTheme, EventCategory, NotificationSoundKey, PurEvent, RepeatRule } from '../types/event';
 import { getNextOccurrenceISO } from './recurrence';
@@ -109,20 +110,57 @@ function buildXlsxBase64(events: PurEvent[], t: TFunction): string {
   return XLSX.write(workbook, { type: 'base64', bookType: 'xlsx', compression: true });
 }
 
-// Writes the export into the cache directory and opens the share sheet,
-// so the user can save it to Files/Drive, email it, etc.
-export async function exportEvents(events: PurEvent[], format: ExportFormat, t: TFunction): Promise<void> {
+export type ExportDestination = 'device' | 'share';
+
+const MIME: Record<ExportFormat, string> = {
+  json: 'application/json',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+};
+
+// The file's contents, ready to write: JSON as plain text, Excel as base64.
+function buildExport(events: PurEvent[], format: ExportFormat, t: TFunction): { content: string; base64: boolean } {
+  return format === 'json'
+    ? { content: JSON.stringify(buildPayload(events), null, 2), base64: false }
+    : { content: buildXlsxBase64(events, t), base64: true };
+}
+
+// Writes the export to the cache directory and opens the share sheet, so
+// the user can email it, put it on Drive, etc. (On iOS the share sheet
+// also offers "Save to Files", so that's the only destination there.)
+async function shareExport(events: PurEvent[], format: ExportFormat, t: TFunction): Promise<void> {
   const uri = `${FileSystem.cacheDirectory}${exportFileName(format)}`;
-  if (format === 'json') {
-    await FileSystem.writeAsStringAsync(uri, JSON.stringify(buildPayload(events), null, 2));
-  } else {
-    await FileSystem.writeAsStringAsync(uri, buildXlsxBase64(events, t), { encoding: FileSystem.EncodingType.Base64 });
-  }
+  const { content, base64 } = buildExport(events, format, t);
+  await FileSystem.writeAsStringAsync(uri, content, base64 ? { encoding: FileSystem.EncodingType.Base64 } : undefined);
   await Sharing.shareAsync(uri, {
-    mimeType: format === 'json' ? 'application/json' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    mimeType: MIME[format],
     UTI: format === 'json' ? 'public.json' : 'org.openxmlformats.spreadsheetml.sheet',
     dialogTitle: t('dataExport.shareTitle'),
   });
+}
+
+// Android only: writes the export straight into the phone's Downloads
+// folder (see modules/save-to-downloads) — no folder picker, which on
+// Android 11+ won't even offer the Downloads root. Returns the file name
+// actually used (Android renames on a clash, e.g. "… (1).xlsx").
+async function saveExportToDevice(events: PurEvent[], format: ExportFormat, t: TFunction): Promise<string> {
+  const name = exportFileName(format);
+  const uri = `${FileSystem.cacheDirectory}${name}`;
+  const { content, base64 } = buildExport(events, format, t);
+  await FileSystem.writeAsStringAsync(uri, content, base64 ? { encoding: FileSystem.EncodingType.Base64 } : undefined);
+  return saveToDownloads(uri, name, MIME[format]);
+}
+
+export type ExportResult = { saved: string } | { shared: true };
+
+export async function exportEvents(
+  events: PurEvent[],
+  format: ExportFormat,
+  destination: ExportDestination,
+  t: TFunction
+): Promise<ExportResult> {
+  if (destination === 'device') return { saved: await saveExportToDevice(events, format, t) };
+  await shareExport(events, format, t);
+  return { shared: true };
 }
 
 export class ImportError extends Error {}

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
 
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
-import { ChoiceModal, type ChoiceModalState } from '../src/components/ChoiceModal';
+import { ExportModal } from '../src/components/ExportModal';
 import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
 import { scheduleRemindersForEvent } from '../src/notifications';
@@ -13,7 +13,7 @@ import { importEventRecords, listEvents } from '../src/storage/events';
 import { usePro } from '../src/subscription';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
-import { exportEvents, ImportError, readImportFile, type ExportFormat } from '../src/utils/dataTransfer';
+import { exportEvents, ImportError, readImportFile, type ExportDestination, type ExportFormat } from '../src/utils/dataTransfer';
 
 function comingSoon() {
   Alert.alert('Coming soon', 'This will be available in a later release.');
@@ -29,7 +29,7 @@ export default function DataPrivacyScreen() {
   const { colors, spacing } = useTheme();
   const { prefs } = usePreferences();
   const { isPro } = usePro();
-  const [choice, setChoice] = useState<ChoiceModalState | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -37,7 +37,7 @@ export default function DataPrivacyScreen() {
   // rows (with a "Pro" trailing badge) and tapping one routes to the
   // paywall, same tappable-not-disabled pattern as the event-detail Share
   // button's own gate.
-  async function runExport(format: ExportFormat) {
+  async function runExport(format: ExportFormat, destination: ExportDestination) {
     const events = await listEvents();
     if (!events.length) {
       setAlert({ title: t('dataExport.nothingTitle'), message: t('dataExport.nothingMessage'), variant: 'warning' });
@@ -45,7 +45,10 @@ export default function DataPrivacyScreen() {
     }
     setBusy(true);
     try {
-      await exportEvents(events, format, t);
+      const result = await exportEvents(events, format, destination, t);
+      if ('saved' in result) {
+        setAlert({ title: t('dataExport.savedTitle'), message: t('dataExport.savedMessage', { name: result.saved }), variant: 'success' });
+      }
     } catch (e) {
       setAlert({ title: t('dataExport.errorTitle'), message: (e as Error).message, variant: 'error' });
     } finally {
@@ -53,23 +56,13 @@ export default function DataPrivacyScreen() {
     }
   }
 
-  // Asks for the format every time — JSON (full backup, importable) or
-  // Excel (readable spreadsheet, also importable).
+  // One sheet asks for both the format and save-vs-share (see ExportModal).
   function handleExport() {
     if (!isPro) {
       router.push('/upgrade');
       return;
     }
-    setChoice({
-      title: t('dataExport.chooseTitle'),
-      message: t('dataExport.chooseMessage'),
-      options: [
-        { key: 'xlsx', icon: 'grid-outline', label: t('dataExport.excelLabel'), description: t('dataExport.excelDescription') },
-        { key: 'json', icon: 'code-slash-outline', label: t('dataExport.jsonLabel'), description: t('dataExport.jsonDescription') },
-      ],
-      cancelLabel: t('manage.cancel'),
-      onChoose: (key) => runExport(key as ExportFormat),
-    });
+    setExportOpen(true);
   }
 
   // No format question here — readImportFile tells JSON and Excel apart
@@ -158,7 +151,7 @@ export default function DataPrivacyScreen() {
           <ActivityIndicator color={colors.primary} />
         </View>
       ) : null}
-      <ChoiceModal state={choice} onClose={() => setChoice(null)} />
+      <ExportModal visible={exportOpen} onClose={() => setExportOpen(false)} onExport={runExport} />
       <AppAlertModal alert={alert} onClose={() => setAlert(null)} />
     </ScrollView>
   );

@@ -52,7 +52,7 @@ export function AppAlertModal({ alert, onClose }: Props) {
             </View>
           ) : null}
           <Text style={[typography.headline, { color: colors.text, textAlign: variant ? 'center' : 'left' }]}>{alert?.title}</Text>
-          <Text style={[typography.body, { color: colors.secondary, marginTop: 8, textAlign: 'justify' }]}>
+          <Text style={[typography.body, { color: colors.secondary, marginTop: 8, textAlign: variant ? 'center' : 'justify' }]}>
             {alert?.message}
           </Text>
           <View style={{ flexDirection: 'row', marginTop: spacing.lg }}>
