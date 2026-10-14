@@ -147,6 +147,8 @@ export default function DataPrivacyScreen() {
       message: `${t('dataImport.conflictMessage')}\n\n${titles}${more}`,
       confirmLabel: t('dataImport.conflictReplace'),
       cancelLabel: t('dataImport.conflictKeep'),
+      // Backs out of the whole import — nothing is added or changed.
+      dismissLabel: t('manage.cancel'),
       warning: true,
       onConfirm: () => finishImport(plan, true),
       onCancel: () => finishImport(plan, false),

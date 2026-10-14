@@ -17,9 +17,15 @@ export type ConfirmModalState = {
   destructive?: boolean;
   warning?: boolean;
   onConfirm: () => void;
-  /** Runs when the sheet is dismissed any other way (cancel button,
-   *  backdrop, back) — for a "cancel" that is itself a real choice. */
+  /** Runs on the cancel button — for a "cancel" that is itself a real
+   *  choice (e.g. "Keep mine"). Without `dismissLabel` it also runs on a
+   *  backdrop tap or the back button. */
   onCancel?: () => void;
+  /** Adds a third, plain "back out" button below the two actions. When
+   *  set, the sheet only closes through its buttons: a backdrop tap does
+   *  nothing, and the back button means this — just close, neither
+   *  onConfirm nor onCancel. */
+  dismissLabel?: string;
 };
 
 interface Props {
@@ -38,13 +44,14 @@ export function ConfirmModal({ state, onClose }: Props) {
     onClose();
     state?.onCancel?.();
   };
+  const blocking = !!state?.dismissLabel;
   const warning = state?.warning;
 
   return (
-    <Modal visible={!!state} transparent animationType="fade" onRequestClose={cancel}>
+    <Modal visible={!!state} transparent animationType="fade" onRequestClose={blocking ? onClose : cancel}>
       <Pressable
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg }}
-        onPress={cancel}
+        onPress={blocking ? undefined : cancel}
       >
         {/* Inner Pressable with a no-op onPress so tapping the card itself
             doesn't bubble to the backdrop's dismiss handler. */}
@@ -68,6 +75,11 @@ export function ConfirmModal({ state, onClose }: Props) {
               style={{ flex: 1, marginLeft: 8 }}
             />
           </View>
+          {state?.dismissLabel ? (
+            <Pressable onPress={onClose} hitSlop={8} style={{ alignItems: 'center', marginTop: spacing.md }}>
+              <Text style={[typography.bodyStrong, { color: colors.secondary }]}>{state.dismissLabel}</Text>
+            </Pressable>
+          ) : null}
         </Pressable>
       </Pressable>
     </Modal>
