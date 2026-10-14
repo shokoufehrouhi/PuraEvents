@@ -400,18 +400,26 @@
     "saveLabel": "ذخیره روی دستگاه",
     "shareLabel": "اشتراک‌گذاری",
     "savedTitle": "در دانلودها ذخیره شد",
-    "savedMessage": "فایل {{name}} در پوشه‌ی دانلودهای گوشی ذخیره شد.",
-    "title": "خروجی گرفتن از داده‌ها"
+    "savedMessage": "{{name}}\nمحل ذخیره: حافظه‌ی داخلی › Download",
+    "title": "خروجی گرفتن از داده‌ها",
+    "showInFolder": "نمایش در پوشه"
   },
   "dataImport": {
     "rowLabel": "وارد کردن داده‌ها",
     "doneTitle": "وارد کردن انجام شد",
     "doneAdded": "رویدادهای وارد شده: {{count}}",
-    "doneSkipped": "از قبل روی این دستگاه بودند (رد شدند): {{count}}",
     "emptyTitle": "رویدادی پیدا نشد",
     "emptyMessage": "این فایل هیچ رویدادی ندارد.",
     "errorTitle": "وارد کردن انجام نشد",
     "invalidFile": "این فایل خروجی PuraEvents نیست. یک فایل .json یا .xlsx که از PuraEvents گرفته شده انتخاب کنید.",
-    "notOurSpreadsheet": "این فایل اکسل از PuraEvents گرفته نشده، پس نمی‌شود آن را وارد کرد."
+    "notOurSpreadsheet": "این فایل اکسل از PuraEvents گرفته نشده، پس نمی‌شود آن را وارد کرد.",
+    "conflictTitle": "رویدادهای موجود روی این دستگاه: {{count}}",
+    "conflictMessage": "این رویدادها روی این دستگاه هم هستند، ولی با جزئیات متفاوت. نسخه‌ی فعلی خودتان را نگه می‌دارید یا با نسخه‌ی فایل جایگزین شوند؟",
+    "conflictReplace": "جایگزینی با فایل",
+    "conflictKeep": "نسخه‌ی خودم بماند",
+    "conflictMore": "…و {{count}} مورد دیگر",
+    "doneReplaced": "جایگزین‌شده از فایل: {{count}}",
+    "doneKept": "نسخه‌ی شما حفظ شد: {{count}}",
+    "doneIdentical": "از قبل به‌روز بودند: {{count}}"
   }
 }

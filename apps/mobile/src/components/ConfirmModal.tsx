@@ -17,6 +17,9 @@ export type ConfirmModalState = {
   destructive?: boolean;
   warning?: boolean;
   onConfirm: () => void;
+  /** Runs when the sheet is dismissed any other way (cancel button,
+   *  backdrop, back) — for a "cancel" that is itself a real choice. */
+  onCancel?: () => void;
 };
 
 interface Props {
@@ -31,13 +34,17 @@ interface Props {
 // doesn't match the rest of the app's look.
 export function ConfirmModal({ state, onClose }: Props) {
   const { colors, radius, spacing, typography } = useTheme();
+  const cancel = () => {
+    onClose();
+    state?.onCancel?.();
+  };
   const warning = state?.warning;
 
   return (
-    <Modal visible={!!state} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={!!state} transparent animationType="fade" onRequestClose={cancel}>
       <Pressable
         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg }}
-        onPress={onClose}
+        onPress={cancel}
       >
         {/* Inner Pressable with a no-op onPress so tapping the card itself
             doesn't bubble to the backdrop's dismiss handler. */}
@@ -50,7 +57,7 @@ export function ConfirmModal({ state, onClose }: Props) {
           <Text style={[typography.headline, { color: colors.text, textAlign: warning ? 'center' : 'left' }]}>{state?.title}</Text>
           <Text style={[typography.body, { color: colors.secondary, marginTop: 8, textAlign: 'justify' }]}>{state?.message}</Text>
           <View style={{ flexDirection: 'row', marginTop: spacing.lg }}>
-            <Button label={state?.cancelLabel ?? ''} variant="secondary" onPress={onClose} style={{ flex: 1, marginRight: 8 }} />
+            <Button label={state?.cancelLabel ?? ''} variant="secondary" onPress={cancel} style={{ flex: 1, marginRight: 8 }} />
             <Button
               label={state?.confirmLabel ?? ''}
               variant={state?.destructive ? 'danger' : 'primary'}

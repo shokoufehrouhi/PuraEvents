@@ -163,10 +163,69 @@ export async function exportEvents(
   return { shared: true };
 }
 
+// Sorting an import against what's already on the device:
+//  - fresh:     id not on the device — always added;
+//  - conflicts: same id, different details — the user decides (keep mine /
+//               replace with the file's version);
+//  - identical: same id and details — nothing to do.
+// Compared on the portable form of both sides, so the bits an export never
+// carries (voice recordings, local photos, widget ids) and the timestamps
+// don't count as differences.
+export interface ImportPlan {
+  fresh: PurEvent[];
+  conflicts: { local: PurEvent; incoming: PurEvent }[];
+  identical: number;
+}
+
+const COMPARED_FIELDS: (keyof PurEvent)[] = [
+  'title', 'dateTimeISO', 'timezone', 'category', 'accentColor', 'cardTheme', 'customPhotoUri', 'customWidgetName',
+  'customOverlayOpacity', 'customCornerStyle', 'customTextStyle', 'note', 'shareMessage', 'sender', 'notificationSound',
+  'repeat', 'reminders',
+];
+
+function comparable(event: PurEvent): string {
+  const portable = toPortableEvent(event);
+  return JSON.stringify(COMPARED_FIELDS.map((field) => portable[field] ?? null));
+}
+
+export function planImport(local: PurEvent[], incoming: PurEvent[]): ImportPlan {
+  const byId = new Map(local.map((e) => [e.id, e]));
+  const seen = new Set<string>();
+  const plan: ImportPlan = { fresh: [], conflicts: [], identical: 0 };
+  for (const event of incoming) {
+    if (seen.has(event.id)) continue;
+    seen.add(event.id);
+    const existing = byId.get(event.id);
+    if (!existing) plan.fresh.push(event);
+    else if (comparable(existing) === comparable(event)) plan.identical += 1;
+    else plan.conflicts.push({ local: existing, incoming: event });
+  }
+  return plan;
+}
+
+// The file's version of an event, laid over the device's copy: everything
+// the file carries wins, but what it can't carry stays — the voice
+// recording, widget link, and a locally picked photo (with its 'custom'
+// theme) when the file has no photo of its own.
+export function replaceWithImported(local: PurEvent, incoming: PurEvent): PurEvent {
+  const merged: PurEvent = { ...incoming, customVoiceUri: local.customVoiceUri, widgetId: local.widgetId };
+  const localPhotoIsDeviceOnly = !!local.customPhotoUri && !/^https?:\/\//.test(local.customPhotoUri);
+  if (localPhotoIsDeviceOnly && !incoming.customPhotoUri) {
+    merged.customPhotoUri = local.customPhotoUri;
+    if (local.cardTheme === 'custom' && incoming.cardTheme === 'color') merged.cardTheme = 'custom';
+  }
+  merged.updatedAt = new Date().toISOString();
+  return merged;
+}
+
 export class ImportError extends Error {}
 
 const pick = <T extends string>(value: unknown, allowed: readonly T[], fallback: T): T =>
   allowed.includes(value as T) ? (value as T) : fallback;
+// For optional fields: a valid value or nothing — never a filled-in
+// default, so an untouched event compares equal to its export.
+const pickOptional = <T extends string>(value: unknown, allowed: readonly T[]): T | undefined =>
+  allowed.includes(value as T) ? (value as T) : undefined;
 const optionalText = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value : undefined;
 
@@ -194,12 +253,12 @@ function normalizeEvent(raw: unknown): PurEvent | null {
     customPhotoUri: photo,
     customWidgetName: optionalText(r.customWidgetName),
     customOverlayOpacity: typeof r.customOverlayOpacity === 'number' ? r.customOverlayOpacity : undefined,
-    customCornerStyle: pick(r.customCornerStyle, ['sharp', 'rounded', 'extraRounded'] as const, 'rounded'),
-    customTextStyle: pick(r.customTextStyle, ['system', 'bold', 'black'] as const, 'system'),
+    customCornerStyle: pickOptional(r.customCornerStyle, ['sharp', 'rounded', 'extraRounded'] as const),
+    customTextStyle: pickOptional(r.customTextStyle, ['system', 'bold', 'black'] as const),
     note: optionalText(r.note),
     shareMessage: optionalText(r.shareMessage),
     sender: optionalText(r.sender),
-    notificationSound: pick(r.notificationSound, SOUNDS, 'default'),
+    notificationSound: pickOptional(r.notificationSound, SOUNDS),
     repeat: pick(r.repeat, REPEATS, 'none'),
     reminders: Array.isArray(r.reminders) ? r.reminders.filter((m): m is number => typeof m === 'number' && m >= 0) : [],
     createdAt: typeof r.createdAt === 'string' ? r.createdAt : now,

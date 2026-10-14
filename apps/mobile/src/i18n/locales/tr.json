@@ -400,18 +400,26 @@
     "saveLabel": "Cihaza kaydet",
     "shareLabel": "Paylaş",
     "savedTitle": "İndirilenlere kaydedildi",
-    "savedMessage": "{{name}} İndirilenler klasörüne kaydedildi.",
-    "title": "Verileri dışa aktar"
+    "savedMessage": "{{name}}\nKaydedildiği yer: Dahili depolama › Download",
+    "title": "Verileri dışa aktar",
+    "showInFolder": "Klasörde göster"
   },
   "dataImport": {
     "rowLabel": "Verileri içe aktar",
     "doneTitle": "İçe aktarma tamamlandı",
     "doneAdded": "İçe aktarılan etkinlikler: {{count}}",
-    "doneSkipped": "Bu cihazda zaten vardı (atlandı): {{count}}",
     "emptyTitle": "Etkinlik bulunamadı",
     "emptyMessage": "Bu dosyada hiç etkinlik yok.",
     "errorTitle": "İçe aktarılamadı",
     "invalidFile": "Bu dosya bir PuraEvents dışa aktarımı değil. PuraEvents'ten dışa aktarılmış bir .json veya .xlsx dosyası seç.",
-    "notOurSpreadsheet": "Bu tablo PuraEvents'ten dışa aktarılmadığı için içe aktarılamaz."
+    "notOurSpreadsheet": "Bu tablo PuraEvents'ten dışa aktarılmadığı için içe aktarılamaz.",
+    "conflictTitle": "Bu cihazda zaten olan etkinlikler: {{count}}",
+    "conflictMessage": "Bu etkinlikler bu cihazda da var ama farklı ayrıntılarla. Mevcut sürümlerini mi tutmak istersin, yoksa dosyadakilerle mi değiştirelim?",
+    "conflictReplace": "Dosyadakiyle değiştir",
+    "conflictKeep": "Benimkini tut",
+    "conflictMore": "…ve {{count}} tane daha",
+    "doneReplaced": "Dosyadan değiştirilen: {{count}}",
+    "doneKept": "Senin sürümün korundu: {{count}}",
+    "doneIdentical": "Zaten güncel: {{count}}"
   }
 }

@@ -400,18 +400,26 @@
     "saveLabel": "حفظ على الجهاز",
     "shareLabel": "مشاركة",
     "savedTitle": "تم الحفظ في التنزيلات",
-    "savedMessage": "تم حفظ {{name}} في مجلد التنزيلات.",
-    "title": "تصدير البيانات"
+    "savedMessage": "{{name}}\nمكان الحفظ: وحدة التخزين الداخلية › Download",
+    "title": "تصدير البيانات",
+    "showInFolder": "عرض في المجلد"
   },
   "dataImport": {
     "rowLabel": "استيراد البيانات",
     "doneTitle": "اكتمل الاستيراد",
     "doneAdded": "الأحداث المستوردة: {{count}}",
-    "doneSkipped": "موجودة مسبقًا على هذا الجهاز (تم تخطيها): {{count}}",
     "emptyTitle": "لم يتم العثور على أحداث",
     "emptyMessage": "هذا الملف لا يحتوي على أي أحداث.",
     "errorTitle": "تعذّر الاستيراد",
     "invalidFile": "هذا الملف ليس تصديرًا من PuraEvents. اختر ملف .json أو .xlsx تم تصديره من PuraEvents.",
-    "notOurSpreadsheet": "لم يتم تصدير هذا الجدول من PuraEvents، لذا لا يمكن استيراده."
+    "notOurSpreadsheet": "لم يتم تصدير هذا الجدول من PuraEvents، لذا لا يمكن استيراده.",
+    "conflictTitle": "أحداث موجودة على هذا الجهاز: {{count}}",
+    "conflictMessage": "هذه الأحداث موجودة على هذا الجهاز أيضًا لكن بتفاصيل مختلفة. هل تحتفظ بنسختك الحالية أم تستبدلها بنسخة الملف؟",
+    "conflictReplace": "استبدال بنسخة الملف",
+    "conflictKeep": "الاحتفاظ بنسختي",
+    "conflictMore": "…و{{count}} أخرى",
+    "doneReplaced": "تم الاستبدال من الملف: {{count}}",
+    "doneKept": "تم الاحتفاظ بنسختك: {{count}}",
+    "doneIdentical": "محدّثة بالفعل: {{count}}"
   }
 }

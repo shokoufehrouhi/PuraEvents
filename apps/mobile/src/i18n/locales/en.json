@@ -400,18 +400,26 @@
     "saveLabel": "Save to device",
     "shareLabel": "Share",
     "savedTitle": "Saved to Downloads",
-    "savedMessage": "{{name}} was saved to your Downloads folder.",
-    "title": "Export data"
+    "savedMessage": "{{name}}\nSaved in: Internal storage › Download",
+    "title": "Export data",
+    "showInFolder": "Show in folder"
   },
   "dataImport": {
     "rowLabel": "Import data",
     "doneTitle": "Import complete",
     "doneAdded": "Events imported: {{count}}",
-    "doneSkipped": "Already on this device (skipped): {{count}}",
     "emptyTitle": "No events found",
     "emptyMessage": "This file doesn't contain any events.",
     "errorTitle": "Couldn't import",
     "invalidFile": "This file isn't a PuraEvents export. Choose a .json or .xlsx file exported from PuraEvents.",
-    "notOurSpreadsheet": "This spreadsheet wasn't exported from PuraEvents, so it can't be imported."
+    "notOurSpreadsheet": "This spreadsheet wasn't exported from PuraEvents, so it can't be imported.",
+    "conflictTitle": "Events already on this device: {{count}}",
+    "conflictMessage": "These events are on this device too, but with different details. Keep your current versions, or replace them with the ones from the file?",
+    "conflictReplace": "Replace with file",
+    "conflictKeep": "Keep mine",
+    "conflictMore": "…and {{count}} more",
+    "doneReplaced": "Replaced from file: {{count}}",
+    "doneKept": "Kept your version: {{count}}",
+    "doneIdentical": "Already up to date: {{count}}"
   }
 }

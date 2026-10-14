@@ -400,18 +400,26 @@
     "saveLabel": "Auf dem Gerät speichern",
     "shareLabel": "Teilen",
     "savedTitle": "In Downloads gespeichert",
-    "savedMessage": "{{name}} wurde in deinem Download-Ordner gespeichert.",
-    "title": "Daten exportieren"
+    "savedMessage": "{{name}}\nGespeichert in: Interner Speicher › Download",
+    "title": "Daten exportieren",
+    "showInFolder": "Im Ordner anzeigen"
   },
   "dataImport": {
     "rowLabel": "Daten importieren",
     "doneTitle": "Import abgeschlossen",
     "doneAdded": "Importierte Ereignisse: {{count}}",
-    "doneSkipped": "Bereits auf diesem Gerät (übersprungen): {{count}}",
     "emptyTitle": "Keine Ereignisse gefunden",
     "emptyMessage": "Diese Datei enthält keine Ereignisse.",
     "errorTitle": "Import nicht möglich",
     "invalidFile": "Diese Datei ist kein PuraEvents-Export. Wähle eine .json- oder .xlsx-Datei, die aus PuraEvents exportiert wurde.",
-    "notOurSpreadsheet": "Diese Tabelle wurde nicht aus PuraEvents exportiert und kann daher nicht importiert werden."
+    "notOurSpreadsheet": "Diese Tabelle wurde nicht aus PuraEvents exportiert und kann daher nicht importiert werden.",
+    "conflictTitle": "Bereits auf diesem Gerät: {{count}}",
+    "conflictMessage": "Diese Ereignisse gibt es auch auf diesem Gerät, aber mit anderen Details. Möchtest du deine aktuellen Versionen behalten oder durch die aus der Datei ersetzen?",
+    "conflictReplace": "Durch Datei ersetzen",
+    "conflictKeep": "Meine behalten",
+    "conflictMore": "…und {{count}} weitere",
+    "doneReplaced": "Aus der Datei ersetzt: {{count}}",
+    "doneKept": "Deine Version behalten: {{count}}",
+    "doneIdentical": "Bereits aktuell: {{count}}"
   }
 }

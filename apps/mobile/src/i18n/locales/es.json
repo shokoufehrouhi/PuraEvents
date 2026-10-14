@@ -400,18 +400,26 @@
     "saveLabel": "Guardar en el dispositivo",
     "shareLabel": "Compartir",
     "savedTitle": "Guardado en Descargas",
-    "savedMessage": "{{name}} se guardó en tu carpeta de Descargas.",
-    "title": "Exportar datos"
+    "savedMessage": "{{name}}\nGuardado en: Almacenamiento interno › Download",
+    "title": "Exportar datos",
+    "showInFolder": "Mostrar en carpeta"
   },
   "dataImport": {
     "rowLabel": "Importar datos",
     "doneTitle": "Importación completa",
     "doneAdded": "Eventos importados: {{count}}",
-    "doneSkipped": "Ya estaban en este dispositivo (omitidos): {{count}}",
     "emptyTitle": "No se encontraron eventos",
     "emptyMessage": "Este archivo no contiene eventos.",
     "errorTitle": "No se pudo importar",
     "invalidFile": "Este archivo no es una exportación de PuraEvents. Elige un archivo .json o .xlsx exportado desde PuraEvents.",
-    "notOurSpreadsheet": "Esta hoja de cálculo no se exportó desde PuraEvents, así que no se puede importar."
+    "notOurSpreadsheet": "Esta hoja de cálculo no se exportó desde PuraEvents, así que no se puede importar.",
+    "conflictTitle": "Eventos que ya están en este dispositivo: {{count}}",
+    "conflictMessage": "Estos eventos también están en este dispositivo, pero con otros detalles. ¿Quieres conservar tus versiones actuales o reemplazarlas por las del archivo?",
+    "conflictReplace": "Reemplazar con el archivo",
+    "conflictKeep": "Conservar los míos",
+    "conflictMore": "…y {{count}} más",
+    "doneReplaced": "Reemplazados desde el archivo: {{count}}",
+    "doneKept": "Se conservó tu versión: {{count}}",
+    "doneIdentical": "Ya estaban al día: {{count}}"
   }
 }

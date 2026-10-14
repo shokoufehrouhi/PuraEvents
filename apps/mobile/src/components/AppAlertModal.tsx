@@ -12,7 +12,15 @@ type Variant = 'success' | 'error' | 'warning';
  *  widget-pin permission has no in-app fix, only a device Settings
  *  toggle). `variant` picks the icon badge above the title — glanceable
  *  status, not just title wording. */
-export type AppAlertState = { title: string; message: string; variant?: Variant; onSettings?: () => void };
+export type AppAlertState = {
+  title: string;
+  message: string;
+  variant?: Variant;
+  onSettings?: () => void;
+  /** A second, primary button next to "Done" (e.g. "Show in folder") —
+   *  the general form of onSettings, which keeps its fixed label. */
+  action?: { label: string; onPress: () => void };
+};
 
 interface Props {
   /** null hides the modal — same "controlled by the caller's own state"
@@ -56,7 +64,7 @@ export function AppAlertModal({ alert, onClose }: Props) {
             {alert?.message}
           </Text>
           <View style={{ flexDirection: 'row', marginTop: spacing.lg }}>
-            {alert?.onSettings ? (
+            {alert?.onSettings || alert?.action ? (
               <Button
                 label={t('events.done')}
                 variant="secondary"
@@ -65,10 +73,10 @@ export function AppAlertModal({ alert, onClose }: Props) {
               />
             ) : null}
             <Button
-              label={alert?.onSettings ? t('events.openSettings') : t('events.done')}
+              label={alert?.action ? alert.action.label : alert?.onSettings ? t('events.openSettings') : t('events.done')}
               onPress={() => {
                 onClose();
-                alert?.onSettings?.();
+                (alert?.action?.onPress ?? alert?.onSettings)?.();
               }}
               style={{ flex: 1 }}
             />

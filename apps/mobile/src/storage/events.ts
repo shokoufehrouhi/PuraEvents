@@ -98,18 +98,12 @@ export async function deleteEvent(id: string): Promise<void> {
   if (deleted?.customVoiceUri) deleteRecordedAudio(deleted.customVoiceUri);
 }
 
-// Adds imported events in one write (see utils/dataTransfer.ts). An event
-// whose id already exists here is skipped, not overwritten — importing the
-// same backup twice, or a backup of this very device, never duplicates or
-// clobbers anything. Returns only the ones actually added.
-export async function importEventRecords(incoming: PurEvent[]): Promise<{ added: PurEvent[]; skipped: number }> {
-  const events = await readAll();
-  const existingIds = new Set(events.map((e) => e.id));
-  const added = incoming.filter((e) => {
-    if (existingIds.has(e.id)) return false;
-    existingIds.add(e.id);
-    return true;
-  });
-  if (added.length) await writeAll([...events, ...added]);
-  return { added, skipped: incoming.length - added.length };
+// Applies an import (see utils/dataTransfer.ts planImport) in one write:
+// `added` are new events, `replaced` are full replacements for events
+// already here (matched by id). Anything else on the device is untouched.
+export async function applyImportedEvents(added: PurEvent[], replaced: PurEvent[]): Promise<void> {
+  if (!added.length && !replaced.length) return;
+  const replacements = new Map(replaced.map((e) => [e.id, e]));
+  const events = (await readAll()).map((e) => replacements.get(e.id) ?? e);
+  await writeAll([...events, ...added]);
 }

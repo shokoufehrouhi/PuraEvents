@@ -1,6 +1,8 @@
 package expo.modules.savetodownloads
 
+import android.app.DownloadManager
 import android.content.ContentValues
+import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -17,6 +19,13 @@ import java.io.File
 class SaveToDownloadsModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("SaveToDownloads")
+
+    // Opens the system's Downloads view (Files app) — the "Show in folder"
+    // button after a save.
+    Function("openDownloads") {
+      val context = appContext.reactContext ?: throw CodedException("No Android context")
+      context.startActivity(Intent(DownloadManager.ACTION_VIEW_DOWNLOADS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
 
     AsyncFunction("saveAsync") { sourceUri: String, fileName: String, mimeType: String ->
       val context = appContext.reactContext ?: throw CodedException("No Android context")
