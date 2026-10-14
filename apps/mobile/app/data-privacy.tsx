@@ -1,13 +1,19 @@
-import { Alert, ScrollView, Share } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
 
+import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
+import { ChoiceModal, type ChoiceModalState } from '../src/components/ChoiceModal';
 import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
-import { listEvents } from '../src/storage/events';
+import { scheduleRemindersForEvent } from '../src/notifications';
+import { importEventRecords, listEvents } from '../src/storage/events';
 import { usePro } from '../src/subscription';
-import { useTheme } from '../src/theme/PreferencesContext';
+import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
+import { exportEvents, ImportError, readImportFile, type ExportFormat } from '../src/utils/dataTransfer';
 
 function comingSoon() {
   Alert.alert('Coming soon', 'This will be available in a later release.');
@@ -21,19 +27,87 @@ export default function DataPrivacyScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, spacing } = useTheme();
+  const { prefs } = usePreferences();
   const { isPro } = usePro();
+  const [choice, setChoice] = useState<ChoiceModalState | null>(null);
+  const [alert, setAlert] = useState<AppAlertState | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  // Pro-only, per explicit request — a free user sees the row (with a
-  // "Pro" trailing badge instead of a chevron-only nav) and tapping it
-  // routes to the paywall instead of exporting, same tappable-not-disabled
-  // pattern as the event-detail Share button's own gate.
-  async function handleExport() {
+  // Export/Import are Pro-only, per explicit request — a free user sees the
+  // rows (with a "Pro" trailing badge) and tapping one routes to the
+  // paywall, same tappable-not-disabled pattern as the event-detail Share
+  // button's own gate.
+  async function runExport(format: ExportFormat) {
+    const events = await listEvents();
+    if (!events.length) {
+      setAlert({ title: t('dataExport.nothingTitle'), message: t('dataExport.nothingMessage'), variant: 'warning' });
+      return;
+    }
+    setBusy(true);
+    try {
+      await exportEvents(events, format, t);
+    } catch (e) {
+      setAlert({ title: t('dataExport.errorTitle'), message: (e as Error).message, variant: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Asks for the format every time — JSON (full backup, importable) or
+  // Excel (readable spreadsheet, also importable).
+  function handleExport() {
     if (!isPro) {
       router.push('/upgrade');
       return;
     }
-    const events = await listEvents();
-    await Share.share({ message: JSON.stringify(events, null, 2) });
+    setChoice({
+      title: t('dataExport.chooseTitle'),
+      message: t('dataExport.chooseMessage'),
+      options: [
+        { key: 'xlsx', icon: 'grid-outline', label: t('dataExport.excelLabel'), description: t('dataExport.excelDescription') },
+        { key: 'json', icon: 'code-slash-outline', label: t('dataExport.jsonLabel'), description: t('dataExport.jsonDescription') },
+      ],
+      cancelLabel: t('manage.cancel'),
+      onChoose: (key) => runExport(key as ExportFormat),
+    });
+  }
+
+  // No format question here — readImportFile tells JSON and Excel apart
+  // from the picked file itself. Existing events are never overwritten
+  // (see importEventRecords); imported ones get their reminders scheduled.
+  async function handleImport() {
+    if (!isPro) {
+      router.push('/upgrade');
+      return;
+    }
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: ['application/json', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '*/*'],
+      copyToCacheDirectory: true,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return;
+    const file = picked.assets[0];
+
+    setBusy(true);
+    try {
+      const incoming = await readImportFile(file.uri, file.name);
+      if (!incoming.length) {
+        setAlert({ title: t('dataImport.emptyTitle'), message: t('dataImport.emptyMessage'), variant: 'warning' });
+        return;
+      }
+      const { added, skipped } = await importEventRecords(incoming);
+      await Promise.all(added.map((event) => scheduleRemindersForEvent(event, isPro, prefs.notificationsEnabled)));
+      setAlert({
+        title: t('dataImport.doneTitle'),
+        message:
+          t('dataImport.doneAdded', { count: added.length }) + (skipped ? `\n${t('dataImport.doneSkipped', { count: skipped })}` : ''),
+        variant: 'success',
+      });
+    } catch (e) {
+      const reason = e instanceof ImportError ? e.message : 'invalidFile';
+      setAlert({ title: t('dataImport.errorTitle'), message: t(`dataImport.${reason}`), variant: 'error' });
+    } finally {
+      setBusy(false);
+    }
   }
 
   // Same Pro gate as Import & Export above — Backup & Sync isn't built yet
@@ -61,9 +135,16 @@ export default function DataPrivacyScreen() {
         <Row
           icon="share-outline"
           badgeColor={rowBadgeColors.purple}
-          label={t('settings.importExport')}
+          label={t('dataExport.rowLabel')}
           value={isPro ? undefined : t('settings.proOnly')}
-          onPress={handleExport}
+          onPress={busy ? undefined : handleExport}
+        />
+        <Row
+          icon="download-outline"
+          badgeColor={rowBadgeColors.purple}
+          label={t('dataImport.rowLabel')}
+          value={isPro ? undefined : t('settings.proOnly')}
+          onPress={busy ? undefined : handleImport}
         />
         <Row
           icon="shield-checkmark-outline"
@@ -72,6 +153,13 @@ export default function DataPrivacyScreen() {
           onPress={() => router.push('/privacy')}
         />
       </Section>
+      {busy ? (
+        <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : null}
+      <ChoiceModal state={choice} onClose={() => setChoice(null)} />
+      <AppAlertModal alert={alert} onClose={() => setAlert(null)} />
     </ScrollView>
   );
 }

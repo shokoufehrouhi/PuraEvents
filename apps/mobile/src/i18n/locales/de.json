@@ -374,5 +374,40 @@
     "downgradeNowMessage": "Dein Plan wechselt sofort zu Monatlich, aber du zahlst erst wieder am {{date}}, wenn dein Jahreszeitraum endet. Danach zahlst du {{price}}.",
     "downgradeNowDone": "Du hast jetzt den Monatsplan. Die nächste Zahlung erfolgt an deinem bisherigen Verlängerungsdatum.",
     "upgradeNowMessage": "Dir werden jetzt {{price}} berechnet und dein Plan wechselt sofort zu Jährlich. Die restliche Zeit deines Monatsplans wird zusätzlich angerechnet."
+  },
+  "dataExport": {
+    "rowLabel": "Daten exportieren",
+    "chooseTitle": "Exportieren als",
+    "chooseMessage": "Beide Formate können später wieder in PuraEvents importiert werden.",
+    "excelLabel": "Excel (.xlsx)",
+    "excelDescription": "Eine übersichtliche Tabelle deiner Ereignisse",
+    "jsonLabel": "JSON",
+    "jsonDescription": "Eine vollständige Sicherungsdatei",
+    "shareTitle": "PuraEvents-Daten exportieren",
+    "sheetName": "Ereignisse",
+    "nothingTitle": "Nichts zu exportieren",
+    "nothingMessage": "Du hast noch keine Ereignisse.",
+    "errorTitle": "Export fehlgeschlagen",
+    "colTitle": "Titel",
+    "colDateTime": "Datum & Uhrzeit",
+    "colNextOccurrence": "Nächster Termin",
+    "colTimezone": "Zeitzone",
+    "colCategory": "Kategorie",
+    "colRepeat": "Wiederholung",
+    "colReminders": "Erinnerungen",
+    "colNote": "Notiz",
+    "colShareMessage": "Teilen-Nachricht",
+    "colSender": "Von"
+  },
+  "dataImport": {
+    "rowLabel": "Daten importieren",
+    "doneTitle": "Import abgeschlossen",
+    "doneAdded": "Importierte Ereignisse: {{count}}",
+    "doneSkipped": "Bereits auf diesem Gerät (übersprungen): {{count}}",
+    "emptyTitle": "Keine Ereignisse gefunden",
+    "emptyMessage": "Diese Datei enthält keine Ereignisse.",
+    "errorTitle": "Import nicht möglich",
+    "invalidFile": "Diese Datei ist kein PuraEvents-Export. Wähle eine .json- oder .xlsx-Datei, die aus PuraEvents exportiert wurde.",
+    "notOurSpreadsheet": "Diese Tabelle wurde nicht aus PuraEvents exportiert und kann daher nicht importiert werden."
   }
 }

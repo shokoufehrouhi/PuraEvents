@@ -374,5 +374,40 @@
     "downgradeNowMessage": "پلن شما همین حالا ماهانه می‌شود، اما تا {{date}} که دوره‌ی سالانه‌تان تمام می‌شود، دوباره پولی از شما کسر نمی‌شود. بعد از آن {{price}} پرداخت می‌کنید.",
     "downgradeNowDone": "اکنون پلن شما ماهانه است. پرداخت بعدی در همان تاریخ تمدید قبلی است.",
     "upgradeNowMessage": "مبلغ {{price}} همین حالا از شما کسر می‌شود و پلن شما فوراً سالانه می‌شود. زمان باقی‌مانده از پلن ماهانه هم به آن اضافه می‌شود."
+  },
+  "dataExport": {
+    "rowLabel": "خروجی گرفتن از داده‌ها",
+    "chooseTitle": "خروجی با فرمت",
+    "chooseMessage": "هر دو فرمت را بعداً می‌توانید دوباره به PuraEvents وارد کنید.",
+    "excelLabel": "اکسل (.xlsx)",
+    "excelDescription": "جدولی خوانا از رویدادهای شما",
+    "jsonLabel": "JSON",
+    "jsonDescription": "فایل پشتیبان کامل",
+    "shareTitle": "خروجی داده‌های PuraEvents",
+    "sheetName": "رویدادها",
+    "nothingTitle": "چیزی برای خروجی نیست",
+    "nothingMessage": "هنوز هیچ رویدادی ندارید.",
+    "errorTitle": "خروجی انجام نشد",
+    "colTitle": "عنوان",
+    "colDateTime": "تاریخ و ساعت",
+    "colNextOccurrence": "وقوع بعدی",
+    "colTimezone": "منطقه زمانی",
+    "colCategory": "دسته‌بندی",
+    "colRepeat": "تکرار",
+    "colReminders": "یادآورها",
+    "colNote": "یادداشت",
+    "colShareMessage": "پیام اشتراک‌گذاری",
+    "colSender": "از طرف"
+  },
+  "dataImport": {
+    "rowLabel": "وارد کردن داده‌ها",
+    "doneTitle": "وارد کردن انجام شد",
+    "doneAdded": "رویدادهای وارد شده: {{count}}",
+    "doneSkipped": "از قبل روی این دستگاه بودند (رد شدند): {{count}}",
+    "emptyTitle": "رویدادی پیدا نشد",
+    "emptyMessage": "این فایل هیچ رویدادی ندارد.",
+    "errorTitle": "وارد کردن انجام نشد",
+    "invalidFile": "این فایل خروجی PuraEvents نیست. یک فایل .json یا .xlsx که از PuraEvents گرفته شده انتخاب کنید.",
+    "notOurSpreadsheet": "این فایل اکسل از PuraEvents گرفته نشده، پس نمی‌شود آن را وارد کرد."
   }
 }

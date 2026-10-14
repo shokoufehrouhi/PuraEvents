@@ -374,5 +374,40 @@
     "downgradeNowMessage": "Planın hemen Aylık olur, ancak Yıllık dönemin bittiği {{date}} tarihine kadar tekrar ücret alınmaz. Sonrasında {{price}} ödersin.",
     "downgradeNowDone": "Artık Aylık plandasın. Bir sonraki ödeme eski yenileme tarihinde.",
     "upgradeNowMessage": "Şimdi {{price}} tahsil edilir ve planın hemen Yıllık olur. Aylık planından kalan süre de üzerine eklenir."
+  },
+  "dataExport": {
+    "rowLabel": "Verileri dışa aktar",
+    "chooseTitle": "Şu biçimde dışa aktar",
+    "chooseMessage": "Her iki biçim de daha sonra PuraEvents'e geri aktarılabilir.",
+    "excelLabel": "Excel (.xlsx)",
+    "excelDescription": "Etkinliklerinin okunabilir bir tablosu",
+    "jsonLabel": "JSON",
+    "jsonDescription": "Tam yedek dosyası",
+    "shareTitle": "PuraEvents verilerini dışa aktar",
+    "sheetName": "Etkinlikler",
+    "nothingTitle": "Dışa aktarılacak bir şey yok",
+    "nothingMessage": "Henüz hiç etkinliğin yok.",
+    "errorTitle": "Dışa aktarma başarısız",
+    "colTitle": "Başlık",
+    "colDateTime": "Tarih ve saat",
+    "colNextOccurrence": "Sonraki tarih",
+    "colTimezone": "Saat dilimi",
+    "colCategory": "Kategori",
+    "colRepeat": "Tekrar",
+    "colReminders": "Hatırlatıcılar",
+    "colNote": "Not",
+    "colShareMessage": "Paylaşım mesajı",
+    "colSender": "Gönderen"
+  },
+  "dataImport": {
+    "rowLabel": "Verileri içe aktar",
+    "doneTitle": "İçe aktarma tamamlandı",
+    "doneAdded": "İçe aktarılan etkinlikler: {{count}}",
+    "doneSkipped": "Bu cihazda zaten vardı (atlandı): {{count}}",
+    "emptyTitle": "Etkinlik bulunamadı",
+    "emptyMessage": "Bu dosyada hiç etkinlik yok.",
+    "errorTitle": "İçe aktarılamadı",
+    "invalidFile": "Bu dosya bir PuraEvents dışa aktarımı değil. PuraEvents'ten dışa aktarılmış bir .json veya .xlsx dosyası seç.",
+    "notOurSpreadsheet": "Bu tablo PuraEvents'ten dışa aktarılmadığı için içe aktarılamaz."
   }
 }

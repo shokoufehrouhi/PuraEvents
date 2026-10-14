@@ -374,5 +374,40 @@
     "downgradeNowMessage": "تتحول خطتك إلى الشهرية فورًا، لكن لن تُحاسَب مجددًا حتى {{date}} عند انتهاء فترتك السنوية. بعد ذلك تدفع {{price}}.",
     "downgradeNowDone": "أنت الآن على الخطة الشهرية. سيكون الخصم التالي في تاريخ التجديد السابق.",
     "upgradeNowMessage": "سيُخصم {{price}} الآن وتتحول خطتك إلى السنوية فورًا، ويُضاف إليها الوقت المتبقي من خطتك الشهرية."
+  },
+  "dataExport": {
+    "rowLabel": "تصدير البيانات",
+    "chooseTitle": "التصدير بصيغة",
+    "chooseMessage": "يمكن استيراد الصيغتين مرة أخرى إلى PuraEvents لاحقًا.",
+    "excelLabel": "إكسل (.xlsx)",
+    "excelDescription": "جدول واضح لأحداثك",
+    "jsonLabel": "JSON",
+    "jsonDescription": "ملف نسخة احتياطية كاملة",
+    "shareTitle": "تصدير بيانات PuraEvents",
+    "sheetName": "الأحداث",
+    "nothingTitle": "لا شيء للتصدير",
+    "nothingMessage": "ليس لديك أي أحداث بعد.",
+    "errorTitle": "فشل التصدير",
+    "colTitle": "العنوان",
+    "colDateTime": "التاريخ والوقت",
+    "colNextOccurrence": "الموعد القادم",
+    "colTimezone": "المنطقة الزمنية",
+    "colCategory": "الفئة",
+    "colRepeat": "التكرار",
+    "colReminders": "التذكيرات",
+    "colNote": "ملاحظة",
+    "colShareMessage": "رسالة المشاركة",
+    "colSender": "من"
+  },
+  "dataImport": {
+    "rowLabel": "استيراد البيانات",
+    "doneTitle": "اكتمل الاستيراد",
+    "doneAdded": "الأحداث المستوردة: {{count}}",
+    "doneSkipped": "موجودة مسبقًا على هذا الجهاز (تم تخطيها): {{count}}",
+    "emptyTitle": "لم يتم العثور على أحداث",
+    "emptyMessage": "هذا الملف لا يحتوي على أي أحداث.",
+    "errorTitle": "تعذّر الاستيراد",
+    "invalidFile": "هذا الملف ليس تصديرًا من PuraEvents. اختر ملف .json أو .xlsx تم تصديره من PuraEvents.",
+    "notOurSpreadsheet": "لم يتم تصدير هذا الجدول من PuraEvents، لذا لا يمكن استيراده."
   }
 }

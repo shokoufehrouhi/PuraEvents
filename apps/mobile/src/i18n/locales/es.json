@@ -374,5 +374,40 @@
     "downgradeNowMessage": "Tu plan cambia a Mensual de inmediato, pero no se te cobrará de nuevo hasta el {{date}}, cuando termina tu periodo Anual. Después pagas {{price}}.",
     "downgradeNowDone": "Ahora tienes el plan Mensual. Tu próximo cobro será en tu fecha de renovación anterior.",
     "upgradeNowMessage": "Se te cobrará {{price}} ahora y tu plan cambia a Anual de inmediato. El tiempo que te queda del plan Mensual se suma."
+  },
+  "dataExport": {
+    "rowLabel": "Exportar datos",
+    "chooseTitle": "Exportar como",
+    "chooseMessage": "Ambos formatos se pueden volver a importar en PuraEvents más adelante.",
+    "excelLabel": "Excel (.xlsx)",
+    "excelDescription": "Una hoja de cálculo legible de tus eventos",
+    "jsonLabel": "JSON",
+    "jsonDescription": "Un archivo de copia de seguridad completo",
+    "shareTitle": "Exportar datos de PuraEvents",
+    "sheetName": "Eventos",
+    "nothingTitle": "Nada que exportar",
+    "nothingMessage": "Todavía no tienes eventos.",
+    "errorTitle": "La exportación falló",
+    "colTitle": "Título",
+    "colDateTime": "Fecha y hora",
+    "colNextOccurrence": "Próxima vez",
+    "colTimezone": "Zona horaria",
+    "colCategory": "Categoría",
+    "colRepeat": "Repetición",
+    "colReminders": "Recordatorios",
+    "colNote": "Nota",
+    "colShareMessage": "Mensaje para compartir",
+    "colSender": "De"
+  },
+  "dataImport": {
+    "rowLabel": "Importar datos",
+    "doneTitle": "Importación completa",
+    "doneAdded": "Eventos importados: {{count}}",
+    "doneSkipped": "Ya estaban en este dispositivo (omitidos): {{count}}",
+    "emptyTitle": "No se encontraron eventos",
+    "emptyMessage": "Este archivo no contiene eventos.",
+    "errorTitle": "No se pudo importar",
+    "invalidFile": "Este archivo no es una exportación de PuraEvents. Elige un archivo .json o .xlsx exportado desde PuraEvents.",
+    "notOurSpreadsheet": "Esta hoja de cálculo no se exportó desde PuraEvents, así que no se puede importar."
   }
 }
