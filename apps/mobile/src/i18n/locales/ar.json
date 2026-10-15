@@ -128,7 +128,10 @@
     "reminderSectionTitle": "التذكير",
     "appearanceLabel": "المظهر",
     "colorLabel": "اللون",
-    "noteSectionTitle": "ملاحظة"
+    "noteSectionTitle": "ملاحظة",
+    "reminderCountOne": "تذكير واحد",
+    "reminderCountMany": "{{count}} تذكيرات",
+    "repeatWithNote": "{{repeat}}، مع ملاحظة"
   },
   "countdown": {
     "days": "{{count}} يوم",
@@ -436,5 +439,9 @@
     "lastExport": "آخر تصدير: {{date}}",
     "neverExported": "لم تصدّر نسخة بعد.",
     "adPrivacyOptions": "خيارات خصوصية الإعلانات"
+  },
+  "notification": {
+    "comingUpIn": "بعد {{time}}",
+    "happeningNow": "يحدث الآن!"
   }
 }

@@ -128,7 +128,10 @@
     "reminderSectionTitle": "Reminder",
     "appearanceLabel": "Appearance",
     "colorLabel": "Color",
-    "noteSectionTitle": "Note"
+    "noteSectionTitle": "Note",
+    "reminderCountOne": "{{count}} reminder",
+    "reminderCountMany": "{{count}} reminders",
+    "repeatWithNote": "{{repeat}}, note added"
   },
   "countdown": {
     "days": "{{count}}d",
@@ -436,5 +439,9 @@
     "lastExport": "Last export: {{date}}",
     "neverExported": "You haven't exported a copy yet.",
     "adPrivacyOptions": "Ad privacy options"
+  },
+  "notification": {
+    "comingUpIn": "Coming up in {{time}}",
+    "happeningNow": "It's happening now!"
   }
 }

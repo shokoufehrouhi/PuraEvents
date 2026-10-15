@@ -128,7 +128,10 @@
     "reminderSectionTitle": "Hatırlatıcı",
     "appearanceLabel": "Görünüm",
     "colorLabel": "Renk",
-    "noteSectionTitle": "Not"
+    "noteSectionTitle": "Not",
+    "reminderCountOne": "{{count}} hatırlatıcı",
+    "reminderCountMany": "{{count}} hatırlatıcı",
+    "repeatWithNote": "{{repeat}}, not eklendi"
   },
   "countdown": {
     "days": "{{count}}g",
@@ -436,5 +439,9 @@
     "lastExport": "Son dışa aktarma: {{date}}",
     "neverExported": "Henüz bir kopya dışa aktarmadın.",
     "adPrivacyOptions": "Reklam gizliliği seçenekleri"
+  },
+  "notification": {
+    "comingUpIn": "{{time}} sonra",
+    "happeningNow": "Şimdi başlıyor!"
   }
 }

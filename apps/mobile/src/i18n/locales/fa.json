@@ -128,7 +128,10 @@
     "reminderSectionTitle": "یادآور",
     "appearanceLabel": "ظاهر",
     "colorLabel": "رنگ",
-    "noteSectionTitle": "یادداشت"
+    "noteSectionTitle": "یادداشت",
+    "reminderCountOne": "{{count}} یادآور",
+    "reminderCountMany": "{{count}} یادآور",
+    "repeatWithNote": "{{repeat}}، با یادداشت"
   },
   "countdown": {
     "days": "{{count}} روز",
@@ -436,5 +439,9 @@
     "lastExport": "آخرین خروجی: {{date}}",
     "neverExported": "هنوز خروجی نگرفته‌اید.",
     "adPrivacyOptions": "تنظیمات حریم خصوصی تبلیغات"
+  },
+  "notification": {
+    "comingUpIn": "{{time}} دیگر",
+    "happeningNow": "همین الان!"
   }
 }

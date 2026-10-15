@@ -3,6 +3,7 @@ import { reloadAppAsync } from 'expo';
 import { I18nManager } from 'react-native';
 
 import i18n, { RTL_LANGUAGES, SUPPORTED_LANGUAGES, type SupportedLanguage } from './index';
+import { syncHomeScreenWidget } from '../widgets/syncHomeScreenWidget';
 
 const LANGUAGE_KEY = 'puraevents:language';
 // Set right before a direction reload and cleared once the app comes back
@@ -49,5 +50,7 @@ export async function restoreLanguage(): Promise<boolean> {
 export async function setLanguage(lang: SupportedLanguage): Promise<void> {
   await AsyncStorage.setItem(LANGUAGE_KEY, lang);
   await i18n.changeLanguage(lang);
+  // The home-screen widget draws its own text (see androidWidgetTask.tsx).
+  syncHomeScreenWidget().catch(() => {});
   await ensureDirection(lang);
 }

@@ -10,11 +10,15 @@ import {
   type WidgetTaskHandler,
 } from 'react-native-android-widget';
 
+import i18n, { SUPPORTED_LANGUAGES } from '../i18n';
 import { getCachedHeroPhotoPath } from '../storage/heroPhoto';
+import { loadPreferences } from '../storage/preferences';
 import { CARD_THEMES } from '../theme/cardThemes';
 import { getCategoryIcon } from '../theme/icons';
 import type { WidgetCornerStyle, WidgetTextStyle } from '../types/event';
+import { localizeDigits } from '../utils/calendars';
 import { darken } from '../utils/color';
+import { formatEventDateLine, formatTodayLine } from '../utils/eventDate';
 import { listUpcomingEventsForWidgets, type WidgetEventSummary } from './widgetEventSummary';
 import { preparePhotoDataUri } from './widgetPhoto';
 
@@ -40,23 +44,31 @@ const APP_ICON_IMAGE = require('../../assets/icon.png');
 const CORNER_RADIUS: Record<WidgetCornerStyle, number> = { sharp: 0, rounded: 16, extraRounded: 28 };
 const TITLE_WEIGHT: Record<WidgetTextStyle, '400' | '700' | '900'> = { system: '400', bold: '700', black: '900' };
 
-// Hardcoded English, not i18n — this headless RemoteViews context runs
-// outside react-i18next entirely (same reason "No upcoming events"/"DAYS"
-// below are plain literals, not t() calls).
-const CATEGORY_LABELS: Record<WidgetEventSummary['category'], string> = {
-  personal: 'Personal',
-  work: 'Work',
-  travel: 'Travel',
-  finance: 'Finance',
-  health: 'Health',
-  other: 'Other',
-};
-const REPEAT_LABELS: Record<WidgetEventSummary['repeat'], string> = {
-  none: 'No repeat',
-  yearly: 'Yearly',
-  monthly: 'Monthly',
-  weekly: 'Weekly',
-};
+// Text in the app's own language and calendar. This headless task runs
+// without React (no useTranslation), and on a widget update the app may
+// not even be open — so the saved language and preferences are read
+// straight from storage (same keys as src/i18n/direction.ts and
+// storage/preferences.ts) and handed down as plain strings/functions.
+interface WidgetText {
+  t: (key: string, options?: Record<string, unknown>) => string;
+  digits: (value: number | string) => string;
+  // Weekday, day and month, time — no year, to fit the small card.
+  eventDate: (iso: string) => string;
+  today: () => string;
+}
+
+async function loadWidgetText(): Promise<WidgetText> {
+  const saved = await AsyncStorage.getItem('puraevents:language').catch(() => null);
+  const language = saved && (SUPPORTED_LANGUAGES as readonly string[]).includes(saved) ? saved : i18n.language;
+  const { calendar } = await loadPreferences().catch(() => ({ calendar: 'gregorian' as const }));
+  return {
+    t: i18n.getFixedT(language) as WidgetText['t'],
+    digits: (value) => localizeDigits(value, language),
+    // formatEventDateLine leaves the year out for repeating events.
+    eventDate: (iso) => formatEventDateLine(iso, 'yearly', calendar, language),
+    today: () => formatTodayLine(calendar, language),
+  };
+}
 
 // Matches react-native-android-widget's own (unexported) ColorProp —
 // TextWidget/FlexWidget's color-ish style props only accept these two
@@ -88,9 +100,11 @@ function countdownParts(targetISO: string) {
 function CountdownCard({
   summary,
   photoDataUri,
+  text,
 }: {
   summary: WidgetEventSummary;
   photoDataUri: string | null;
+  text: WidgetText;
 }) {
   const preset = CARD_THEMES[summary.cardTheme] ?? CARD_THEMES.color;
   const isCustom = summary.cardTheme === 'custom';
@@ -116,9 +130,9 @@ function CountdownCard({
   // floating in it.
   const iconSize = 20;
   const countdownEntries: [number, string][] = [
-    [days, 'D'],
-    [hours, 'H'],
-    [minutes, 'M'],
+    [days, text.t('countdown.unitDays')],
+    [hours, text.t('countdown.unitHours')],
+    [minutes, text.t('countdown.unitMinutes')],
   ];
 
   // Mirrors MiniWidget's own 'small' content exactly (see its comment) —
@@ -136,14 +150,14 @@ function CountdownCard({
       <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'wrap_content' }}>
         <ImageWidget image={icon} imageWidth={iconSize} imageHeight={iconSize} style={{ marginRight: 6, width: iconSize, height: iconSize }} />
         <TextWidget
-          text={CATEGORY_LABELS[summary.category]}
+          text={text.t(`events.category.${summary.category}`)}
           maxLines={1}
           truncate="END"
           style={{ color: textColor, fontSize: 12, fontWeight: '800', width: 'wrap_content', ...photoTextShadow }}
         />
       </FlexWidget>
       <TextWidget
-        text={REPEAT_LABELS[summary.repeat]}
+        text={text.t(`events.repeat.${summary.repeat}`)}
         maxLines={1}
         style={{ color: secondaryColor, fontSize: 11, fontWeight: '700', width: 'wrap_content', ...photoTextShadow }}
       />
@@ -156,14 +170,14 @@ function CountdownCard({
         style={{ color: textColor, fontSize: 16, fontWeight: titleWeight, ...photoTextShadow }}
       />
       <TextWidget
-        text={dayjs(summary.nextOccurrenceISO).format('ddd, MMM D · HH:mm')}
+        text={text.eventDate(summary.nextOccurrenceISO)}
         maxLines={1}
         style={{ color: secondaryColor, fontSize: 12, fontWeight: '700', marginTop: 3, ...photoTextShadow }}
       />
       <FlexWidget style={{ width: 'match_parent', flexDirection: 'row', marginTop: 8 }}>
         {countdownEntries.map(([value, label]) => (
           <FlexWidget key={label} style={{ width: 'wrap_content', marginRight: 14, alignItems: 'center' }}>
-            <TextWidget text={String(value)} style={{ color: textColor, fontSize: 20, fontWeight: '800', ...photoTextShadow }} />
+            <TextWidget text={text.digits(value)} style={{ color: textColor, fontSize: 20, fontWeight: '800', ...photoTextShadow }} />
             <TextWidget text={label} style={{ color: secondaryColor, fontSize: 9, fontWeight: '700', ...photoTextShadow }} />
           </FlexWidget>
         ))}
@@ -232,9 +246,11 @@ export function CountdownWidget({
   summary,
   photoDataUri = null,
   heroPhotoDataUri = null,
+  text,
 }: {
   summary: WidgetEventSummary | null;
   photoDataUri?: string | null;
+  text: WidgetText;
   // Same "Today" banner photo the Events tab's own hero card shows (see
   // storage/heroPhoto.ts) — only ever passed when summary is null (see
   // buildCountdownWidgetElement below), falls back to HERO_FALLBACK_IMAGE
@@ -252,10 +268,8 @@ export function CountdownWidget({
     // "Today" + the real current date/time bottom-left, same
     // card:{justifyContent:'space-between'} split between the two. Name+
     // logo sit small underneath that, like ShareCard.tsx's own subtle
-    // brand mark, rather than taking over the whole card. English-only
-    // (hardcoded date format, not formatEventDateLine/i18n) — same
-    // simplification CATEGORY_LABELS/REPEAT_LABELS above already make for
-    // this headless context.
+    // brand mark, rather than taking over the whole card. Text follows the
+    // app's language and calendar (see loadWidgetText).
     const textShadow = { textShadowColor: 'rgba(0, 0, 0, 0.7)' as WidgetColor, textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } };
     return (
       <OverlapWidget clickAction="OPEN_APP" style={{ height: 'match_parent', width: 'match_parent', borderRadius: 20, padding: 0, overflow: 'hidden' }}>
@@ -268,13 +282,13 @@ export function CountdownWidget({
         />
         <FlexWidget style={{ height: 'match_parent', width: 'match_parent', padding: 12, justifyContent: 'space-between' }}>
           <TextWidget
-            text="TODAY TRIPS"
+            text={text.t('events.heroCaption').toUpperCase()}
             style={{ color: 'rgba(255, 255, 255, 0.85)' as WidgetColor, fontSize: 10, fontWeight: '900', ...textShadow }}
           />
           <FlexWidget style={{ width: 'wrap_content' }}>
-            <TextWidget text="Today" style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', ...textShadow }} />
+            <TextWidget text={text.t('events.todayTitle')} style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', ...textShadow }} />
             <TextWidget
-              text={dayjs().format('ddd, MMM D, YYYY · HH:mm')}
+              text={text.today()}
               style={{ color: 'rgba(255, 255, 255, 0.85)' as WidgetColor, fontSize: 11, fontWeight: '700', marginTop: 3, ...textShadow }}
             />
             <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', width: 'wrap_content', marginTop: 8 }}>
@@ -292,7 +306,7 @@ export function CountdownWidget({
     );
   }
 
-  return <CountdownCard summary={summary} photoDataUri={photoDataUri} />;
+  return <CountdownCard summary={summary} photoDataUri={photoDataUri} text={text} />;
 }
 
 // Shared by every render call-site (the headless task handler below and
@@ -307,7 +321,8 @@ export async function buildCountdownWidgetElement(summary: WidgetEventSummary | 
   // in — an upcoming event never reads this prop (see CountdownWidget
   // above), so skip the extra AsyncStorage read/image resize otherwise.
   const heroPhotoDataUri = summary ? null : await preparePhotoDataUri(await getCachedHeroPhotoPath());
-  return <CountdownWidget summary={summary} photoDataUri={photoDataUri} heroPhotoDataUri={heroPhotoDataUri} />;
+  const text = await loadWidgetText();
+  return <CountdownWidget summary={summary} photoDataUri={photoDataUri} heroPhotoDataUri={heroPhotoDataUri} text={text} />;
 }
 
 // Every instance of this provider always shows the same thing: whichever

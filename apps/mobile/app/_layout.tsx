@@ -43,7 +43,7 @@ if (Platform.OS === 'android') {
 initSubscriptions();
 
 function Navigation() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { colors, scheme } = useTheme();
   const { isPro, isReady: proReady } = usePro();
@@ -80,13 +80,13 @@ function Navigation() {
     };
   }, []);
 
-  // After an Android backup restore the events are back but their reminders
-  // aren't scheduled (see restoreMissingReminders). Waits for the plan, since
+  // After an Android backup restore, or a language change, reminders need
+  // scheduling again (see restoreMissingReminders). Waits for the plan, since
   // free and Pro schedule different reminders.
   useEffect(() => {
     if (!proReady || !prefsReady) return;
     restoreMissingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
-  }, [proReady, prefsReady, isPro, prefs.notificationsEnabled]);
+  }, [proReady, prefsReady, isPro, prefs.notificationsEnabled, i18n.language]);
 
   const headerOptions = {
     headerShown: true,

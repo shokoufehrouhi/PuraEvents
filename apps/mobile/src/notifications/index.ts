@@ -1,9 +1,12 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import i18n from '../i18n';
 import { listEvents } from '../storage/events';
 import { logNotificationFired, markNotificationSeen } from '../storage/notificationLog';
 import type { NotificationSoundKey, PurEvent } from '../types/event';
+import { localizeDigits } from '../utils/calendars';
 import { getActiveReminders } from '../utils/reminders';
 
 // Filenames as bundled via the expo-notifications config plugin's own
@@ -181,7 +184,8 @@ export async function scheduleRemindersForEvent(
     // one) followed by how much time is actually left, so a reminder
     // reads like "Don't forget the passport — coming up in 2h" instead of
     // needing the user to retype that same info as a separate message.
-    const timeLine = offsetMin === 0 ? "It's happening now!" : `Coming up in ${describeOffset(offsetMin)}`;
+    const timeLine =
+      offsetMin === 0 ? i18n.t('notification.happeningNow') : i18n.t('notification.comingUpIn', { time: describeOffset(offsetMin) });
     const body = event.note?.trim() ? `${event.note.trim()} — ${timeLine}` : timeLine;
 
     await Notifications.scheduleNotificationAsync({
@@ -219,24 +223,31 @@ export async function applyNotificationsEnabledChange(enabled: boolean, isPro: b
   await Promise.all(events.map((event) => scheduleRemindersForEvent(event, isPro, true)));
 }
 
-// Startup check: scheduled notifications live in the OS, not in the app's
-// data, so after Android restores a backup (reinstall / new phone) the
-// events come back with none of their reminders scheduled. If the app has
-// nothing scheduled at all, schedule every event's reminders again — a
-// no-op for events whose reminders are all in the past.
+const REMINDER_LANGUAGE_KEY = 'puraevents:reminderLanguage';
+
+// Run at launch and whenever the app language changes. Schedules every
+// event's reminders again when:
+//  - nothing is scheduled at all: scheduled notifications live in the OS,
+//    not in the app's data, so after Android restores a backup (reinstall
+//    / new phone) the events come back with no reminders scheduled;
+//  - the language changed: a reminder's text is fixed when it's scheduled.
+// A no-op for events whose reminders are all in the past.
 export async function restoreMissingReminders(isPro: boolean, notificationsEnabled: boolean): Promise<void> {
   if (!notificationsEnabled) return;
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  if (scheduled.some((n) => n.identifier.startsWith('puraevents:'))) return;
+  const hasAny = scheduled.some((n) => n.identifier.startsWith('puraevents:'));
+  const scheduledIn = await AsyncStorage.getItem(REMINDER_LANGUAGE_KEY).catch(() => null);
+  if (hasAny && scheduledIn === i18n.language) return;
   const events = await listEvents();
   await Promise.all(events.map((event) => scheduleRemindersForEvent(event, isPro, true)));
+  await AsyncStorage.setItem(REMINDER_LANGUAGE_KEY, i18n.language).catch(() => {});
 }
 
 // Also used by app/_layout.tsx's tap popup, to show how much is left until
 // the event *now* (not the offset the reminder itself fired for) in the
 // same terse "2h"/"3d" shape the notification body already uses.
 export function describeOffset(minutes: number): string {
-  if (minutes < 60) return `${minutes}m`;
-  if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
-  return `${Math.round(minutes / 1440)}d`;
+  const [key, count] =
+    minutes < 60 ? ['countdown.minutes', minutes] : minutes < 1440 ? ['countdown.hours', Math.round(minutes / 60)] : ['countdown.days', Math.round(minutes / 1440)];
+  return localizeDigits(i18n.t(key, { count }), i18n.language);
 }

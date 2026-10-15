@@ -201,6 +201,7 @@ export function EventWizard({ mode, eventId }: Props) {
       DateTimePickerAndroid.open({
         value: date,
         mode: 'time',
+        is24Hour: prefs.timeFormat !== '12h',
         onChange: (_, selected) => selected && setDate(selected),
       });
     } else {
@@ -314,11 +315,15 @@ export function EventWizard({ mode, eventId }: Props) {
   }
 
   const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
-  const scheduleSummary = `${formatCivilDateFull(date.toISOString(), prefs.calendar, i18n.language)} • ${localizeDigits(dayjs(date).format('h:mm A'), i18n.language)}`;
+  // Follows Preferences → Time format, like the event detail screen.
+  const timeFormat = prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm';
+  const scheduleSummary = `${formatCivilDateFull(date.toISOString(), prefs.calendar, i18n.language)} • ${localizeDigits(dayjs(date).format(timeFormat), i18n.language)}`;
   const remindersSummary =
-    reminders.length === 0 ? t('events.noReminders') : `${reminders.length} ${t('events.remindersLabel').toLowerCase()}`;
+    reminders.length === 0
+      ? t('events.noReminders')
+      : localizeDigits(t(reminders.length === 1 ? 'events.reminderCountOne' : 'events.reminderCountMany', { count: reminders.length }), i18n.language);
   const appearanceSummary = t(`events.cardTheme.${cardTheme}`);
-  const advancedSummary = note.trim() ? `${t(`events.repeat.${repeat}`)}, note added` : t(`events.repeat.${repeat}`);
+  const advancedSummary = note.trim() ? t('events.repeatWithNote', { repeat: t(`events.repeat.${repeat}`) }) : t(`events.repeat.${repeat}`);
   const shareSummary =
     shareMessage.trim() || sender.trim() || customVoiceUri ? t('events.shareSummaryCustom') : t('events.shareSummaryAuto');
 
@@ -428,7 +433,7 @@ export function EventWizard({ mode, eventId }: Props) {
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={[typography.caption, { color: colors.secondary }]}>{t('events.timeLabel')}</Text>
-                    <Text style={[typography.bodyStrong, { color: colors.text }]}>{localizeDigits(dayjs(date).format('h:mm A'), i18n.language)}</Text>
+                    <Text style={[typography.bodyStrong, { color: colors.text }]}>{localizeDigits(dayjs(date).format(timeFormat), i18n.language)}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
                 </Pressable>

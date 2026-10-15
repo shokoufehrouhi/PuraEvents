@@ -128,7 +128,10 @@
     "reminderSectionTitle": "Erinnerung",
     "appearanceLabel": "Erscheinungsbild",
     "colorLabel": "Farbe",
-    "noteSectionTitle": "Notiz"
+    "noteSectionTitle": "Notiz",
+    "reminderCountOne": "{{count}} Erinnerung",
+    "reminderCountMany": "{{count}} Erinnerungen",
+    "repeatWithNote": "{{repeat}}, mit Notiz"
   },
   "countdown": {
     "days": "{{count}}T",
@@ -436,5 +439,9 @@
     "lastExport": "Letzter Export: {{date}}",
     "neverExported": "Du hast noch keine Kopie exportiert.",
     "adPrivacyOptions": "Datenschutzoptionen für Werbung"
+  },
+  "notification": {
+    "comingUpIn": "In {{time}}",
+    "happeningNow": "Jetzt geht's los!"
   }
 }
