@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Platform, ScrollView, Text, View } from 'react-native';
 
+import { adPrivacyOptionsRequired, showAdPrivacyOptions } from '../src/ads/mobileAdsInit';
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { ConfirmModal, type ConfirmModalState } from '../src/components/ConfirmModal';
 import { ExportModal } from '../src/components/ExportModal';
@@ -43,8 +44,12 @@ export default function DataPrivacyScreen() {
   // When the user last exported a copy (save or share) — shown under the
   // rows so they can tell how old their own backup is.
   const [lastExport, setLastExport] = useState<string | null>(null);
+  // Only where the ad consent rules apply (EEA/UK/CH): a way back into the
+  // consent form, as Google's EU User Consent Policy requires.
+  const [showAdPrivacy, setShowAdPrivacy] = useState(false);
   useEffect(() => {
     AsyncStorage.getItem(LAST_EXPORT_KEY).then(setLastExport, () => {});
+    adPrivacyOptionsRequired().then(setShowAdPrivacy);
   }, []);
   const [exportOpen, setExportOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
@@ -181,6 +186,14 @@ export default function DataPrivacyScreen() {
           value={isPro ? undefined : t('settings.proOnly')}
           onPress={busy ? undefined : handleImport}
         />
+        {showAdPrivacy ? (
+          <Row
+            icon="megaphone-outline"
+            badgeColor={rowBadgeColors.orange}
+            label={t('dataBackup.adPrivacyOptions')}
+            onPress={() => showAdPrivacyOptions().catch(() => {})}
+          />
+        ) : null}
         <Row
           icon="shield-checkmark-outline"
           badgeColor={rowBadgeColors.green}

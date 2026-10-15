@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { TestIds, useAppOpenAd, useForeground } from 'react-native-google-mobile-ads';
 
 import { usePro } from '../subscription';
-import { mobileAdsInitPromise } from './mobileAdsInit';
+import { initAdsOnce } from './mobileAdsInit';
 
 // Real AdMob App Open unit (project: PuraEvents) — same TestIds-in-dev
 // policy as adGate.tsx's own interstitial (see that file's comment).
@@ -48,12 +48,12 @@ export function AppOpenAdController() {
   // after a reload would re-trigger the cold-start effect too.
   const shownOnColdStart = useRef(false);
 
-  // Waits for the shared mobileAdsInitPromise before this ad's own first
-  // load() — same fix, same reasoning as adGate.tsx's own interstitial.
+  // Consent + SDK init first — same as adGate.tsx's own interstitial.
   useEffect(() => {
+    if (!isReady || isPro) return;
     let cancelled = false;
-    mobileAdsInitPromise.then(() => {
-      if (!cancelled && isReady && !isPro) load();
+    initAdsOnce().then((allowed) => {
+      if (!cancelled && allowed) load();
     });
     return () => {
       cancelled = true;

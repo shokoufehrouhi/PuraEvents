@@ -2,7 +2,7 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { useTheme } from '../src/theme/PreferencesContext';
 
-const LAST_UPDATED = 'September 14, 2026';
+const LAST_UPDATED = 'October 15, 2026';
 
 // English-only, deliberately — same reasoning as privacy.tsx: subscription/
 // liability language needs to say exactly what it means, and a

@@ -1,10 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TestIds, useInterstitialAd } from 'react-native-google-mobile-ads';
 
 import { usePro } from '../subscription';
-import { mobileAdsInitPromise } from './mobileAdsInit';
+import { initAdsOnce } from './mobileAdsInit';
 
 // Free-tier "action gate": the monetization model (docs/PROJECT.md §6.1)
 // shows ads to free users, and the product decision is that performing a
@@ -45,8 +45,12 @@ const AD_UNIT_ID = __DEV__
 // ad never hold up the app itself, only the actions gated on it (see
 // useGatedAction below).
 export function AdGateProvider({ children }: { children: ReactNode }) {
-  const { isPro } = usePro();
+  const { isPro, isReady } = usePro();
   const { isLoaded, isClosed, error, load, show } = useInterstitialAd(AD_UNIT_ID);
+  // false once consent says no ads may be requested (an EEA user who
+  // declined, or no consent info at all) — the gate then lets actions
+  // through without an ad instead of blocking them for good.
+  const [adsAllowed, setAdsAllowed] = useState<boolean | null>(null);
   // The gated action waiting on the ad currently on screen — set by
   // runGated, run (and cleared) once the ad reports closed. A ref, not
   // state: this is never rendered, just replayed once.
@@ -71,17 +75,20 @@ export function AdGateProvider({ children }: { children: ReactNode }) {
     load();
   }, [load]);
 
-  // Waits for the shared mobileAdsInitPromise before this ad's own first
-  // load() — see that file's own comment for why this ordering matters.
+  // Free users only: consent + SDK init first (see mobileAdsInit.ts), then
+  // this ad's own first load().
   useEffect(() => {
+    if (!isReady || isPro) return;
     let cancelled = false;
-    mobileAdsInitPromise.then(() => {
-      if (!cancelled) load();
+    initAdsOnce().then((allowed) => {
+      if (cancelled) return;
+      setAdsAllowed(allowed);
+      if (allowed) load();
     });
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [isReady, isPro, load]);
 
   // isClosed covers both a normal watch-to-completion and the ad failing
   // to actually open when show() was called (see AdHookReturns' own doc) —
@@ -93,11 +100,11 @@ export function AdGateProvider({ children }: { children: ReactNode }) {
     runPendingAction();
   }, [isClosed, runPendingAction]);
 
-  const status: AdGateStatus = isPro || isLoaded ? 'ready' : error ? 'unavailable' : 'loading';
+  const status: AdGateStatus = isPro || isLoaded || adsAllowed === false ? 'ready' : error ? 'unavailable' : 'loading';
 
   const runGated = useCallback(
     (action: () => void | Promise<void>) => {
-      if (isPro) {
+      if (isPro || adsAllowed === false) {
         action();
         return;
       }
@@ -108,7 +115,7 @@ export function AdGateProvider({ children }: { children: ReactNode }) {
       // the user stranded for long. See runPendingAction's own comment.
       stuckAdTimer.current = setTimeout(runPendingAction, 6000);
     },
-    [isPro, show, runPendingAction]
+    [isPro, adsAllowed, show, runPendingAction]
   );
 
   return <AdGateContext.Provider value={{ status, retry: load, runGated }}>{children}</AdGateContext.Provider>;
