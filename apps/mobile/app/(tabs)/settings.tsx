@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Row } from '../../src/components/ui/Row';
@@ -11,10 +11,7 @@ import { Section } from '../../src/components/ui/Section';
 import { useTheme } from '../../src/theme/PreferencesContext';
 import { usePro } from '../../src/subscription';
 import { responsiveContent, rowBadgeColors } from '../../src/theme/tokens';
-
-function comingSoon() {
-  Alert.alert('Coming soon', 'This will be available in a later release.');
-}
+import { rateApp } from '../../src/utils/rateApp';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -113,7 +110,7 @@ export default function SettingsScreen() {
             label={t('settings.helpFeedback')}
             onPress={() => Linking.openURL('mailto:support@puraevents.app')}
           />
-          <Row icon="star-outline" badgeColor={rowBadgeColors.orange} label={t('settings.rateApp')} onPress={() => comingSoon()} />
+          <Row icon="star-outline" badgeColor={rowBadgeColors.orange} label={t('settings.rateApp')} onPress={rateApp} />
           <Row
             icon="information-circle-outline"
             badgeColor={rowBadgeColors.purple}
