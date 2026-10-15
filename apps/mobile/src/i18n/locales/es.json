@@ -429,5 +429,11 @@
   "common": {
     "comingSoonTitle": "Próximamente",
     "comingSoonMessage": "Estará disponible en una versión posterior."
+  },
+  "dataBackup": {
+    "noteAndroid": "Tus eventos se guardan en este dispositivo. Android también hace una copia de seguridad automática en tu cuenta de Google, así que vuelven al reinstalar la app o configurar un teléfono nuevo. Borrar los datos de la app los elimina para siempre: exporta una copia para guardarla tú.",
+    "noteIos": "Tus eventos se guardan en este dispositivo y se incluyen en la copia de seguridad de iCloud de tu iPhone. Eliminar la app los borra: exporta una copia para guardarla tú.",
+    "lastExport": "Última exportación: {{date}}",
+    "neverExported": "Aún no has exportado ninguna copia."
   }
 }

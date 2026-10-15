@@ -2,7 +2,7 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { useTheme } from '../src/theme/PreferencesContext';
 
-const LAST_UPDATED = 'September 14, 2026';
+const LAST_UPDATED = 'October 15, 2026';
 
 // English-only, deliberately — this is a legal document, not app UI copy,
 // and machine-translating GDPR/CCPA/subscription language into the app's
@@ -14,17 +14,21 @@ const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: '1. Summary',
     body:
-      'PuraEvents is offline-first: your events, reminders, and appearance settings are stored only on this device by ' +
-      "default. No account is required to use the free version, and this version doesn't run any analytics, " +
-      'advertising, or crash-reporting SDK.',
+      'PuraEvents is offline-first: your events, reminders, and appearance settings are stored on this device, and ' +
+      'no account is needed. We don\'t run our own servers, analytics, or crash reporting. The free version shows ' +
+      'ads through Google AdMob, which collects some device data to do so (see section 4); PuraEvents Pro has no ' +
+      'ads. Purchases are verified through RevenueCat.',
   },
   {
     heading: '2. Information Stored On Your Device',
     body:
       'Events you create (title, date/time, timezone, category, notes, reminders, appearance, and any optional Share ' +
       'message or sender name), widgets you design (photos and style settings), and app preferences (theme, language, ' +
-      'calendar system) are stored locally on your device. None of it leaves your device unless you explicitly export ' +
-      'it yourself (see "Your Choices" below), or a Pro cloud-sync feature — once available — is turned on.',
+      'calendar system) are stored locally on your device. It leaves your device only when you export it yourself (see ' +
+      '"Your Choices" below), or through your phone\'s own backup: on Android, the system\'s Auto Backup saves the ' +
+      'app\'s events and settings (not photos) to your own Google account, and on iPhone they are part of your ' +
+      'iCloud device backup. Those backups are run by Google or Apple under your account and your phone\'s backup ' +
+      'settings; we never receive them.',
   },
   {
     heading: '3. Photos You Add',
@@ -40,21 +44,30 @@ const SECTIONS: { heading: string; body: string }[] = [
       "location access) or a category keyword as the search term. Notifications: reminders are scheduled locally " +
       "using your operating system's own notification system — we don't run a push server and never see or store " +
       'your reminder content remotely. App Store / Google Play: a Pro purchase is handled entirely by Apple or ' +
-      "Google; we don't receive or store your payment card details.",
+      "Google; we don't receive or store your payment card details. RevenueCat (revenuecat.com): checks whether you " +
+      'have an active Pro purchase, using your store purchase receipts and a random app user ID it creates — not ' +
+      'your name or email. Google AdMob (free version only): to show, measure, and limit ads and to prevent ad ' +
+      'fraud, Google\'s Mobile Ads SDK collects your device\'s advertising ID, IP address, device and app ' +
+      'information, and how you interact with ads. Depending on your region and settings these ads may be ' +
+      'personalized. Google handles this data under its own policy: policies.google.com/technologies/partner-sites.',
   },
   {
     heading: '5. Data We Do Not Collect',
     body:
-      "We don't currently collect analytics, advertising identifiers, or crash reports. If that changes in a future " +
-      "version, this policy — and, where required, your platform's own privacy labels — will be updated first.",
+      'We don\'t run analytics or crash reporting, don\'t ask for your name, email, or location, and don\'t sell ' +
+      'your personal data. The advertising data described in section 4 is collected by Google\'s SDK in the free ' +
+      'version, not by us. If any of this changes, this policy — and your platform\'s privacy labels — will be ' +
+      'updated first.',
   },
   {
     heading: '6. Your Choices',
     body:
       'Export: Settings → Data & Privacy → Export shares all of your events as a file at any time. Delete: since your ' +
-      'data lives only on this device, uninstalling the app deletes it; once optional cloud sync ships, an in-app ' +
-      '"delete my cloud data" option will be added here. Access/correction: view and edit every event directly in ' +
-      'the app at any time.',
+      'data lives on this device, clearing the app\'s data or uninstalling it deletes it there; copies in your phone\'s ' +
+      'own Google or iCloud backup are managed (and can be deleted) in that account\'s backup settings. ' +
+      'Access/correction: view and edit every event directly in the app at any time. Ads: you can reset or delete ' +
+      'your advertising ID, or opt out of personalized ads, in your phone\'s settings (Android: Settings → Google ' +
+      '→ Ads, or Privacy → Ads; iPhone: Settings → Privacy & Security → Tracking). Upgrading to Pro removes ads.',
   },
   {
     heading: "7. Children's Privacy",
@@ -65,9 +78,10 @@ const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: '8. International Users (GDPR / CCPA)',
     body:
-      "Because your data stays on your device unless you export it yourself, we don't process your personal data on " +
-      'our own servers today. If you\'re in the EU/UK or California and have questions about your rights under GDPR ' +
-      'or the CCPA, contact us using the details below.',
+      "Your events stay on your device, and we don't process your personal data on servers of our own. The services " +
+      'in section 4 (Google AdMob, RevenueCat, Pexels, and Apple/Google for purchases) process the limited data ' +
+      'described there. If you\'re in the EU/UK or California and have questions about your rights under GDPR or ' +
+      'the CCPA, contact us using the details below.',
   },
   {
     heading: '9. Changes To This Policy',

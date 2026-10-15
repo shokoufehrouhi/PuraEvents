@@ -40,8 +40,8 @@ const SECTIONS: { heading: string; body: string }[] = [
     heading: '4. Your Content',
     body:
       'Events, notes, photos, and messages you create are yours. Because the app is offline-first, you are solely ' +
-      'responsible for backing up your own data (Settings → Data & Privacy → Export) until an optional cloud-sync ' +
-      'feature becomes available.',
+      'responsible for backing up your own data (Settings → Data & Privacy → Export); your phone\'s own system ' +
+      'backup can help, but isn\'t guaranteed to be on or up to date.',
   },
   {
     heading: '5. Intellectual Property',

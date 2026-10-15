@@ -1,8 +1,9 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, Text, View } from 'react-native';
 
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { ConfirmModal, type ConfirmModalState } from '../src/components/ConfirmModal';
@@ -14,6 +15,7 @@ import { applyImportedEvents, listEvents } from '../src/storage/events';
 import { usePro } from '../src/subscription';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
+import { formatCivilDateFull } from '../src/utils/calendars';
 import { openDownloadsFolder } from '../modules/save-to-downloads';
 import {
   exportEvents,
@@ -26,16 +28,24 @@ import {
   type ImportPlan,
 } from '../src/utils/dataTransfer';
 
+const LAST_EXPORT_KEY = 'puraevents:lastExport';
+
 // Sub-screen for the Settings "Data & Privacy" menu row — moved out of the
 // Settings tab's own inline Section per explicit request that each of its
 // 4 top-level menus (Appearance/Notifications/Data & Privacy/About) drill
 // into its own screen instead of showing sub-rows inline.
 export default function DataPrivacyScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, typography } = useTheme();
   const { prefs } = usePreferences();
   const { isPro } = usePro();
+  // When the user last exported a copy (save or share) — shown under the
+  // rows so they can tell how old their own backup is.
+  const [lastExport, setLastExport] = useState<string | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem(LAST_EXPORT_KEY).then(setLastExport, () => {});
+  }, []);
   const [exportOpen, setExportOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
@@ -54,6 +64,9 @@ export default function DataPrivacyScreen() {
     setBusy(true);
     try {
       const result = await exportEvents(events, format, destination, t);
+      const now = new Date().toISOString();
+      AsyncStorage.setItem(LAST_EXPORT_KEY, now).catch(() => {});
+      setLastExport(now);
       if ('saved' in result) {
         setAlert({
           title: t('dataExport.savedTitle'),
@@ -151,28 +164,9 @@ export default function DataPrivacyScreen() {
     });
   }
 
-  // Same Pro gate as Import & Export above — Backup & Sync isn't built yet
-  // either way (still a "coming soon" placeholder), but a free user still
-  // sees the paywall first, not "coming soon", so the gate reads correctly
-  // once this row is real.
-  function handleBackupSync() {
-    if (!isPro) {
-      router.push('/upgrade');
-      return;
-    }
-    Alert.alert(t('common.comingSoonTitle'), t('common.comingSoonMessage'));
-  }
-
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
       <Section>
-        <Row
-          icon="cloud-outline"
-          badgeColor={rowBadgeColors.blue}
-          label={t('settings.backupSync')}
-          value={isPro ? t('settings.onThisDevice') : t('settings.proOnly')}
-          onPress={handleBackupSync}
-        />
         <Row
           icon="share-outline"
           badgeColor={rowBadgeColors.purple}
@@ -194,6 +188,16 @@ export default function DataPrivacyScreen() {
           onPress={() => router.push('/privacy')}
         />
       </Section>
+      <Text style={[typography.caption, { color: colors.secondary, marginTop: -spacing.sm, marginHorizontal: spacing.sm }]}>
+        {t(Platform.OS === 'ios' ? 'dataBackup.noteIos' : 'dataBackup.noteAndroid')}
+      </Text>
+      {isPro ? (
+        <Text style={[typography.caption, { color: colors.secondary, marginTop: spacing.sm, marginHorizontal: spacing.sm }]}>
+          {lastExport
+            ? t('dataBackup.lastExport', { date: formatCivilDateFull(lastExport, prefs.calendar, i18n.language) })
+            : t('dataBackup.neverExported')}
+        </Text>
+      ) : null}
       {busy ? (
         <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
           <ActivityIndicator color={colors.primary} />

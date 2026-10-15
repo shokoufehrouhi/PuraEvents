@@ -429,5 +429,11 @@
   "common": {
     "comingSoonTitle": "Demnächst",
     "comingSoonMessage": "Das ist in einer späteren Version verfügbar."
+  },
+  "dataBackup": {
+    "noteAndroid": "Deine Events werden auf diesem Gerät gespeichert. Android sichert sie außerdem automatisch in deinem Google-Konto, sodass sie nach einer Neuinstallation oder auf einem neuen Handy zurückkommen. Wenn du die App-Daten löschst, sind sie endgültig weg – exportiere eine Kopie, um selbst eine zu behalten.",
+    "noteIos": "Deine Events werden auf diesem Gerät gespeichert und sind im iCloud-Backup deines iPhones enthalten. Wenn du die App löschst, sind sie weg – exportiere eine Kopie, um selbst eine zu behalten.",
+    "lastExport": "Letzter Export: {{date}}",
+    "neverExported": "Du hast noch keine Kopie exportiert."
   }
 }

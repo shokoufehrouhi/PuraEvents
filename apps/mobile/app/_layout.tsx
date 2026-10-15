@@ -12,9 +12,15 @@ import { AdGateProvider } from '../src/ads/adGate';
 import { AppOpenAdController } from '../src/ads/AppOpenAdController';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
-import { extractNotificationInfo, initNotificationLogListeners, requestNotificationPermissions, type NotificationInfo } from '../src/notifications';
+import {
+  extractNotificationInfo,
+  initNotificationLogListeners,
+  requestNotificationPermissions,
+  restoreMissingReminders,
+  type NotificationInfo,
+} from '../src/notifications';
 import { initSubscriptions, usePro } from '../src/subscription';
-import { PreferencesProvider, useTheme } from '../src/theme/PreferencesContext';
+import { PreferencesProvider, usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 
@@ -40,7 +46,8 @@ function Navigation() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, scheme } = useTheme();
-  const { isPro } = usePro();
+  const { isPro, isReady: proReady } = usePro();
+  const { prefs, ready: prefsReady } = usePreferences();
   // The notification the user just tapped — shown as a popup with its full
   // data (title/body/event/sent time) regardless of which screen the app
   // happens to be on, since a tap can arrive from a background or fully
@@ -72,6 +79,14 @@ function Navigation() {
       responseSub.remove();
     };
   }, []);
+
+  // After an Android backup restore the events are back but their reminders
+  // aren't scheduled (see restoreMissingReminders). Waits for the plan, since
+  // free and Pro schedule different reminders.
+  useEffect(() => {
+    if (!proReady || !prefsReady) return;
+    restoreMissingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
+  }, [proReady, prefsReady, isPro, prefs.notificationsEnabled]);
 
   const headerOptions = {
     headerShown: true,

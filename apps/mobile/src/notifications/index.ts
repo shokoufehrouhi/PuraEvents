@@ -219,6 +219,19 @@ export async function applyNotificationsEnabledChange(enabled: boolean, isPro: b
   await Promise.all(events.map((event) => scheduleRemindersForEvent(event, isPro, true)));
 }
 
+// Startup check: scheduled notifications live in the OS, not in the app's
+// data, so after Android restores a backup (reinstall / new phone) the
+// events come back with none of their reminders scheduled. If the app has
+// nothing scheduled at all, schedule every event's reminders again — a
+// no-op for events whose reminders are all in the past.
+export async function restoreMissingReminders(isPro: boolean, notificationsEnabled: boolean): Promise<void> {
+  if (!notificationsEnabled) return;
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  if (scheduled.some((n) => n.identifier.startsWith('puraevents:'))) return;
+  const events = await listEvents();
+  await Promise.all(events.map((event) => scheduleRemindersForEvent(event, isPro, true)));
+}
+
 // Also used by app/_layout.tsx's tap popup, to show how much is left until
 // the event *now* (not the offset the reminder itself fired for) in the
 // same terse "2h"/"3d" shape the notification body already uses.

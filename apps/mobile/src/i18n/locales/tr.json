@@ -429,5 +429,11 @@
   "common": {
     "comingSoonTitle": "Yakında",
     "comingSoonMessage": "Bu özellik sonraki bir sürümde gelecek."
+  },
+  "dataBackup": {
+    "noteAndroid": "Etkinliklerin bu cihazda saklanır. Android ayrıca bunları Google hesabına otomatik olarak yedekler; uygulamayı yeniden yüklediğinde veya yeni bir telefon kurduğunda geri gelirler. Uygulama verilerini temizlemek onları kalıcı olarak siler — kendin saklamak için bir kopya dışa aktar.",
+    "noteIos": "Etkinliklerin bu cihazda saklanır ve iPhone’unun iCloud yedeğine dahildir. Uygulamayı silmek onları siler — kendin saklamak için bir kopya dışa aktar.",
+    "lastExport": "Son dışa aktarma: {{date}}",
+    "neverExported": "Henüz bir kopya dışa aktarmadın."
   }
 }

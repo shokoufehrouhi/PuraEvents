@@ -429,5 +429,11 @@
   "common": {
     "comingSoonTitle": "Coming soon",
     "comingSoonMessage": "This will be available in a later release."
+  },
+  "dataBackup": {
+    "noteAndroid": "Your events are saved on this device. Android also backs them up to your Google account automatically, so they come back when you reinstall the app or set up a new phone. Clearing the app's data erases them for good — export a copy to keep one yourself.",
+    "noteIos": "Your events are saved on this device and included in your iPhone's iCloud backup. Deleting the app erases them — export a copy to keep one yourself.",
+    "lastExport": "Last export: {{date}}",
+    "neverExported": "You haven't exported a copy yet."
   }
 }
