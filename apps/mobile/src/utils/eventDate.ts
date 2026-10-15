@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 import type { CalendarSystem } from '../storage/preferences';
 import type { RepeatRule } from '../types/event';
-import { formatCivilDateFull, formatCivilDateMonthDay, formatWeekdayName, shouldUseFarsiDigits } from './calendars';
+import { formatCivilDateFull, formatCivilDateMonthDay, formatWeekdayName, localizeDigits, shouldUseFarsiDigits } from './calendars';
 
 // Hero card date line, format depends on how the event repeats — a
 // non-repeating event needs the year to be meaningful; a yearly/monthly
@@ -18,7 +18,7 @@ export function formatEventDateLine(
   calendar: CalendarSystem,
   language: string,
 ): string {
-  const time = dayjs(dateTimeISO).format('HH:mm');
+  const time = localizeDigits(dayjs(dateTimeISO).format('HH:mm'), language);
   const useFarsiDigits = shouldUseFarsiDigits(language);
   const weekday = formatWeekdayName(dateTimeISO, language);
   // Farsi/Arabic text conventionally separates clauses with "،", not ",".
@@ -28,10 +28,10 @@ export function formatEventDateLine(
     case 'weekly':
     case 'monthly':
     case 'yearly':
-      return `${weekday}${comma} ${formatCivilDateMonthDay(dateTimeISO, calendar, useFarsiDigits)} · ${time}`;
+      return `${weekday}${comma} ${formatCivilDateMonthDay(dateTimeISO, calendar, language)} · ${time}`;
     case 'none':
     default:
-      return `${weekday}${comma} ${formatCivilDateFull(dateTimeISO, calendar, useFarsiDigits)} · ${time}`;
+      return `${weekday}${comma} ${formatCivilDateFull(dateTimeISO, calendar, language)} · ${time}`;
   }
 }
 

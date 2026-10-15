@@ -9,7 +9,6 @@ import { AddWidgetStepIllustration, type AddWidgetStepKind } from '../src/compon
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { MiniWidget } from '../src/components/MiniWidget';
 import { Button } from '../src/components/ui/Button';
-import { RTL_LANGUAGES, type SupportedLanguage } from '../src/i18n';
 import { useTheme } from '../src/theme/PreferencesContext';
 import type { PurEvent } from '../src/types/event';
 import { openHomeScreenShortcutPermissionSettings } from '../src/utils/miuiPermissions';
@@ -33,26 +32,20 @@ const PREVIEW_EVENT: PurEvent = {
   updatedAt: '',
 };
 
-// isRTL flips this screen's own layout (illustration/badge/text order,
-// margins, alignment) for fa/ar — deliberately independent of
-// I18nManager.isRTL, which stays false app-wide until forceRTL() + a
-// restart get wired up (see app/_layout.tsx's own note); RTL_LANGUAGES is
-// keyed off the selected language directly instead, so this screen reads
-// correctly right now regardless of that broader follow-up. The
-// illustration itself is never mirrored — it depicts real, physically
-// fixed OS chrome (e.g. iOS's Edit button always sits top-left on the
-// device, in every language), not this app's own UI.
-function Step({ number, text, illustration, isRTL }: { number: number; text: string; illustration: AddWidgetStepKind; isRTL: boolean }) {
+// The app-wide RTL mirroring (src/i18n/direction.ts) flips this row for
+// fa/ar. The illustration itself is never mirrored — it depicts real,
+// physically fixed OS chrome (e.g. iOS's Edit button always sits top-left
+// on the device, in every language), not this app's own UI.
+function Step({ number, text, illustration }: { number: number; text: string; illustration: AddWidgetStepKind }) {
   const { colors, spacing, radius, typography } = useTheme();
   return (
-    <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', marginBottom: spacing.lg }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg }}>
       <AddWidgetStepIllustration kind={illustration} />
       <View
         style={{
           flex: 1,
-          marginLeft: isRTL ? 0 : spacing.md,
-          marginRight: isRTL ? spacing.md : 0,
-          flexDirection: isRTL ? 'row-reverse' : 'row',
+          marginLeft: spacing.md,
+          flexDirection: 'row',
           alignItems: 'flex-start',
         }}
       >
@@ -64,13 +57,12 @@ function Step({ number, text, illustration, isRTL }: { number: number; text: str
             backgroundColor: `${colors.primary}1A`,
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: isRTL ? 0 : 12,
-            marginLeft: isRTL ? 12 : 0,
+            marginRight: 12,
           }}
         >
           <Text style={[typography.bodyStrong, { color: colors.primary, fontSize: 13 }]}>{number}</Text>
         </View>
-        <Text style={[typography.body, { color: colors.text, flex: 1, marginTop: 2, textAlign: isRTL ? 'right' : 'left' }]}>{text}</Text>
+        <Text style={[typography.body, { color: colors.text, flex: 1, marginTop: 2, textAlign: 'left' }]}>{text}</Text>
       </View>
     </View>
   );
@@ -81,13 +73,12 @@ function Step({ number, text, illustration, isRTL }: { number: number; text: str
 // and src/widgets/androidWidgetTask.tsx), not the in-app MiniWidget
 // mockup/style-picker every other "Add Widget" button in this app opens.
 export default function AddWidgetToHomeScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors, spacing, typography } = useTheme();
   const insets = useSafeAreaInsets();
   const [requesting, setRequesting] = useState(false);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
   const isAndroid = Platform.OS === 'android';
-  const isRTL = RTL_LANGUAGES.includes(i18n.language as SupportedLanguage);
 
   // Android has AppWidgetManager.requestPinAppWidget, which
   // react-native-android-widget wraps — the launcher shows its own system
@@ -136,7 +127,7 @@ export default function AddWidgetToHomeScreen() {
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={{ padding: spacing.md, paddingBottom: insets.bottom + spacing.md }}
       >
-        <Text style={[typography.body, { color: colors.secondary, marginBottom: spacing.lg, textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={[typography.body, { color: colors.secondary, marginBottom: spacing.lg, textAlign: 'left' }]}>
           {t('addWidgetHome.subtitle')}
         </Text>
 
@@ -152,12 +143,12 @@ export default function AddWidgetToHomeScreen() {
             </Text>
           </View>
         ) : (
-          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'flex-start', marginBottom: spacing.xl }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.xl }}>
             <Ionicons name="information-circle-outline" size={16} color={colors.secondary} style={{ marginTop: 2 }} />
             <Text
               style={[
                 typography.caption,
-                { color: colors.secondary, marginLeft: isRTL ? 0 : 6, marginRight: isRTL ? 6 : 0, flex: 1, textAlign: isRTL ? 'right' : 'left' },
+                { color: colors.secondary, marginLeft: 6, flex: 1, textAlign: 'left' },
               ]}
             >
               {t('addWidgetHome.iosNote')}
@@ -165,22 +156,22 @@ export default function AddWidgetToHomeScreen() {
           </View>
         )}
 
-        <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.md, textAlign: isRTL ? 'right' : 'left' }]}>
+        <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.md, textAlign: 'left' }]}>
           {t('addWidgetHome.manualStepsTitle')}
         </Text>
         {isAndroid ? (
           <>
-            <Step number={1} text={t('addWidgetHome.androidStep1')} illustration="long-press-home" isRTL={isRTL} />
-            <Step number={2} text={t('addWidgetHome.androidStep2')} illustration="tap-widgets-menu" isRTL={isRTL} />
-            <Step number={3} text={t('addWidgetHome.androidStep3')} illustration="drag-widget" isRTL={isRTL} />
+            <Step number={1} text={t('addWidgetHome.androidStep1')} illustration="long-press-home" />
+            <Step number={2} text={t('addWidgetHome.androidStep2')} illustration="tap-widgets-menu" />
+            <Step number={3} text={t('addWidgetHome.androidStep3')} illustration="drag-widget" />
           </>
         ) : (
           <>
-            <Step number={1} text={t('addWidgetHome.iosStep1')} illustration="long-press-home" isRTL={isRTL} />
-            <Step number={2} text={t('addWidgetHome.iosStep2')} illustration="tap-edit" isRTL={isRTL} />
-            <Step number={3} text={t('addWidgetHome.iosStep3')} illustration="tap-plus" isRTL={isRTL} />
-            <Step number={4} text={t('addWidgetHome.iosStep4')} illustration="search" isRTL={isRTL} />
-            <Step number={5} text={t('addWidgetHome.iosStep5')} illustration="choose-size" isRTL={isRTL} />
+            <Step number={1} text={t('addWidgetHome.iosStep1')} illustration="long-press-home" />
+            <Step number={2} text={t('addWidgetHome.iosStep2')} illustration="tap-edit" />
+            <Step number={3} text={t('addWidgetHome.iosStep3')} illustration="tap-plus" />
+            <Step number={4} text={t('addWidgetHome.iosStep4')} illustration="search" />
+            <Step number={5} text={t('addWidgetHome.iosStep5')} illustration="choose-size" />
           </>
         )}
       </ScrollView>

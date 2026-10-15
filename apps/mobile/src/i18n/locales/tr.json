@@ -7,7 +7,7 @@
   },
   "events": {
     "listTitle": "Etkinliklerin",
-    "heroCaption": "Today Trips",
+    "heroCaption": "Bugünün gezileri",
     "todayTitle": "Bugün",
     "upcoming": "Yaklaşan",
     "past": "Geçmiş",
@@ -135,7 +135,10 @@
     "hours": "{{count}}sa",
     "minutes": "{{count}}dk",
     "seconds": "{{count}}sn",
-    "past": "Gerçekleşti"
+    "past": "Gerçekleşti",
+    "unitDays": "GÜN",
+    "unitHours": "SA",
+    "unitMinutes": "DK"
   },
   "settings": {
     "title": "Ayarlar",
@@ -230,7 +233,8 @@
     "saturday": "Cumartesi",
     "searchTimezone": "Saat dilimi ara",
     "noTimezoneMatch": "Aramanızla eşleşen saat dilimi yok.",
-    "previewTripTitle": "{{city}} Gezisi"
+    "previewTripTitle": "{{city}} Gezisi",
+    "preview": "Önizleme"
   },
   "paywall": {
     "title": "Her anı değerli kıl",
@@ -421,5 +425,9 @@
     "doneReplaced": "Dosyadan değiştirilen: {{count}}",
     "doneKept": "Senin sürümün korundu: {{count}}",
     "doneIdentical": "Zaten güncel: {{count}}"
+  },
+  "common": {
+    "comingSoonTitle": "Yakında",
+    "comingSoonMessage": "Bu özellik sonraki bir sürümde gelecek."
   }
 }

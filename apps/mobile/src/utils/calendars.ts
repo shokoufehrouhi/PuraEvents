@@ -123,7 +123,7 @@ interface CivilDate {
   monthName: string;
 }
 
-function toCivilDate(iso: string, calendar: CalendarSystem): CivilDate {
+function toCivilDate(iso: string, calendar: CalendarSystem, language = 'en'): CivilDate {
   const date = dayjs(iso).toDate();
 
   if (calendar === 'persian') {
@@ -137,7 +137,10 @@ function toCivilDate(iso: string, calendar: CalendarSystem): CivilDate {
   }
 
   const d = dayjs(iso);
-  return { year: d.year(), month: d.month() + 1, day: d.date(), monthName: d.format('MMM') };
+  // English keeps its short "Oct"; other languages use the full names table.
+  const monthName =
+    language === 'en' ? d.format('MMM') : (GREGORIAN_MONTHS_BY_LANGUAGE[language] ?? GREGORIAN_MONTHS_BY_LANGUAGE.en)[d.month()];
+  return { year: d.year(), month: d.month() + 1, day: d.date(), monthName };
 }
 
 // Unicode "right-to-left isolate" (U+2067 ... U+2069) around JUST the month
@@ -176,21 +179,31 @@ export function shouldUseFarsiDigits(language: string): boolean {
   return language === 'fa' || language === 'ar';
 }
 
-/** "10 Sep 2026" / "۱۹ شهریور ۱۴۰۵" / "۲۷ صفر ۱۴۴۸" */
-export function formatCivilDateFull(iso: string, calendar: CalendarSystem, useFarsiDigits: boolean): string {
-  const { day, monthName, year } = toCivilDate(iso, calendar);
-  if (calendar === 'gregorian') return `${monthName} ${day}, ${year}`;
-  const dayStr = useFarsiDigits ? toPersianDigits(day) : String(day);
-  const yearStr = useFarsiDigits ? toPersianDigits(year) : String(year);
-  return `${dayStr} ${isolateRTL(monthName)} ${yearStr}`;
+/** Numbers shown in the UI (countdowns, times) in the same digits as the
+ *  dates around them: Farsi digits for fa/ar, Latin otherwise. */
+export function localizeDigits(value: string | number, language: string): string {
+  return shouldUseFarsiDigits(language) ? toPersianDigits(value) : String(value);
 }
 
-/** "Sep 10" / "۱۹ شهریور" / "۲۷ صفر" — for repeats where the year is noise. */
-export function formatCivilDateMonthDay(iso: string, calendar: CalendarSystem, useFarsiDigits: boolean): string {
-  const { day, monthName } = toCivilDate(iso, calendar);
-  if (calendar === 'gregorian') return `${monthName} ${day}`;
+/** "Oct 22, 2026" / "22 Oktober 2026" / "۲۲ اکتبر ۲۰۲۶" / "۱۹ شهریور ۱۴۰۵" /
+ *  "۲۷ صفر ۱۴۴۸" — month names follow the UI language for Gregorian dates
+ *  too (English keeps its short "Oct 22, 2026" form). */
+export function formatCivilDateFull(iso: string, calendar: CalendarSystem, language: string): string {
+  const { day, monthName, year } = toCivilDate(iso, calendar, language);
+  if (calendar === 'gregorian' && language === 'en') return `${monthName} ${day}, ${year}`;
+  const useFarsiDigits = shouldUseFarsiDigits(language);
   const dayStr = useFarsiDigits ? toPersianDigits(day) : String(day);
-  return `${dayStr} ${isolateRTL(monthName)}`;
+  const yearStr = useFarsiDigits ? toPersianDigits(year) : String(year);
+  return `${dayStr} ${calendar !== 'gregorian' || useFarsiDigits ? isolateRTL(monthName) : monthName} ${yearStr}`;
+}
+
+/** "Sep 10" / "10 September" / "۱۹ شهریور" / "۲۷ صفر" — for repeats where the year is noise. */
+export function formatCivilDateMonthDay(iso: string, calendar: CalendarSystem, language: string): string {
+  const { day, monthName } = toCivilDate(iso, calendar, language);
+  if (calendar === 'gregorian' && language === 'en') return `${monthName} ${day}`;
+  const useFarsiDigits = shouldUseFarsiDigits(language);
+  const dayStr = useFarsiDigits ? toPersianDigits(day) : String(day);
+  return `${dayStr} ${calendar !== 'gregorian' || useFarsiDigits ? isolateRTL(monthName) : monthName}`;
 }
 
 /** Bare day-of-month number in the target calendar, e.g. for "every month on the 16th". */

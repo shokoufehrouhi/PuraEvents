@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Section } from '../src/components/ui/Section';
 import i18n, { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../src/i18n';
+import { setLanguage } from '../src/i18n/direction';
 import { useTheme } from '../src/theme/PreferencesContext';
 
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
@@ -27,7 +28,7 @@ export default function LanguagePickerScreen() {
     // crashes with "ScreenStackFragment added into a non-stack container."
     // Deferring the re-render past this navigation event avoids the race.
     router.back();
-    setTimeout(() => i18n.changeLanguage(lang), 0);
+    setTimeout(() => setLanguage(lang), 0);
   }
 
   return (

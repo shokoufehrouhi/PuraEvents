@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { localizeDigits } from '../utils/calendars';
+
 interface Props {
   targetISO: string;
   textColor?: string;
@@ -35,7 +37,7 @@ export function HeroCountdown({
   dividerColor,
   compact,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [now, setNow] = useState(() => dayjs());
 
   useEffect(() => {
@@ -53,9 +55,9 @@ export function HeroCountdown({
   }
 
   const columns: [number, string][] = [
-    [days, 'DAYS'],
-    [hours, 'HRS'],
-    [minutes, 'MIN'],
+    [days, t('countdown.unitDays')],
+    [hours, t('countdown.unitHours')],
+    [minutes, t('countdown.unitMinutes')],
   ];
 
   return (
@@ -66,7 +68,7 @@ export function HeroCountdown({
             <View style={[styles.divider, { backgroundColor: dividerColor, height: numberSize }]} />
           ) : null}
           <View style={styles.col}>
-            <Text style={[styles.number, { color: textColor, fontSize: numberSize, lineHeight: numberSize + 4 }]}>{value}</Text>
+            <Text style={[styles.number, { color: textColor, fontSize: numberSize, lineHeight: numberSize + 4 }]}>{localizeDigits(value, i18n.language)}</Text>
             <Text style={[styles.label, { color: labelColor, fontSize: labelSize }]}>{label}</Text>
           </View>
         </View>

@@ -6,7 +6,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Share from 'react-native-share';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
@@ -17,6 +17,7 @@ import { MiniWidget } from '../../../src/components/MiniWidget';
 import { ShareCard } from '../../../src/components/ShareCard';
 import { Button } from '../../../src/components/ui/Button';
 import { Section } from '../../../src/components/ui/Section';
+import { EventIcon } from '../../../src/components/EventIcon';
 import { cancelRemindersForEvent, scheduleRemindersForEvent } from '../../../src/notifications';
 import { deleteEvent, getEvent, listEvents } from '../../../src/storage/events';
 import { usePro } from '../../../src/subscription';
@@ -24,12 +25,13 @@ import { getCategoryIcon } from '../../../src/theme/icons';
 import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext';
 import { accents } from '../../../src/theme/tokens';
 import type { PurEvent } from '../../../src/types/event';
-import { formatCivilDateFull, shouldUseFarsiDigits } from '../../../src/utils/calendars';
+import { formatCivilDateFull, localizeDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
 import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
 import { resolveAudioUri } from '../../../src/utils/persistAudio';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
+import { flipInRTL } from '../../../src/utils/rtl';
 
 // A single "EVENT DETAILS"/"REMINDER"/"NOTE"/"APPEARANCE" row: icon badge +
 // two-line text. Purely informational, not tappable — editing any of this
@@ -196,11 +198,10 @@ export default function EventDetailScreen() {
     router.push(`/event/${event!.id}/edit`);
   }
 
-  const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
-  const { color: categoryColor, image: categoryImage } = getCategoryIcon(event.category);
+  const { color: categoryColor } = getCategoryIcon(event.category);
   const nextOccurrence = getNextOccurrence(event.dateTimeISO, event.repeat);
-  const timeString = nextOccurrence.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm');
-  const dateTimeValue = `${formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, useFarsiDigits)} · ${timeString}`;
+  const timeString = localizeDigits(nextOccurrence.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm'), i18n.language);
+  const dateTimeValue = `${formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, i18n.language)} · ${timeString}`;
   // Same "Happened" definition as the Events tab's own Past split (see
   // app/(tabs)/index.tsx) — a repeating event's *next* occurrence is
   // always upcoming by definition, only a one-time event can be past.
@@ -218,7 +219,7 @@ export default function EventDetailScreen() {
           hitSlop={12}
           style={[styles.headerButton, { backgroundColor: colors.surfaceAlt }]}
         >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
+          <Ionicons name="chevron-back" size={22} color={colors.text} style={flipInRTL} />
         </Pressable>
         <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.eventDetails')}</Text>
         {/* Same plan badge as the Events/Widgets tabs' own headers. Free
@@ -242,7 +243,7 @@ export default function EventDetailScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md }}>
         <View style={styles.titleRow}>
-          <Image source={categoryImage} style={styles.categoryImage} resizeMode="contain" />
+          <EventIcon category={event.category} size={56} />
           <View style={{ marginLeft: 14, flex: 1 }}>
             <Text style={[typography.label, styles.categoryLabel, { color: categoryColor }]}>
               {t(`events.category.${event.category}`).toUpperCase()}
@@ -313,10 +314,10 @@ export default function EventDetailScreen() {
               // Pro back rather than having silently vanished.
               const locked = !activeReminders.includes(offset);
               const fireAt = nextOccurrence.subtract(offset, 'minute');
-              const fireTime = fireAt.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm');
+              const fireTime = localizeDigits(fireAt.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm'), i18n.language);
               const fireValue = locked
                 ? t('widgets.availableWithPro')
-                : `${formatCivilDateFull(fireAt.toISOString(), prefs.calendar, useFarsiDigits)} · ${fireTime}`;
+                : `${formatCivilDateFull(fireAt.toISOString(), prefs.calendar, i18n.language)} · ${fireTime}`;
               return (
                 <View key={offset} style={{ opacity: locked ? 0.55 : 1 }}>
                   <DetailRow icon={locked ? 'lock-closed' : 'notifications-outline'} label={reminderLabel(offset, t)} value={fireValue} />
@@ -390,7 +391,6 @@ const styles = StyleSheet.create({
   headerButton: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   planBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  categoryImage: { width: 56, height: 56 },
   categoryLabel: { fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
   countdownCard: { marginTop: 20, borderLeftWidth: 4, overflow: 'hidden', alignItems: 'center' },
   reminderPill: {

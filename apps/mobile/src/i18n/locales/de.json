@@ -7,7 +7,7 @@
   },
   "events": {
     "listTitle": "Deine Ereignisse",
-    "heroCaption": "Today Trips",
+    "heroCaption": "Heutige Reisen",
     "todayTitle": "Heute",
     "upcoming": "Bevorstehend",
     "past": "Vergangen",
@@ -135,7 +135,10 @@
     "hours": "{{count}}Std",
     "minutes": "{{count}}Min",
     "seconds": "{{count}}Sek",
-    "past": "Vorbei"
+    "past": "Vorbei",
+    "unitDays": "TAGE",
+    "unitHours": "STD",
+    "unitMinutes": "MIN"
   },
   "settings": {
     "title": "Einstellungen",
@@ -230,7 +233,8 @@
     "saturday": "Samstag",
     "searchTimezone": "Zeitzone suchen",
     "noTimezoneMatch": "Keine Zeitzone entspricht deiner Suche.",
-    "previewTripTitle": "{{city}}-Reise"
+    "previewTripTitle": "{{city}}-Reise",
+    "preview": "Vorschau"
   },
   "paywall": {
     "title": "Mach jeden Moment zählen",
@@ -421,5 +425,9 @@
     "doneReplaced": "Aus der Datei ersetzt: {{count}}",
     "doneKept": "Deine Version behalten: {{count}}",
     "doneIdentical": "Bereits aktuell: {{count}}"
+  },
+  "common": {
+    "comingSoonTitle": "Demnächst",
+    "comingSoonMessage": "Das ist in einer späteren Version verfügbar."
   }
 }

@@ -21,6 +21,7 @@ import { getCategoryPhotos } from '../src/utils/categoryPhoto';
 import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
 import { persistRemoteImage } from '../src/utils/persistImage';
 import { getActiveWidgetIds, isWidgetFrozen } from '../src/utils/widgetAccess';
+import { flipInRTL } from '../src/utils/rtl';
 
 type Tab = 'builtin' | 'mine' | 'categories';
 
@@ -361,7 +362,7 @@ export default function WidgetPickerScreen() {
             {quotaFull ? (
               <Text style={[typography.bodyStrong, { color: colors.primary }]}>{t('events.viewPro')}</Text>
             ) : (
-              <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+              <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
             )}
           </Pressable>
         ) : null}

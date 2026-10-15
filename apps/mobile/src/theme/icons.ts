@@ -12,12 +12,12 @@ import type { EventCategory } from '../types/event';
 // different icon styles in the app (list rows, event detail, wizard, hero
 // card, category-picker all share this one map again).
 export const CATEGORY_ICONS: Record<EventCategory, { color: string; image: number }> = {
-  personal: { color: '#ED6F64', image: require('../../assets/icons/categories/personal.png') },
+  personal: { color: '#E86FB0', image: require('../../assets/icons/categories/personal.png') },
   work: { color: '#7F6DC0', image: require('../../assets/icons/categories/work.png') },
   travel: { color: '#6494EC', image: require('../../assets/icons/categories/travel.png') },
   finance: { color: '#74BE92', image: require('../../assets/icons/categories/finance.png') },
-  health: { color: '#DD6979', image: require('../../assets/icons/categories/health.png') },
-  other: { color: '#917ECA', image: require('../../assets/icons/categories/other.png') },
+  health: { color: '#E5534B', image: require('../../assets/icons/categories/health.png') },
+  other: { color: '#EE9B3A', image: require('../../assets/icons/categories/other.png') },
 };
 
 export function getCategoryIcon(category: EventCategory) {

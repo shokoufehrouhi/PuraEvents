@@ -20,10 +20,11 @@ import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
 import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import { accents } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
-import { formatCivilDateFull, shouldUseFarsiDigits } from '../../src/utils/calendars';
+import { formatCivilDateFull } from '../../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence, getPreviousOccurrence } from '../../src/utils/recurrence';
 import { syncHomeScreenWidget } from '../../src/widgets/syncHomeScreenWidget';
+import { flipInRTL } from '../../src/utils/rtl';
 
 type PastFilter = '3m' | '6m' | '1y' | 'all';
 
@@ -61,7 +62,7 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
           {event.title}
         </Text>
         <Text style={[typography.caption, styles.rowDate, { color: colors.secondary }]}>
-          {formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, shouldUseFarsiDigits(i18n.language))}
+          {formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, i18n.language)}
         </Text>
       </View>
       <View style={styles.rowRight}>
@@ -112,7 +113,7 @@ function LimitBanner({ onPress }: { onPress: () => void }) {
       </View>
       <View style={styles.limitLink}>
         <Text style={[typography.bodyStrong, { color: colors.primary }]}>{t('events.viewPro')}</Text>
-        <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+        <Ionicons name="chevron-forward" size={16} color={colors.primary} style={flipInRTL} />
       </View>
     </Pressable>
   );

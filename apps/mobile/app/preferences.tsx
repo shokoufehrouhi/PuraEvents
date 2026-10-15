@@ -138,7 +138,7 @@ export default function PreferencesScreen() {
         />
       </Section>
 
-      <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>Preview</Text>
+      <Text style={[typography.label, { color: colors.secondary, marginBottom: spacing.sm }]}>{t('preferences.preview')}</Text>
       <EventHeroCard
         event={previewEvent}
         height={140}

@@ -7,7 +7,7 @@
   },
   "events": {
     "listTitle": "أحداثك",
-    "heroCaption": "Today Trips",
+    "heroCaption": "رحلات اليوم",
     "todayTitle": "اليوم",
     "upcoming": "القادمة",
     "past": "السابقة",
@@ -135,7 +135,10 @@
     "hours": "{{count}} ساعة",
     "minutes": "{{count}} دقيقة",
     "seconds": "{{count}} ثانية",
-    "past": "انتهى"
+    "past": "انتهى",
+    "unitDays": "يوم",
+    "unitHours": "ساعة",
+    "unitMinutes": "دقيقة"
   },
   "settings": {
     "title": "الإعدادات",
@@ -230,7 +233,8 @@
     "saturday": "السبت",
     "searchTimezone": "بحث عن المنطقة الزمنية",
     "noTimezoneMatch": "لا توجد مناطق زمنية تطابق بحثك.",
-    "previewTripTitle": "رحلة {{city}}"
+    "previewTripTitle": "رحلة {{city}}",
+    "preview": "معاينة"
   },
   "paywall": {
     "title": "اجعل كل لحظة مهمة",
@@ -421,5 +425,9 @@
     "doneReplaced": "تم الاستبدال من الملف: {{count}}",
     "doneKept": "تم الاحتفاظ بنسختك: {{count}}",
     "doneIdentical": "محدّثة بالفعل: {{count}}"
+  },
+  "common": {
+    "comingSoonTitle": "قريبًا",
+    "comingSoonMessage": "ستتوفر هذه الميزة في إصدار لاحق."
   }
 }

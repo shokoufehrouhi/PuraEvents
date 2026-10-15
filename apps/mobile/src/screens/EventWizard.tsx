@@ -34,9 +34,10 @@ import {
   type WidgetSelection,
   type WidgetTextStyle,
 } from '../types/event';
-import { formatCivilDateFull, shouldUseFarsiDigits } from '../utils/calendars';
+import { formatCivilDateFull, localizeDigits, shouldUseFarsiDigits } from '../utils/calendars';
 import { resolvePhotoUri } from '../utils/persistImage';
 import { awaitPick } from '../utils/pickerBridge';
+import { flipInRTL } from '../utils/rtl';
 
 type SectionKey = 'schedule' | 'reminders' | 'appearance' | 'advanced' | 'share';
 
@@ -69,7 +70,7 @@ function AccordionRow({ title, summary, expanded, onPress, children, navigate }:
             <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{summary}</Text>
           ) : null}
         </View>
-        <Ionicons name={navigate ? 'chevron-forward' : expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
+        <Ionicons name={navigate ? 'chevron-forward' : expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} style={flipInRTL} />
       </Pressable>
       {!navigate && expanded ? <View style={{ marginTop: spacing.sm + 4 }}>{children}</View> : null}
     </View>
@@ -313,7 +314,7 @@ export function EventWizard({ mode, eventId }: Props) {
   }
 
   const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
-  const scheduleSummary = `${formatCivilDateFull(date.toISOString(), prefs.calendar, useFarsiDigits)} • ${dayjs(date).format('h:mm A')}`;
+  const scheduleSummary = `${formatCivilDateFull(date.toISOString(), prefs.calendar, i18n.language)} • ${localizeDigits(dayjs(date).format('h:mm A'), i18n.language)}`;
   const remindersSummary =
     reminders.length === 0 ? t('events.noReminders') : `${reminders.length} ${t('events.remindersLabel').toLowerCase()}`;
   const appearanceSummary = t(`events.cardTheme.${cardTheme}`);
@@ -392,7 +393,7 @@ export function EventWizard({ mode, eventId }: Props) {
           >
             <EventIcon category={category} size={32} />
             <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t(`events.category.${category}`)}</Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+            <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
           </Pressable>
         </Card>
 
@@ -427,9 +428,9 @@ export function EventWizard({ mode, eventId }: Props) {
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={[typography.caption, { color: colors.secondary }]}>{t('events.timeLabel')}</Text>
-                    <Text style={[typography.bodyStrong, { color: colors.text }]}>{dayjs(date).format('h:mm A')}</Text>
+                    <Text style={[typography.bodyStrong, { color: colors.text }]}>{localizeDigits(dayjs(date).format('h:mm A'), i18n.language)}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+                  <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
                 </Pressable>
 
                 {Platform.OS === 'ios' && (
@@ -575,7 +576,7 @@ export function EventWizard({ mode, eventId }: Props) {
                   <Ionicons name="lock-closed" size={14} color={colors.primary} />
                   <Text style={[typography.caption, { color: colors.text, flex: 1, marginLeft: 6 }]}>{t('widgets.proNote')}</Text>
                   <Text style={[typography.bodyStrong, { color: colors.primary, marginLeft: 6 }]}>{t('events.viewPro')}</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.primary} style={{ marginLeft: 2 }} />
+                  <Ionicons name="chevron-forward" size={16} color={colors.primary} style={[{ marginLeft: 2 }, flipInRTL]} />
                 </Pressable>
               ) : null}
             </AccordionRow>
@@ -593,7 +594,7 @@ export function EventWizard({ mode, eventId }: Props) {
               >
                 <Ionicons name={REPEAT_STYLES[repeat].icon} size={18} color={REPEAT_STYLES[repeat].color} />
                 <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>{t(`events.repeat.${repeat}`)}</Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+                <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
               </Pressable>
 
               {/* No manual title/body field — the reminder notification is
@@ -611,7 +612,7 @@ export function EventWizard({ mode, eventId }: Props) {
                 <Text style={[typography.body, { color: colors.text, flex: 1, marginLeft: 10 }]}>
                   {t(`events.notificationSound.${notificationSound}`)}
                 </Text>
-                <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+                <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
               </Pressable>
 
               <Text style={[typography.label, { color: colors.secondary, marginTop: 16, marginBottom: 8 }]}>{t('events.noteLabel')}</Text>

@@ -19,10 +19,10 @@ import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 
 // Side-effect import: initializes i18next before any screen renders.
-// NOTE: RTL languages (fa, ar — see src/i18n) only fully mirror the layout
-// after I18nManager.forceRTL() + an app restart, which isn't wired up yet.
-// Track as a follow-up before shipping fa/ar as selectable languages.
+// RootLayout then swaps in the saved language and its layout direction
+// (see src/i18n/direction.ts).
 import '../src/i18n';
+import { restoreLanguage } from '../src/i18n/direction';
 
 // Module scope, not inside the component — ultimately calls
 // AppRegistry.registerHeadlessTask, which needs to run once, as early as
@@ -255,6 +255,20 @@ function Navigation() {
 }
 
 export default function RootLayout() {
+  // Nothing renders until the saved language is in place (an AsyncStorage
+  // read), or while a reload to flip the layout direction is under way —
+  // otherwise the first frame would show the wrong language or mirroring.
+  const [languageReady, setLanguageReady] = useState(false);
+  useEffect(() => {
+    restoreLanguage()
+      .then((reloading) => {
+        if (!reloading) setLanguageReady(true);
+      })
+      .catch(() => setLanguageReady(true));
+  }, []);
+
+  if (!languageReady) return null;
+
   return (
     <SafeAreaProvider>
       <PreferencesProvider>

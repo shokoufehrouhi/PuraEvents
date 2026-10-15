@@ -12,9 +12,10 @@ import { listEvents } from '../src/storage/events';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { accents, rowBadgeColors } from '../src/theme/tokens';
 import type { PurEvent } from '../src/types/event';
-import { formatCivilDateFull, shouldUseFarsiDigits } from '../src/utils/calendars';
+import { formatCivilDateFull, localizeDigits, shouldUseFarsiDigits } from '../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../src/utils/locationPhoto';
 import { doesEventOccurOnDate } from '../src/utils/recurrence';
+import { flipInRTL } from '../src/utils/rtl';
 
 // One row inside the "Events" timeline card below — a colored dot (the
 // event's own accent color) connected by a thin vertical line to the next
@@ -31,9 +32,8 @@ function DayEventRow({
   const { colors, spacing, typography } = useTheme();
   const { i18n, t } = useTranslation();
   const { prefs } = usePreferences();
-  const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
   const dotColor = accents[event.accentColor] ?? accents.violet;
-  const time = dayjs(event.dateTimeISO).format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm');
+  const time = localizeDigits(dayjs(event.dateTimeISO).format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm'), i18n.language);
 
   return (
     <Pressable
@@ -49,10 +49,10 @@ function DayEventRow({
           {event.title}
         </Text>
         <Text style={[typography.caption, { color: colors.secondary }]}>
-          {formatCivilDateFull(event.dateTimeISO, prefs.calendar, useFarsiDigits)} {t('day.at')} {time}
+          {formatCivilDateFull(event.dateTimeISO, prefs.calendar, i18n.language)} {t('day.at')} {time}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.outline} style={{ marginTop: spacing.sm + 4 }} />
+      <Ionicons name="chevron-forward" size={18} color={colors.outline} style={[{ marginTop: spacing.sm + 4 }, flipInRTL]} />
     </Pressable>
   );
 }
@@ -124,7 +124,7 @@ export default function DayScreen() {
       >
         <Ionicons name="calendar-outline" size={20} color={colors.secondary} />
         <Text style={[typography.body, { color: colors.text, marginLeft: 10, flex: 1 }]}>
-          {formatCivilDateFull(selectedDate.toISOString(), prefs.calendar, useFarsiDigits)}
+          {formatCivilDateFull(selectedDate.toISOString(), prefs.calendar, i18n.language)}
         </Text>
         <Ionicons name={datePickerOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.secondary} />
       </Pressable>

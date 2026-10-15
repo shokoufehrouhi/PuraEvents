@@ -7,7 +7,7 @@
   },
   "events": {
     "listTitle": "Tus eventos",
-    "heroCaption": "Today Trips",
+    "heroCaption": "Viajes de hoy",
     "todayTitle": "Hoy",
     "upcoming": "Próximos",
     "past": "Pasados",
@@ -135,7 +135,10 @@
     "hours": "{{count}}h",
     "minutes": "{{count}}m",
     "seconds": "{{count}}s",
-    "past": "Ya ocurrió"
+    "past": "Ya ocurrió",
+    "unitDays": "DÍAS",
+    "unitHours": "HRS",
+    "unitMinutes": "MIN"
   },
   "settings": {
     "title": "Ajustes",
@@ -230,7 +233,8 @@
     "saturday": "Sábado",
     "searchTimezone": "Buscar zona horaria",
     "noTimezoneMatch": "Ninguna zona horaria coincide con tu búsqueda.",
-    "previewTripTitle": "Viaje a {{city}}"
+    "previewTripTitle": "Viaje a {{city}}",
+    "preview": "Vista previa"
   },
   "paywall": {
     "title": "Haz que cada momento cuente",
@@ -421,5 +425,9 @@
     "doneReplaced": "Reemplazados desde el archivo: {{count}}",
     "doneKept": "Se conservó tu versión: {{count}}",
     "doneIdentical": "Ya estaban al día: {{count}}"
+  },
+  "common": {
+    "comingSoonTitle": "Próximamente",
+    "comingSoonMessage": "Estará disponible en una versión posterior."
   }
 }

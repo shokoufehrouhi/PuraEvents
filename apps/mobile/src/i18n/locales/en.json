@@ -135,7 +135,10 @@
     "hours": "{{count}}h",
     "minutes": "{{count}}m",
     "seconds": "{{count}}s",
-    "past": "Happened"
+    "past": "Happened",
+    "unitDays": "DAYS",
+    "unitHours": "HRS",
+    "unitMinutes": "MIN"
   },
   "settings": {
     "title": "Settings",
@@ -230,7 +233,8 @@
     "saturday": "Saturday",
     "searchTimezone": "Search timezone",
     "noTimezoneMatch": "No timezones match your search.",
-    "previewTripTitle": "{{city}} Trip"
+    "previewTripTitle": "{{city}} Trip",
+    "preview": "Preview"
   },
   "paywall": {
     "title": "Make every moment count",
@@ -421,5 +425,9 @@
     "doneReplaced": "Replaced from file: {{count}}",
     "doneKept": "Kept your version: {{count}}",
     "doneIdentical": "Already up to date: {{count}}"
+  },
+  "common": {
+    "comingSoonTitle": "Coming soon",
+    "comingSoonMessage": "This will be available in a later release."
   }
 }

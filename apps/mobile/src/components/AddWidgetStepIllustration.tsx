@@ -35,6 +35,8 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
         borderColor: colors.outline,
         alignItems: 'center',
         justifyContent: 'center',
+        // Real OS chrome, so never mirrored with the app's RTL layout.
+        direction: 'ltr',
         overflow: 'hidden',
       }}
     >

@@ -125,7 +125,7 @@ export default function CategoryThemesScreen() {
                       <Text style={styles.tileCaption} numberOfLines={1}>
                         {captions[i]}
                       </Text>
-                      <Text style={styles.tileDays}>{(i + 1) * 10 + 2} DAYS</Text>
+                      <Text style={styles.tileDays}>{(i + 1) * 10 + 2} {t('countdown.unitDays')}</Text>
                     </View>
                   </Pressable>
                 ))}

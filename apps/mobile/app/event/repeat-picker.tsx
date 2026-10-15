@@ -10,6 +10,7 @@ import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import type { RepeatRule } from '../../src/types/event';
 import { civilDayOfMonth, formatCivilDateMonthDay, shouldUseFarsiDigits, toPersianDigits } from '../../src/utils/calendars';
 import { resolvePick } from '../../src/utils/pickerBridge';
+import { flipInRTL } from '../../src/utils/rtl';
 
 // English ordinal suffix — only meaningful for the Gregorian calendar (a
 // bare day number reads fine in Persian/Islamic contexts without one).
@@ -53,7 +54,7 @@ export default function RepeatPickerScreen() {
         return t('events.repeatMonthlyDesc', { day: dayLabel });
       }
       case 'yearly':
-        return t('events.repeatYearlyDesc', { date: formatCivilDateMonthDay(dateISO, prefs.calendar, useFarsiDigits) });
+        return t('events.repeatYearlyDesc', { date: formatCivilDateMonthDay(dateISO, prefs.calendar, i18n.language) });
       case 'none':
       default:
         return t('events.repeatNoneDesc');
@@ -69,7 +70,7 @@ export default function RepeatPickerScreen() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { padding: spacing.md }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} style={flipInRTL} />
         </Pressable>
         <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.repeatLabel')}</Text>
         <View style={{ width: 24 }} />

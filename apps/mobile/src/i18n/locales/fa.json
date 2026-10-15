@@ -7,7 +7,7 @@
   },
   "events": {
     "listTitle": "رویدادهای شما",
-    "heroCaption": "Today Trips",
+    "heroCaption": "سفرهای امروز",
     "todayTitle": "امروز",
     "upcoming": "پیش‌رو",
     "past": "گذشته",
@@ -135,7 +135,10 @@
     "hours": "{{count}} ساعت",
     "minutes": "{{count}} دقیقه",
     "seconds": "{{count}} ثانیه",
-    "past": "برگزار شد"
+    "past": "برگزار شد",
+    "unitDays": "روز",
+    "unitHours": "ساعت",
+    "unitMinutes": "دقیقه"
   },
   "settings": {
     "title": "تنظیمات",
@@ -230,7 +233,8 @@
     "saturday": "شنبه",
     "searchTimezone": "جستجوی منطقه زمانی",
     "noTimezoneMatch": "هیچ منطقه زمانی مطابق جستجوی شما یافت نشد.",
-    "previewTripTitle": "سفر {{city}}"
+    "previewTripTitle": "سفر {{city}}",
+    "preview": "پیش‌نمایش"
   },
   "paywall": {
     "title": "هر لحظه را به‌یادماندنی کن",
@@ -421,5 +425,9 @@
     "doneReplaced": "جایگزین‌شده از فایل: {{count}}",
     "doneKept": "نسخه‌ی شما حفظ شد: {{count}}",
     "doneIdentical": "از قبل به‌روز بودند: {{count}}"
+  },
+  "common": {
+    "comingSoonTitle": "به‌زودی",
+    "comingSoonMessage": "این قابلیت در نسخه‌های بعدی اضافه می‌شود."
   }
 }

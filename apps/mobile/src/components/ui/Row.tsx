@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { useTheme } from '../../theme/PreferencesContext';
 import { minTapTarget } from '../../theme/tokens';
+import { flipInRTL } from '../../utils/rtl';
 
 interface BaseProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -57,7 +58,7 @@ export function Row(props: Props) {
           {props.value ? (
             <Text style={[typography.body, { color: colors.secondary, marginRight: spacing.xs }]}>{props.value}</Text>
           ) : null}
-          {props.onPress ? <Ionicons name="chevron-forward" size={18} color={colors.outline} /> : null}
+          {props.onPress ? <Ionicons name="chevron-forward" size={18} color={colors.outline} style={flipInRTL} /> : null}
         </>
       )}
     </View>

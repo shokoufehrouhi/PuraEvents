@@ -6,7 +6,7 @@ import { usePreferences } from '../theme/PreferencesContext';
 import { CARD_THEMES } from '../theme/cardThemes';
 import { accents } from '../theme/tokens';
 import { SHARE_MESSAGE_MAX_LENGTH, type PurEvent } from '../types/event';
-import { formatCivilDateFull, shouldUseFarsiDigits } from '../utils/calendars';
+import { formatCivilDateFull } from '../utils/calendars';
 import { darken } from '../utils/color';
 import { resolvePhotoUri } from '../utils/persistImage';
 import { getNextOccurrence } from '../utils/recurrence';
@@ -36,8 +36,7 @@ export function ShareCard({ event }: Props) {
   const preset = CARD_THEMES[event.cardTheme] ?? CARD_THEMES.color;
   const base = accents[event.accentColor] ?? accents.violet;
   const nextOccurrence = getNextOccurrence(event.dateTimeISO, event.repeat);
-  const useFarsiDigits = shouldUseFarsiDigits(i18n.language);
-  const dateLabel = formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, useFarsiDigits);
+  const dateLabel = formatCivilDateFull(nextOccurrence.toISOString(), prefs.calendar, i18n.language);
   const overlayOpacity = (event.customOverlayOpacity ?? 35) / 100;
   const hasPhoto = event.cardTheme === 'custom' && Boolean(event.customPhotoUri);
   const textColor = hasPhoto || !preset.background ? '#FFFFFF' : preset.text;

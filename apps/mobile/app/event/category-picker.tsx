@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { EventIcon } from '../../src/components/EventIcon';
 import { getCategoryIcon } from '../../src/theme/icons';
 import { useTheme } from '../../src/theme/PreferencesContext';
 import type { EventCategory } from '../../src/types/event';
 import { resolvePick } from '../../src/utils/pickerBridge';
+import { flipInRTL } from '../../src/utils/rtl';
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
 
@@ -29,7 +31,7 @@ export default function CategoryPickerScreen() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { padding: spacing.md }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} style={flipInRTL} />
         </Pressable>
         <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.categoryLabel')}</Text>
         <View style={{ width: 24 }} />
@@ -39,7 +41,7 @@ export default function CategoryPickerScreen() {
         <View style={styles.list}>
           {CATEGORIES.map((c) => {
             const selected = current === c;
-            const { color, image } = getCategoryIcon(c);
+            const { color } = getCategoryIcon(c);
             return (
               <Pressable
                 key={c}
@@ -49,7 +51,7 @@ export default function CategoryPickerScreen() {
                   { backgroundColor: selected ? colors.primary : `${color}1F`, borderRadius: radius.lg, opacity: pressed ? 0.8 : 1 },
                 ]}
               >
-                <Image source={image} style={styles.badge} resizeMode="contain" />
+                <EventIcon category={c} size={44} />
                 <Text style={[typography.bodyStrong, { color: selected ? colors.onPrimary : colors.text, flex: 1, marginLeft: 14, fontSize: 17 }]}>
                   {t(`events.category.${c}`)}
                 </Text>
@@ -67,5 +69,4 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   list: { gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 14 },
-  badge: { width: 44, height: 44 },
 });

@@ -26,10 +26,6 @@ import {
   type ImportPlan,
 } from '../src/utils/dataTransfer';
 
-function comingSoon() {
-  Alert.alert('Coming soon', 'This will be available in a later release.');
-}
-
 // Sub-screen for the Settings "Data & Privacy" menu row — moved out of the
 // Settings tab's own inline Section per explicit request that each of its
 // 4 top-level menus (Appearance/Notifications/Data & Privacy/About) drill
@@ -156,7 +152,7 @@ export default function DataPrivacyScreen() {
   }
 
   // Same Pro gate as Import & Export above — Backup & Sync isn't built yet
-  // either way (still the comingSoon() placeholder), but a free user still
+  // either way (still a "coming soon" placeholder), but a free user still
   // sees the paywall first, not "coming soon", so the gate reads correctly
   // once this row is real.
   function handleBackupSync() {
@@ -164,7 +160,7 @@ export default function DataPrivacyScreen() {
       router.push('/upgrade');
       return;
     }
-    comingSoon();
+    Alert.alert(t('common.comingSoonTitle'), t('common.comingSoonMessage'));
   }
 
   return (

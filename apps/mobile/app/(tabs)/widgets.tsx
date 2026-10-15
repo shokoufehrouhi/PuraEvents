@@ -19,6 +19,7 @@ import type { CardTheme, EventCategory, PurEvent, Widget, WidgetSelection } from
 import { getCategoryPhotos } from '../../src/utils/categoryPhoto';
 import { persistRemoteImage } from '../../src/utils/persistImage';
 import { getActiveWidgetIds, isWidgetFrozen } from '../../src/utils/widgetAccess';
+import { flipInRTL } from '../../src/utils/rtl';
 
 // Fixed placeholder — same "New York" convention as custom-widget.tsx's own
 // DEFAULT_SAMPLE, per explicit request that this preview never show a real
@@ -293,7 +294,7 @@ export default function WidgetsScreen() {
               {t('addWidgetHome.subtitle')}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+          <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
         </Pressable>
 
         <View style={[styles.searchBar, { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, marginTop: spacing.lg }]}>
@@ -376,7 +377,7 @@ export default function WidgetsScreen() {
             {quotaFull ? (
               <Text style={[typography.bodyStrong, { color: colors.primary }]}>{t('events.viewPro')}</Text>
             ) : (
-              <Ionicons name="chevron-forward" size={18} color={colors.secondary} />
+              <Ionicons name="chevron-forward" size={18} color={colors.secondary} style={flipInRTL} />
             )}
           </Pressable>
         ) : null}
