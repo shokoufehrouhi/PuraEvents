@@ -28,7 +28,7 @@ const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/
 const linkify = (s) =>
   escape(s)
     .replace(/\b([\w.-]+@[\w-]+\.[\w.]+[a-z])/g, '<a href="mailto:$1">$1</a>')
-    .replace(/\b((?:policies\.google\.com|revenuecat\.com|pexels\.com)(?:\/[\w/.-]*[\w/])?)/g, '<a href="https://$1">$1</a>');
+    .replace(/\b((?:policies\.google\.com|revenuecat\.com|pexels\.com|sentry\.io)(?:\/[\w/.-]*[\w/])?)/g, '<a href="https://$1">$1</a>');
 
 function page({ title, intro, updated, sections, other }) {
   return `<!DOCTYPE html>

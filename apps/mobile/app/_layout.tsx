@@ -15,6 +15,7 @@ import { backUpIfChanged } from '../src/backup/driveBackup';
 import { AppSplash } from '../src/components/AppSplash';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
+import { initCrashReporting, wrapWithCrashReporting } from '../src/monitoring/sentry';
 import {
   extractNotificationInfo,
   initNotificationLogListeners,
@@ -40,6 +41,9 @@ import { restoreLanguage } from '../src/i18n/direction';
 if (Platform.OS === 'android') {
   initAndroidWidgetTaskHandler();
 }
+
+// First, so a crash anywhere below is reported (release builds only).
+initCrashReporting();
 
 // The native splash stays up until the saved language is in place (see
 // RootLayout) instead of hiding on the first, still-empty frame.
@@ -286,7 +290,7 @@ function Navigation() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   // Only the splash renders until the saved language is in place (an
   // AsyncStorage read), or while a reload to flip the layout direction is
   // under way — otherwise the first frame would show the wrong language or
@@ -318,3 +322,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+export default wrapWithCrashReporting(RootLayout);

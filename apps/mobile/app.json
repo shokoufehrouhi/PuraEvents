@@ -189,6 +189,14 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.832588364667-rvte6c0sjshv753i9l0tm3mheik8jclq"
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://de.sentry.io/",
+          "organization": "pura-65",
+          "project": "puraevents"
+        }
       ]
     ],
     "experiments": {

@@ -2,7 +2,7 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { useTheme } from '../src/theme/PreferencesContext';
 
-const LAST_UPDATED = 'October 15, 2026';
+const LAST_UPDATED = 'October 16, 2026';
 
 // English-only, deliberately — this is a legal document, not app UI copy,
 // and machine-translating GDPR/CCPA/subscription language into the app's
@@ -15,7 +15,7 @@ const SECTIONS: { heading: string; body: string }[] = [
     heading: '1. Summary',
     body:
       'PuraEvents is offline-first: your events, reminders, and appearance settings are stored on this device, and ' +
-      'no account is needed. We don\'t run our own servers, analytics, or crash reporting. The free version shows ' +
+      'no account is needed. We don\'t run our own servers or analytics; crash reports go to Sentry (section 4). The free version shows ' +
       'ads through Google AdMob, which collects some device data to do so (see section 4); PuraEvents Pro has no ' +
       'ads. Purchases are verified through RevenueCat.',
   },
@@ -49,12 +49,15 @@ const SECTIONS: { heading: string; body: string }[] = [
       'your name or email. Google AdMob (free version only): to show, measure, and limit ads and to prevent ad ' +
       'fraud, Google\'s Mobile Ads SDK collects your device\'s advertising ID, IP address, device and app ' +
       'information, and how you interact with ads. Depending on your region and settings these ads may be ' +
-      'personalized. Google handles this data under its own policy: policies.google.com/technologies/partner-sites.',
+      'personalized. Google handles this data under its own policy: policies.google.com/technologies/partner-sites. ' +
+      'Sentry (sentry.io, servers in the EU): when the app crashes or hits an error, a report with the technical ' +
+      'details (which code failed, app version, phone model and OS version) is sent so we can fix it. It doesn\'t ' +
+      'include your events, notes, or account details, and we don\'t send your IP address with it.',
   },
   {
     heading: '5. Data We Do Not Collect',
     body:
-      'We don\'t run analytics or crash reporting, don\'t ask for your name, email, or location, and don\'t sell ' +
+      'We don\'t run analytics, don\'t ask for your name, email, or location, and don\'t sell ' +
       'your personal data. The advertising data described in section 4 is collected by Google\'s SDK in the free ' +
       'version, not by us. If any of this changes, this policy — and your platform\'s privacy labels — will be ' +
       'updated first.',
@@ -79,7 +82,7 @@ const SECTIONS: { heading: string; body: string }[] = [
     heading: '8. International Users (GDPR / CCPA)',
     body:
       "Your events stay on your device, and we don't process your personal data on servers of our own. The services " +
-      'in section 4 (Google AdMob, RevenueCat, Pexels, and Apple/Google for purchases) process the limited data ' +
+      'in section 4 (Google AdMob, RevenueCat, Sentry, Pexels, and Apple/Google for purchases) process the limited data ' +
       'described there. If you\'re in the EU/UK or California and have questions about your rights under GDPR or ' +
       'the CCPA, contact us using the details below.',
   },
