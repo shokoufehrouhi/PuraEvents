@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventIcon } from '../../src/components/EventIcon';
@@ -205,6 +205,11 @@ export default function WidgetsScreen() {
     router.push({ pathname: '/custom-widget', params: { eventId: targetEventId ?? '' } });
   }
 
+  // Which Categories photo is picked (its remote URL), and which one is
+  // still downloading.
+  const [pickedPhotoUrl, setPickedPhotoUrl] = useState<string | null>(null);
+  const [downloadingUrl, setDownloadingUrl] = useState<string | null>(null);
+
   async function pickCategoryPhoto(url: string) {
     if (!isPro) {
       router.push('/upgrade');
@@ -213,7 +218,11 @@ export default function WidgetsScreen() {
     // Persist it locally first — it's a remote Pexels URL, not a saved
     // widget's own photo, so nothing else keeps it alive once tomorrow's
     // daily rotation drops it from the Categories tab (see getCategoryPhotos).
-    const persistedUri = await persistRemoteImage(url);
+    // The saved copy has a local path, not this URL — remember which card
+    // was picked so it stays highlighted.
+    setPickedPhotoUrl(url);
+    setDownloadingUrl(url);
+    const persistedUri = await persistRemoteImage(url).finally(() => setDownloadingUrl(null));
     applySelection({ cardTheme: 'custom', customPhotoUri: persistedUri });
   }
 
@@ -485,8 +494,13 @@ export default function WidgetsScreen() {
                       };
                       return (
                         <Pressable key={`${category}-${i}`} disabled={!url} onPress={() => url && pickCategoryPhoto(url)}>
-                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && sample.customPhotoUri === url ? 2 : 0, borderColor: colors.primary }]}>
+                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && pickedPhotoUrl === url ? 2 : 0, borderColor: colors.primary }]}>
                             <MiniWidget event={previewEvent} size="small" />
+                            {downloadingUrl === url ? (
+                              <View style={[StyleSheet.absoluteFill, styles.downloading]}>
+                                <ActivityIndicator color="#fff" />
+                              </View>
+                            ) : null}
                             {!isPro && url ? (
                               <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
                                 <Ionicons name="lock-closed" size={11} color="#fff" />
@@ -555,6 +569,7 @@ const styles = StyleSheet.create({
   proBadge: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   proBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  downloading: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' },
   myWidgetsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 10 },
   countBadge: { paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
