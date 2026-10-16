@@ -95,10 +95,10 @@ function Navigation() {
     restoreMissingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
   }, [proReady, prefsReady, isPro, prefs.notificationsEnabled, i18n.language]);
 
-  // Google Drive auto backup (Pro, Android): when the app goes to the
-  // background — the user is done for now — upload if anything changed.
+  // Google Drive auto backup (Pro): when the app goes to the background —
+  // the user is done for now — upload if anything changed.
   useEffect(() => {
-    if (Platform.OS !== 'android' || !isPro) return;
+    if (!isPro) return;
     const sub = AppState.addEventListener('change', (next) => {
       if (next === 'background') backUpIfChanged().catch(() => {});
     });

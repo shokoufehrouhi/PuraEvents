@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 
 import { useTheme } from '../theme/PreferencesContext';
@@ -61,8 +61,8 @@ function AppIconDots({ colors }: { colors: Colors }) {
 // inherently a duration, not a pose, so it's the one gesture here a still
 // image genuinely can't convey on its own).
 function PulseRing({ color }: { color: string }) {
-  const scale = useRef(new Animated.Value(0.6)).current;
-  const opacity = useRef(new Animated.Value(0.5)).current;
+  const [scale] = useState(() => new Animated.Value(0.6));
+  const [opacity] = useState(() => new Animated.Value(0.5));
 
   useEffect(() => {
     const loop = Animated.loop(

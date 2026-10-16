@@ -24,7 +24,12 @@ const MEDIA_DIRS = ['event-sounds/', 'widget-photos/'];
 const BACKED_UP_KEYS = ['puraevents:events', 'puraevents:widgets', 'puraevents:preferences', 'puraevents:language'];
 const STATE_KEY = 'puraevents:driveBackup';
 
-GoogleSignin.configure({ scopes: [DRIVE_SCOPE] });
+// iOS needs its own OAuth client (Google Cloud project puraevents-revenuecat;
+// its reversed id is the URL scheme in app.json). Android finds its clients
+// by package name + signing certificate, so it needs nothing here.
+const IOS_CLIENT_ID = '832588364667-rvte6c0sjshv753i9l0tm3mheik8jclq.apps.googleusercontent.com';
+
+GoogleSignin.configure({ scopes: [DRIVE_SCOPE], iosClientId: IOS_CLIENT_ID });
 
 export interface DriveBackupState {
   email: string | null;

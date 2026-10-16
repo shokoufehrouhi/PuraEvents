@@ -212,7 +212,7 @@ export default function DataPrivacyScreen() {
             : t('dataBackup.neverExported')}
         </Text>
       ) : null}
-      {Platform.OS === 'android' ? <DriveBackupSection /> : null}
+      <DriveBackupSection />
       {busy ? (
         <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
           <ActivityIndicator color={colors.primary} />

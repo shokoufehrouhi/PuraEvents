@@ -3,6 +3,8 @@ import mobileAds, {
   AdsConsentDebugGeography,
   AdsConsentPrivacyOptionsRequirementStatus,
 } from 'react-native-google-mobile-ads';
+import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+import { Platform } from 'react-native';
 
 // Dev-only switch to see the EEA consent form without being in Europe:
 // EXPO_PUBLIC_ADS_DEBUG_EEA=1 in .env (emulators count as test devices; a
@@ -30,6 +32,14 @@ async function gatherConsentThenInitialize(): Promise<boolean> {
   }
   const { canRequestAds } = await AdsConsent.getConsentInfo().catch(() => ({ canRequestAds: false }));
   if (!canRequestAds) return false;
+  // iOS: Apple's App Tracking Transparency prompt, once, after Google's
+  // consent form and before the first ad request — without it the
+  // advertising ID stays hidden and ads are non-personalized. Declining
+  // changes nothing else; ads still load.
+  if (Platform.OS === 'ios') {
+    const { canAskAgain, granted } = await getTrackingPermissionsAsync().catch(() => ({ canAskAgain: false, granted: false }));
+    if (!granted && canAskAgain) await requestTrackingPermissionsAsync().catch(() => {});
+  }
   await mobileAds().initialize();
   return true;
 }
