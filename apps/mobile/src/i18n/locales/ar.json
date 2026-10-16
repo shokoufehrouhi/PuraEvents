@@ -3,7 +3,8 @@
   "tabs": {
     "events": "الأحداث",
     "widgets": "الودجات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "overview": "نظرة عامة"
   },
   "events": {
     "listTitle": "أحداثك",
@@ -468,5 +469,30 @@
     "errorNoBackup": "لا توجد نسخة احتياطية في حساب Google هذا بعد.",
     "errorInvalid": "تعذرت قراءة النسخة الاحتياطية في Google Drive.",
     "errorSignIn": "تعذر تسجيل الدخول عبر Google (الرمز {{code}})."
+  },
+  "overview": {
+    "title": "نظرة عامة",
+    "lockedTitle": "أحداثك في لمحة",
+    "lockedBody": "اعرف ما ينتظرك خلال ٣٠ يومًا، وكيف تتوزع أحداثك على الفئات، وكم حدثًا مرّ عليك كل شهر — مع PuraEvents Pro.",
+    "upcoming": "القادمة",
+    "next7Days": "الأيام السبعة القادمة",
+    "next30Days": "الثلاثون يومًا القادمة",
+    "nextEvent": "التالي",
+    "noUpcoming": "لا توجد أحداث قادمة.",
+    "timeline": "الثلاثون يومًا القادمة",
+    "today": "اليوم",
+    "thisWeek": "هذا الأسبوع",
+    "nextWeek": "الأسبوع القادم",
+    "later": "لاحقًا",
+    "nothingNext30": "لا شيء خلال الثلاثين يومًا القادمة.",
+    "byCategory": "حسب الفئة",
+    "history": "السجل",
+    "last3Months": "آخر ٣ أشهر",
+    "last6Months": "آخر ٦ أشهر",
+    "last12Months": "آخر ١٢ شهرًا",
+    "perMonth": "الأحداث شهريًا",
+    "reminders": "التذكيرات",
+    "remindersNext7Days": "خلال الأيام السبعة القادمة",
+    "notificationsLast30Days": "المستلمة في آخر ٣٠ يومًا"
   }
 }

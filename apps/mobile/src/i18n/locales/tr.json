@@ -3,7 +3,8 @@
   "tabs": {
     "events": "Etkinlikler",
     "widgets": "Widget'lar",
-    "settings": "Ayarlar"
+    "settings": "Ayarlar",
+    "overview": "Genel bakış"
   },
   "events": {
     "listTitle": "Etkinliklerin",
@@ -468,5 +469,30 @@
     "errorNoBackup": "Bu Google hesabında henüz yedek yok.",
     "errorInvalid": "Google Drive'daki yedek okunamadı.",
     "errorSignIn": "Google ile giriş başarısız oldu (kod {{code}})."
+  },
+  "overview": {
+    "title": "Genel bakış",
+    "lockedTitle": "Etkinliklerin bir bakışta",
+    "lockedBody": "Önümüzdeki 30 günde neler olduğunu, etkinliklerinin kategorilere nasıl dağıldığını ve her ay kaç etkinliğin olduğunu gör — PuraEvents Pro ile.",
+    "upcoming": "Yaklaşan",
+    "next7Days": "Önümüzdeki 7 gün",
+    "next30Days": "Önümüzdeki 30 gün",
+    "nextEvent": "Sıradaki",
+    "noUpcoming": "Yaklaşan etkinlik yok.",
+    "timeline": "Önümüzdeki 30 gün",
+    "today": "Bugün",
+    "thisWeek": "Bu hafta",
+    "nextWeek": "Gelecek hafta",
+    "later": "Daha sonra",
+    "nothingNext30": "Önümüzdeki 30 günde bir şey yok.",
+    "byCategory": "Kategoriye göre",
+    "history": "Geçmiş",
+    "last3Months": "Son 3 ay",
+    "last6Months": "Son 6 ay",
+    "last12Months": "Son 12 ay",
+    "perMonth": "Aylık etkinlikler",
+    "reminders": "Hatırlatıcılar",
+    "remindersNext7Days": "Önümüzdeki 7 günde",
+    "notificationsLast30Days": "Son 30 günde alınan"
   }
 }

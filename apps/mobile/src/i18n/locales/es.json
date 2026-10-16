@@ -3,7 +3,8 @@
   "tabs": {
     "events": "Eventos",
     "widgets": "Widgets",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "overview": "Resumen"
   },
   "events": {
     "listTitle": "Tus eventos",
@@ -468,5 +469,30 @@
     "errorNoBackup": "Aún no hay ninguna copia en esta cuenta de Google.",
     "errorInvalid": "No se pudo leer la copia de Google Drive.",
     "errorSignIn": "El inicio de sesión con Google falló (código {{code}})."
+  },
+  "overview": {
+    "title": "Resumen",
+    "lockedTitle": "Tus eventos de un vistazo",
+    "lockedBody": "Mira qué viene en los próximos 30 días, cómo se reparten tus eventos por categoría y cuántos has tenido cada mes, con PuraEvents Pro.",
+    "upcoming": "Próximos",
+    "next7Days": "Próximos 7 días",
+    "next30Days": "Próximos 30 días",
+    "nextEvent": "Siguiente",
+    "noUpcoming": "No hay eventos próximos.",
+    "timeline": "Próximos 30 días",
+    "today": "Hoy",
+    "thisWeek": "Esta semana",
+    "nextWeek": "La próxima semana",
+    "later": "Más adelante",
+    "nothingNext30": "Nada en los próximos 30 días.",
+    "byCategory": "Por categoría",
+    "history": "Historial",
+    "last3Months": "Últimos 3 meses",
+    "last6Months": "Últimos 6 meses",
+    "last12Months": "Últimos 12 meses",
+    "perMonth": "Eventos por mes",
+    "reminders": "Recordatorios",
+    "remindersNext7Days": "En los próximos 7 días",
+    "notificationsLast30Days": "Recibidos en los últimos 30 días"
   }
 }

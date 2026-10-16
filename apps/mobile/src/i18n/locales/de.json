@@ -3,7 +3,8 @@
   "tabs": {
     "events": "Ereignisse",
     "widgets": "Widgets",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "overview": "Übersicht"
   },
   "events": {
     "listTitle": "Deine Ereignisse",
@@ -468,5 +469,30 @@
     "errorNoBackup": "In diesem Google-Konto gibt es noch kein Backup.",
     "errorInvalid": "Das Backup in Google Drive konnte nicht gelesen werden.",
     "errorSignIn": "Die Google-Anmeldung hat nicht funktioniert (Code {{code}})."
+  },
+  "overview": {
+    "title": "Übersicht",
+    "lockedTitle": "Deine Events auf einen Blick",
+    "lockedBody": "Sieh, was in den nächsten 30 Tagen ansteht, wie sich deine Events auf Kategorien verteilen und wie viele du jeden Monat hattest – mit PuraEvents Pro.",
+    "upcoming": "Anstehend",
+    "next7Days": "Nächste 7 Tage",
+    "next30Days": "Nächste 30 Tage",
+    "nextEvent": "Als Nächstes",
+    "noUpcoming": "Keine anstehenden Events.",
+    "timeline": "Nächste 30 Tage",
+    "today": "Heute",
+    "thisWeek": "Diese Woche",
+    "nextWeek": "Nächste Woche",
+    "later": "Später",
+    "nothingNext30": "Nichts in den nächsten 30 Tagen.",
+    "byCategory": "Nach Kategorie",
+    "history": "Verlauf",
+    "last3Months": "Letzte 3 Monate",
+    "last6Months": "Letzte 6 Monate",
+    "last12Months": "Letzte 12 Monate",
+    "perMonth": "Events pro Monat",
+    "reminders": "Erinnerungen",
+    "remindersNext7Days": "In den nächsten 7 Tagen",
+    "notificationsLast30Days": "In den letzten 30 Tagen erhalten"
   }
 }

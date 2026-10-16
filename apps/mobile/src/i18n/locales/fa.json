@@ -3,7 +3,8 @@
   "tabs": {
     "events": "رویدادها",
     "widgets": "ویجت‌ها",
-    "settings": "تنظیمات"
+    "settings": "تنظیمات",
+    "overview": "نمای کلی"
   },
   "events": {
     "listTitle": "رویدادهای شما",
@@ -468,5 +469,30 @@
     "errorNoBackup": "هنوز پشتیبانی در این حساب گوگل نیست.",
     "errorInvalid": "پشتیبان موجود در Google Drive خوانده نشد.",
     "errorSignIn": "ورود با گوگل انجام نشد (کد {{code}})."
+  },
+  "overview": {
+    "title": "نمای کلی",
+    "lockedTitle": "رویدادهایتان در یک نگاه",
+    "lockedBody": "ببینید در ۳۰ روز آینده چه رویدادهایی دارید، رویدادهایتان در هر دسته چندتاست و ماه‌به‌ماه چند رویداد داشته‌اید — با PuraEvents Pro.",
+    "upcoming": "پیش‌رو",
+    "next7Days": "۷ روز آینده",
+    "next30Days": "۳۰ روز آینده",
+    "nextEvent": "بعدی",
+    "noUpcoming": "رویداد پیش‌رویی ندارید.",
+    "timeline": "۳۰ روز آینده",
+    "today": "امروز",
+    "thisWeek": "این هفته",
+    "nextWeek": "هفته‌ی بعد",
+    "later": "بعدتر",
+    "nothingNext30": "در ۳۰ روز آینده رویدادی نیست.",
+    "byCategory": "بر اساس دسته",
+    "history": "تاریخچه",
+    "last3Months": "۳ ماه گذشته",
+    "last6Months": "۶ ماه گذشته",
+    "last12Months": "۱۲ ماه گذشته",
+    "perMonth": "رویدادها در هر ماه",
+    "reminders": "یادآورها",
+    "remindersNext7Days": "در ۷ روز آینده",
+    "notificationsLast30Days": "دریافت‌شده در ۳۰ روز گذشته"
   }
 }

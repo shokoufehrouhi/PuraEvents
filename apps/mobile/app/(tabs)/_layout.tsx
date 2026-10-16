@@ -17,6 +17,7 @@ type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>
 const ROUTE_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
   index: { active: 'calendar', inactive: 'calendar-outline' },
   widgets: { active: 'grid', inactive: 'grid-outline' },
+  overview: { active: 'stats-chart', inactive: 'stats-chart-outline' },
   settings: { active: 'settings', inactive: 'settings-outline' },
 };
 
@@ -89,6 +90,7 @@ export default function TabsLayout() {
     <Tabs tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: t('tabs.events') }} />
       <Tabs.Screen name="widgets" options={{ title: t('tabs.widgets') }} />
+      <Tabs.Screen name="overview" options={{ title: t('tabs.overview') }} />
       <Tabs.Screen name="settings" options={{ title: t('tabs.settings') }} />
     </Tabs>
   );

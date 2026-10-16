@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme/PreferencesContext';
 import { minTapTarget } from '../../theme/tokens';
@@ -17,11 +18,13 @@ interface Props {
   // `disabled` alone, which gives no feedback that something is happening.
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
+  // Optional icon before the label (e.g. the diamond on "Get Pro").
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 // Primary/secondary/danger button with pressed + disabled states, matching
 // the design system's COMPONENTS/STATES tokens.
-export function Button({ label, onPress, variant = 'primary', disabled, loading, style }: Props) {
+export function Button({ label, onPress, variant = 'primary', disabled, loading, style, icon }: Props) {
   const { colors, radius, spacing, typography } = useTheme();
 
   const outlined = variant === 'secondary' || variant === 'dangerOutline';
@@ -47,7 +50,14 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
         style,
       ]}
     >
-      {loading ? <ActivityIndicator color={textColor} /> : <Text style={[styles.label, typography.bodyStrong, { color: textColor }]}>{label}</Text>}
+      {loading ? (
+        <ActivityIndicator color={textColor} />
+      ) : (
+        <View style={styles.content}>
+          {icon ? <Ionicons name={icon} size={18} color={textColor} style={{ marginRight: 8 }} /> : null}
+          <Text style={[styles.label, typography.bodyStrong, { color: textColor }]}>{label}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -58,5 +68,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  content: { flexDirection: 'row', alignItems: 'center' },
   label: {},
 });

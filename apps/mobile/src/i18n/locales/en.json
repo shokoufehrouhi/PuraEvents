@@ -3,7 +3,8 @@
   "tabs": {
     "events": "Events",
     "widgets": "Widgets",
-    "settings": "Settings"
+    "settings": "Settings",
+    "overview": "Overview"
   },
   "events": {
     "listTitle": "Your Events",
@@ -468,5 +469,30 @@
     "errorNoBackup": "There's no backup in this Google account yet.",
     "errorInvalid": "The backup in Google Drive couldn't be read.",
     "errorSignIn": "Google sign-in didn't work (code {{code}})."
+  },
+  "overview": {
+    "title": "Overview",
+    "lockedTitle": "Your events at a glance",
+    "lockedBody": "See what's coming up in the next 30 days, how your events split across categories, and how many you've had month by month — with PuraEvents Pro.",
+    "upcoming": "Upcoming",
+    "next7Days": "Next 7 days",
+    "next30Days": "Next 30 days",
+    "nextEvent": "Next up",
+    "noUpcoming": "No upcoming events.",
+    "timeline": "Next 30 days",
+    "today": "Today",
+    "thisWeek": "This week",
+    "nextWeek": "Next week",
+    "later": "Later",
+    "nothingNext30": "Nothing in the next 30 days.",
+    "byCategory": "By category",
+    "history": "History",
+    "last3Months": "Last 3 months",
+    "last6Months": "Last 6 months",
+    "last12Months": "Last 12 months",
+    "perMonth": "Events per month",
+    "reminders": "Reminders",
+    "remindersNext7Days": "Due in the next 7 days",
+    "notificationsLast30Days": "Received in the last 30 days"
   }
 }
