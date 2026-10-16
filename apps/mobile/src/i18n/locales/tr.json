@@ -141,7 +141,8 @@
     "past": "Gerçekleşti",
     "unitDays": "GÜN",
     "unitHours": "SA",
-    "unitMinutes": "DK"
+    "unitMinutes": "DK",
+    "leftToday": "BUGÜN KALAN"
   },
   "settings": {
     "title": "Ayarlar",

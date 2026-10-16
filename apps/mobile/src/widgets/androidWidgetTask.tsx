@@ -10,9 +10,8 @@ import {
   type WidgetTaskHandler,
 } from 'react-native-android-widget';
 
-import i18n, { SUPPORTED_LANGUAGES } from '../i18n';
+import i18n from '../i18n';
 import { getCachedHeroPhotoPath } from '../storage/heroPhoto';
-import { loadPreferences } from '../storage/preferences';
 import { CARD_THEMES } from '../theme/cardThemes';
 import { getCategoryIcon } from '../theme/icons';
 import type { WidgetCornerStyle, WidgetTextStyle } from '../types/event';
@@ -20,6 +19,7 @@ import { localizeDigits } from '../utils/calendars';
 import { darken } from '../utils/color';
 import { formatEventDateLine, formatTodayLine } from '../utils/eventDate';
 import { listUpcomingEventsForWidgets, type WidgetEventSummary } from './widgetEventSummary';
+import { loadWidgetLocale } from './widgetLocale';
 import { preparePhotoDataUri } from './widgetPhoto';
 
 // The single app.json provider declaration (name matches its own
@@ -44,11 +44,8 @@ const APP_ICON_IMAGE = require('../../assets/icon.png');
 const CORNER_RADIUS: Record<WidgetCornerStyle, number> = { sharp: 0, rounded: 16, extraRounded: 28 };
 const TITLE_WEIGHT: Record<WidgetTextStyle, '400' | '700' | '900'> = { system: '400', bold: '700', black: '900' };
 
-// Text in the app's own language and calendar. This headless task runs
-// without React (no useTranslation), and on a widget update the app may
-// not even be open — so the saved language and preferences are read
-// straight from storage (same keys as src/i18n/direction.ts and
-// storage/preferences.ts) and handed down as plain strings/functions.
+// Text in the app's own language and calendar (see widgetLocale.ts),
+// handed down as plain strings/functions — RemoteViews has no React context.
 interface WidgetText {
   t: (key: string, options?: Record<string, unknown>) => string;
   digits: (value: number | string) => string;
@@ -58,9 +55,7 @@ interface WidgetText {
 }
 
 async function loadWidgetText(): Promise<WidgetText> {
-  const saved = await AsyncStorage.getItem('puraevents:language').catch(() => null);
-  const language = saved && (SUPPORTED_LANGUAGES as readonly string[]).includes(saved) ? saved : i18n.language;
-  const { calendar } = await loadPreferences().catch(() => ({ calendar: 'gregorian' as const }));
+  const { language, calendar } = await loadWidgetLocale();
   return {
     t: i18n.getFixedT(language) as WidgetText['t'],
     digits: (value) => localizeDigits(value, language),

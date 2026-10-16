@@ -141,7 +141,8 @@
     "past": "Vorbei",
     "unitDays": "TAGE",
     "unitHours": "STD",
-    "unitMinutes": "MIN"
+    "unitMinutes": "MIN",
+    "leftToday": "HEUTE NOCH"
   },
   "settings": {
     "title": "Einstellungen",

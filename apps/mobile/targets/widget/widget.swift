@@ -20,6 +20,9 @@ private enum Shared {
     // upcoming event at all, read here for the empty-state background
     // (see content()'s own isEmpty branch).
     static let heroPhotoKey = "heroPhoto"
+    // The labels in the app's language plus the language/calendar to format
+    // dates with — written by iosWidgetSync.ts (this extension has no i18n).
+    static let textKey = "text"
 
     static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
@@ -62,35 +65,61 @@ private enum Shared {
         return "category-\(known.contains(category) ? category : "other")"
     }
 
-    // Hardcoded English, not localized — this headless widget extension
-    // has no access to react-i18next, same reason androidWidgetTask.tsx's
-    // own CATEGORY_LABELS/REPEAT_LABELS are plain literals there too (kept
-    // identical wording here for parity between the two platforms).
-    static let categoryLabels: [String: String] = [
-        "personal": "Personal", "work": "Work", "travel": "Travel",
-        "finance": "Finance", "health": "Health", "other": "Other",
-    ]
-    static let repeatLabels: [String: String] = [
-        "none": "No repeat", "yearly": "Yearly", "monthly": "Monthly", "weekly": "Weekly",
-    ]
+    struct WidgetText: Decodable {
+        let language: String
+        let calendar: String
+        let categories: [String: String]
+        let repeats: [String: String]
+        // Days, hours, minutes.
+        let units: [String]
+        let leftToday: String
+        let heroCaption: String
+        let today: String
 
-    static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "EEE, MMM d · HH:mm"
-        return formatter
-    }()
+        // Until the app has written its own (first launch after install).
+        static let english = WidgetText(
+            language: "en", calendar: "gregorian",
+            categories: [
+                "personal": "Personal", "work": "Work", "travel": "Travel",
+                "finance": "Finance", "health": "Health", "other": "Other",
+            ],
+            repeats: ["none": "No repeat", "yearly": "Yearly", "monthly": "Monthly", "weekly": "Weekly"],
+            units: ["DAYS", "HRS", "MIN"], leftToday: "LEFT TODAY", heroCaption: "TODAY TRIPS", today: "Today"
+        )
+    }
 
-    // Separate from dateFormatter above (which is scoped to an *event's*
-    // own date) — the empty-state "Today" banner's own line always
-    // includes the year, matching EventHeroCard.tsx's own formatTodayLine
-    // (see content()'s own isEmpty branch below).
-    static let todayDateFormatter: DateFormatter = {
+    static func loadText() -> WidgetText {
+        guard
+            let json = UserDefaults(suiteName: appGroup)?.string(forKey: textKey),
+            let data = json.data(using: .utf8),
+            let text = try? JSONDecoder().decode(WidgetText.self, from: data)
+        else { return .english }
+        return text
+    }
+
+    // Dates in the app's language and calendar (Persian/Hijri when the
+    // user chose them), worded the way that locale writes them. The event
+    // line has no year, to fit the small card; the empty-state "Today" line
+    // keeps it, like EventHeroCard.tsx's formatTodayLine.
+    static func formatDate(_ date: Date, withYear: Bool, text: WidgetText) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "EEE, MMM d, yyyy · HH:mm"
-        return formatter
-    }()
+        formatter.locale = Locale(identifier: text.language)
+        switch text.calendar {
+        case "persian": formatter.calendar = Calendar(identifier: .persian)
+        case "islamic": formatter.calendar = Calendar(identifier: .islamicUmmAlQura)
+        default: formatter.calendar = Calendar(identifier: .gregorian)
+        }
+        formatter.setLocalizedDateFormatFromTemplate(withYear ? "EEEMMMdyHHmm" : "EEEMMMdHHmm")
+        return formatter.string(from: date)
+    }
+
+    // Countdown numbers in the same digits as the rest of the widget
+    // (Persian/Arabic digits for fa/ar).
+    static func formatNumber(_ value: Int, text: WidgetText) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: text.language)
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
 
     // photoDataUri is a "data:image/jpeg;base64,…" string (see
     // widgetPhoto.ts's preparePhotoDataUri, shared with Android) — strip
@@ -261,6 +290,8 @@ private struct WidgetTypeScale {
 struct PuraEventsWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) private var family
+    // Labels and date/number formatting in the app's language.
+    private let text = Shared.loadText()
 
     // GeometryReader reads WidgetKit's *actual* delivered pixel bounds for
     // this instance directly — confirmed the real bug on-device (screen
@@ -356,14 +387,14 @@ struct PuraEventsWidgetEntryView: View {
                             Image(Shared.categoryImageName(entry.category ?? "other"))
                                 .resizable()
                                 .frame(width: scale.icon, height: scale.icon)
-                            Text(Shared.categoryLabels[entry.category ?? "", default: "Other"])
+                            Text(text.categories[entry.category ?? "", default: text.categories["other"] ?? "Other"])
                                 .font(.system(size: scale.category, weight: .heavy))
                                 .foregroundColor(.white)
                                 .lineLimit(1)
                                 .shadow(color: shadow, radius: 3, x: 0, y: 1)
                         }
                         Spacer()
-                        Text(Shared.repeatLabels[entry.repeatRule ?? "", default: "No repeat"])
+                        Text(text.repeats[entry.repeatRule ?? "", default: text.repeats["none"] ?? "No repeat"])
                             .font(.system(size: scale.repeatLabel, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .lineLimit(1)
@@ -374,7 +405,7 @@ struct PuraEventsWidgetEntryView: View {
                         .foregroundColor(.white)
                         .lineLimit(1)
                         .shadow(color: shadow, radius: 3, x: 0, y: 1)
-                    Text(Shared.dateFormatter.string(from: targetDate))
+                    Text(Shared.formatDate(targetDate, withYear: false, text: text))
                         .font(.system(size: scale.date, weight: .bold))
                         .foregroundColor(.white.opacity(0.8))
                         .lineLimit(1)
@@ -388,7 +419,7 @@ struct PuraEventsWidgetEntryView: View {
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
                             .shadow(color: shadow, radius: 3, x: 0, y: 1)
-                        Text("LEFT TODAY")
+                        Text(text.leftToday)
                             .font(.system(size: scale.countdownLabel + 2, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .shadow(color: shadow, radius: 3, x: 0, y: 1)
@@ -399,9 +430,9 @@ struct PuraEventsWidgetEntryView: View {
                         // stat's number centered over its own D/H/M label
                         // (.center, not .leading) to match.
                         HStack(spacing: family == .systemSmall ? 8 : 10) {
-                            ForEach([(days, "D"), (hours, "H"), (minutes, "M")], id: \.1) { value, label in
+                            ForEach([(days, text.units[safe: 0] ?? "D"), (hours, text.units[safe: 1] ?? "H"), (minutes, text.units[safe: 2] ?? "M")], id: \.1) { value, label in
                                 VStack(alignment: .center, spacing: 0) {
-                                    Text("\(value)")
+                                    Text(Shared.formatNumber(value, text: text))
                                         .font(.system(size: scale.countdownNumber, weight: .heavy))
                                         .foregroundColor(.white)
                                         .shadow(color: shadow, radius: 3, x: 0, y: 1)
@@ -437,16 +468,16 @@ struct PuraEventsWidgetEntryView: View {
                 // is the point here, not a big logo taking over the card.
                 let shadow = Color.black.opacity(0.7)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("TODAY TRIPS")
+                    Text(text.heroCaption)
                         .font(.system(size: 10, weight: .heavy))
                         .foregroundColor(.white.opacity(0.85))
                         .shadow(color: shadow, radius: 3, x: 0, y: 1)
                     Spacer()
-                    Text("Today")
+                    Text(text.today)
                         .font(.system(size: 18, weight: .heavy))
                         .foregroundColor(.white)
                         .shadow(color: shadow, radius: 3, x: 0, y: 1)
-                    Text(Shared.todayDateFormatter.string(from: Date()))
+                    Text(Shared.formatDate(Date(), withYear: true, text: text))
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white.opacity(0.85))
                         .shadow(color: shadow, radius: 3, x: 0, y: 1)
@@ -498,5 +529,13 @@ struct PuraEventsWidget: Widget {
 struct PuraEventsWidgetBundle: WidgetBundle {
     var body: some Widget {
         PuraEventsWidget()
+    }
+}
+
+private extension Array {
+    // Out-of-range reads give nil instead of crashing the widget (e.g. an
+    // older app version that wrote fewer unit labels).
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

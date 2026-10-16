@@ -141,7 +141,8 @@
     "past": "برگزار شد",
     "unitDays": "روز",
     "unitHours": "ساعت",
-    "unitMinutes": "دقیقه"
+    "unitMinutes": "دقیقه",
+    "leftToday": "مانده تا امروز"
   },
   "settings": {
     "title": "تنظیمات",

@@ -1,7 +1,9 @@
 import { ExtensionStorage } from '@bacons/apple-targets';
 
+import i18n from '../i18n';
 import { getCachedHeroPhotoPath } from '../storage/heroPhoto';
 import { listUpcomingEventsForWidgets } from './widgetEventSummary';
+import { loadWidgetLocale } from './widgetLocale';
 import { preparePhotoDataUri } from './widgetPhoto';
 
 // Must match app.json's ios.entitlements app-group *and* the same string
@@ -15,6 +17,27 @@ const STORAGE_KEY = 'events';
 // at all (see below); widget.swift's Shared.loadHeroPhotoDataUri() reads
 // this same key.
 const HERO_PHOTO_KEY = 'heroPhoto';
+// The widget's labels in the app's language (widget.swift has no i18n of
+// its own), plus the language and calendar it formats dates with.
+const TEXT_KEY = 'text';
+
+const CATEGORIES = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
+const REPEATS = ['none', 'yearly', 'monthly', 'weekly'];
+
+async function widgetText() {
+  const { language, calendar } = await loadWidgetLocale();
+  const t = i18n.getFixedT(language);
+  return {
+    language,
+    calendar,
+    categories: Object.fromEntries(CATEGORIES.map((c) => [c, t(`events.category.${c}`)])),
+    repeats: Object.fromEntries(REPEATS.map((r) => [r, t(`events.repeat.${r}`)])),
+    units: [t('countdown.unitDays'), t('countdown.unitHours'), t('countdown.unitMinutes')],
+    leftToday: t('countdown.leftToday'),
+    heroCaption: t('events.heroCaption').toUpperCase(),
+    today: t('events.todayTitle'),
+  };
+}
 
 // The iOS widget extension (targets/widget/widget.swift) is a completely
 // separate process from this app — it has no access to AsyncStorage, so
@@ -44,6 +67,7 @@ export async function syncIOSWidget(): Promise<void> {
     ? [{ ...soonest, photoDataUri: soonest.cardTheme === 'custom' ? await preparePhotoDataUri(soonest.customPhotoUri) : null }]
     : [];
   const storage = new ExtensionStorage(WIDGET_APP_GROUP);
+  storage.set(TEXT_KEY, JSON.stringify(await widgetText()));
   storage.set(STORAGE_KEY, payload.length ? JSON.stringify(payload) : undefined);
   // Same "no event → hero photo instead" empty state as Android's own
   // buildCountdownWidgetElement — only resolved/written when there's

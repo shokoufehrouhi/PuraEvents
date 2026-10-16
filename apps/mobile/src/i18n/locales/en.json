@@ -141,7 +141,8 @@
     "past": "Happened",
     "unitDays": "DAYS",
     "unitHours": "HRS",
-    "unitMinutes": "MIN"
+    "unitMinutes": "MIN",
+    "leftToday": "LEFT TODAY"
   },
   "settings": {
     "title": "Settings",

@@ -141,7 +141,8 @@
     "past": "انتهى",
     "unitDays": "يوم",
     "unitHours": "ساعة",
-    "unitMinutes": "دقيقة"
+    "unitMinutes": "دقيقة",
+    "leftToday": "متبقٍ اليوم"
   },
   "settings": {
     "title": "الإعدادات",

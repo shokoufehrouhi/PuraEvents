@@ -141,7 +141,8 @@
     "past": "Ya ocurrió",
     "unitDays": "DÍAS",
     "unitHours": "HRS",
-    "unitMinutes": "MIN"
+    "unitMinutes": "MIN",
+    "leftToday": "QUEDA HOY"
   },
   "settings": {
     "title": "Ajustes",
