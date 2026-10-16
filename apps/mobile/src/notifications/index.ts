@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import i18n from '../i18n';
+import { accents } from '../theme/tokens';
 import { listEvents } from '../storage/events';
 import { logNotificationFired, markNotificationSeen } from '../storage/notificationLog';
 import type { NotificationSoundKey, PurEvent } from '../types/event';
@@ -156,7 +157,7 @@ export async function cancelRemindersForEvent(eventId: string): Promise<void> {
 // first regardless, so flipping the toggle off and saving/reopening an
 // event actually clears them instead of leaving stale ones scheduled.
 export async function scheduleRemindersForEvent(
-  event: Pick<PurEvent, 'id' | 'title' | 'dateTimeISO' | 'reminders' | 'note' | 'notificationSound'>,
+  event: Pick<PurEvent, 'id' | 'title' | 'dateTimeISO' | 'reminders' | 'note' | 'notificationSound' | 'accentColor'>,
   isPro: boolean,
   notificationsEnabled: boolean
 ): Promise<void> {
@@ -198,6 +199,10 @@ export async function scheduleRemindersForEvent(
         // channel above is what actually controls it on Android 8+ (see
         // ensureAndroidChannel's own comment).
         sound: isCustomSound ? NOTIFICATION_SOUND_FILES[sound] : true,
+        // Android: the notification is tinted with the event's own accent
+        // color (the small icon and app name), so each event's reminders
+        // are recognizable at a glance. iOS ignores it.
+        color: accents[event.accentColor] ?? accents.violet,
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(fireAt), channelId },
     });
