@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
@@ -111,6 +111,19 @@
           "androidAppId": "ca-app-pub-6967597025156397~2997555153",
           "iosAppId": "ca-app-pub-6967597025156397~2624288125",
           "userTrackingUsageDescription": "$(PRODUCT_NAME) uses this to show ads that are more relevant to you."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "image": "./assets/splash-logo.png",
+            "backgroundColor": "#0E0E14"
+          }
         }
       ]
     ],

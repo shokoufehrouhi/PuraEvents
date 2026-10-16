@@ -443,5 +443,29 @@
   "notification": {
     "comingUpIn": "Empieza en {{time}}",
     "happeningNow": "¡Está pasando ahora!"
+  },
+  "driveBackup": {
+    "title": "Copia en Google Drive",
+    "connect": "Conectar cuenta de Google",
+    "backUpNow": "Hacer copia ahora",
+    "restore": "Restaurar copia",
+    "auto": "Copia automática",
+    "account": "Cuenta de Google",
+    "lastBackup": "Última copia: {{date}}",
+    "noBackupYet": "Aún no hay copia.",
+    "note": "Guarda tus eventos, widgets, ajustes, mensajes de voz y fotos en una carpeta oculta de tu propio Google Drive y restáuralos en cualquier teléfono, incluso después de borrar los datos de la app.",
+    "doneTitle": "Copia hecha",
+    "doneMessage": "Tus datos están guardados en tu Google Drive.",
+    "restoreTitle": "¿Restaurar desde Google Drive?",
+    "restoreMessage": "Todo lo de este dispositivo (eventos, widgets y ajustes) se reemplazará por la copia del {{date}}. Después la app se reiniciará.",
+    "restoreAction": "Restaurar",
+    "disconnectTitle": "¿Desconectar la cuenta de Google?",
+    "disconnectMessage": "Las copias se detienen. Tu última copia queda en Google Drive y puedes restaurarla más tarde volviendo a conectar.",
+    "disconnect": "Desconectar",
+    "errorTitle": "Copia en Google Drive",
+    "errorNetwork": "No se pudo conectar con Google Drive. Revisa tu conexión e inténtalo de nuevo.",
+    "errorNoBackup": "Aún no hay ninguna copia en esta cuenta de Google.",
+    "errorInvalid": "No se pudo leer la copia de Google Drive.",
+    "errorSignIn": "El inicio de sesión con Google falló (código {{code}})."
   }
 }

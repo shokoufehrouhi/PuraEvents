@@ -8,6 +8,7 @@ import { ActivityIndicator, Platform, ScrollView, Text, View } from 'react-nativ
 import { adPrivacyOptionsRequired, showAdPrivacyOptions } from '../src/ads/mobileAdsInit';
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { ConfirmModal, type ConfirmModalState } from '../src/components/ConfirmModal';
+import { DriveBackupSection } from '../src/components/DriveBackupSection';
 import { ExportModal } from '../src/components/ExportModal';
 import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
@@ -211,6 +212,7 @@ export default function DataPrivacyScreen() {
             : t('dataBackup.neverExported')}
         </Text>
       ) : null}
+      {Platform.OS === 'android' ? <DriveBackupSection /> : null}
       {busy ? (
         <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
           <ActivityIndicator color={colors.primary} />

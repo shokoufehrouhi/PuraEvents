@@ -443,5 +443,29 @@
   "notification": {
     "comingUpIn": "Coming up in {{time}}",
     "happeningNow": "It's happening now!"
+  },
+  "driveBackup": {
+    "title": "Google Drive backup",
+    "connect": "Connect Google account",
+    "backUpNow": "Back up now",
+    "restore": "Restore from backup",
+    "auto": "Back up automatically",
+    "account": "Google account",
+    "lastBackup": "Last backup: {{date}}",
+    "noBackupYet": "No backup yet.",
+    "note": "Back up your events, widgets, settings, voice messages and photos to a hidden folder in your own Google Drive, and restore them on any phone — even after clearing the app's data.",
+    "doneTitle": "Backed up",
+    "doneMessage": "Your data is saved in your Google Drive.",
+    "restoreTitle": "Restore from Google Drive?",
+    "restoreMessage": "Everything on this device — events, widgets and settings — will be replaced with the backup from {{date}}. The app restarts afterwards.",
+    "restoreAction": "Restore",
+    "disconnectTitle": "Disconnect Google account?",
+    "disconnectMessage": "Backups stop. Your last backup stays in Google Drive, and you can restore it later by connecting again.",
+    "disconnect": "Disconnect",
+    "errorTitle": "Google Drive backup",
+    "errorNetwork": "Couldn't reach Google Drive. Check your connection and try again.",
+    "errorNoBackup": "There's no backup in this Google account yet.",
+    "errorInvalid": "The backup in Google Drive couldn't be read.",
+    "errorSignIn": "Google sign-in didn't work (code {{code}})."
   }
 }

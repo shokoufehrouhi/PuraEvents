@@ -443,5 +443,29 @@
   "notification": {
     "comingUpIn": "In {{time}}",
     "happeningNow": "Jetzt geht's los!"
+  },
+  "driveBackup": {
+    "title": "Google Drive-Backup",
+    "connect": "Google-Konto verbinden",
+    "backUpNow": "Jetzt sichern",
+    "restore": "Aus Backup wiederherstellen",
+    "auto": "Automatisch sichern",
+    "account": "Google-Konto",
+    "lastBackup": "Letztes Backup: {{date}}",
+    "noBackupYet": "Noch kein Backup.",
+    "note": "Sichere deine Events, Widgets, Einstellungen, Sprachnachrichten und Fotos in einem versteckten Ordner in deinem eigenen Google Drive und stelle sie auf jedem Handy wieder her – auch nach dem Löschen der App-Daten.",
+    "doneTitle": "Gesichert",
+    "doneMessage": "Deine Daten sind in deinem Google Drive gespeichert.",
+    "restoreTitle": "Aus Google Drive wiederherstellen?",
+    "restoreMessage": "Alles auf diesem Gerät – Events, Widgets und Einstellungen – wird durch das Backup vom {{date}} ersetzt. Danach startet die App neu.",
+    "restoreAction": "Wiederherstellen",
+    "disconnectTitle": "Google-Konto trennen?",
+    "disconnectMessage": "Backups werden beendet. Dein letztes Backup bleibt in Google Drive und du kannst es später nach erneutem Verbinden wiederherstellen.",
+    "disconnect": "Trennen",
+    "errorTitle": "Google Drive-Backup",
+    "errorNetwork": "Google Drive ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+    "errorNoBackup": "In diesem Google-Konto gibt es noch kein Backup.",
+    "errorInvalid": "Das Backup in Google Drive konnte nicht gelesen werden.",
+    "errorSignIn": "Die Google-Anmeldung hat nicht funktioniert (Code {{code}})."
   }
 }

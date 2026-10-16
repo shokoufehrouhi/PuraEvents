@@ -443,5 +443,29 @@
   "notification": {
     "comingUpIn": "{{time}} دیگر",
     "happeningNow": "همین الان!"
+  },
+  "driveBackup": {
+    "title": "پشتیبان در Google Drive",
+    "connect": "اتصال حساب گوگل",
+    "backUpNow": "پشتیبان‌گیری الان",
+    "restore": "بازیابی از پشتیبان",
+    "auto": "پشتیبان‌گیری خودکار",
+    "account": "حساب گوگل",
+    "lastBackup": "آخرین پشتیبان: {{date}}",
+    "noBackupYet": "هنوز پشتیبانی گرفته نشده.",
+    "note": "از رویدادها، ویجت‌ها، تنظیمات، پیام‌های صوتی و عکس‌ها در یک پوشه‌ی مخفی در Google Drive خودتان پشتیبان بگیرید و روی هر گوشی برشان گردانید — حتی بعد از پاک کردن داده‌های اپ.",
+    "doneTitle": "پشتیبان گرفته شد",
+    "doneMessage": "داده‌های شما در Google Drive ذخیره شد.",
+    "restoreTitle": "بازیابی از Google Drive؟",
+    "restoreMessage": "همه‌چیز روی این گوشی — رویدادها، ویجت‌ها و تنظیمات — با پشتیبان {{date}} جایگزین می‌شود. بعد از آن اپ دوباره باز می‌شود.",
+    "restoreAction": "بازیابی",
+    "disconnectTitle": "قطع اتصال حساب گوگل؟",
+    "disconnectMessage": "پشتیبان‌گیری متوقف می‌شود. آخرین پشتیبان در Google Drive می‌ماند و بعداً با اتصال دوباره می‌توانید بازیابی‌اش کنید.",
+    "disconnect": "قطع اتصال",
+    "errorTitle": "پشتیبان Google Drive",
+    "errorNetwork": "اتصال به Google Drive برقرار نشد. اینترنت را بررسی کنید و دوباره امتحان کنید.",
+    "errorNoBackup": "هنوز پشتیبانی در این حساب گوگل نیست.",
+    "errorInvalid": "پشتیبان موجود در Google Drive خوانده نشد.",
+    "errorSignIn": "ورود با گوگل انجام نشد (کد {{code}})."
   }
 }

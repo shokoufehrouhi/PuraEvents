@@ -443,5 +443,29 @@
   "notification": {
     "comingUpIn": "بعد {{time}}",
     "happeningNow": "يحدث الآن!"
+  },
+  "driveBackup": {
+    "title": "نسخ احتياطي على Google Drive",
+    "connect": "ربط حساب Google",
+    "backUpNow": "نسخ احتياطي الآن",
+    "restore": "الاستعادة من النسخة الاحتياطية",
+    "auto": "نسخ احتياطي تلقائي",
+    "account": "حساب Google",
+    "lastBackup": "آخر نسخة احتياطية: {{date}}",
+    "noBackupYet": "لا توجد نسخة احتياطية بعد.",
+    "note": "احفظ نسخة من أحداثك وأدواتك وإعداداتك ورسائلك الصوتية وصورك في مجلد مخفي على Google Drive الخاص بك، واستعدها على أي هاتف — حتى بعد مسح بيانات التطبيق.",
+    "doneTitle": "تم النسخ الاحتياطي",
+    "doneMessage": "تم حفظ بياناتك في Google Drive.",
+    "restoreTitle": "الاستعادة من Google Drive؟",
+    "restoreMessage": "سيُستبدل كل ما على هذا الجهاز — الأحداث والأدوات والإعدادات — بالنسخة الاحتياطية من {{date}}. سيُعاد تشغيل التطبيق بعدها.",
+    "restoreAction": "استعادة",
+    "disconnectTitle": "فصل حساب Google؟",
+    "disconnectMessage": "سيتوقف النسخ الاحتياطي. تبقى آخر نسخة في Google Drive ويمكنك استعادتها لاحقًا بإعادة الربط.",
+    "disconnect": "فصل",
+    "errorTitle": "النسخ الاحتياطي على Google Drive",
+    "errorNetwork": "تعذر الاتصال بـ Google Drive. تحقق من الاتصال وحاول مجددًا.",
+    "errorNoBackup": "لا توجد نسخة احتياطية في حساب Google هذا بعد.",
+    "errorInvalid": "تعذرت قراءة النسخة الاحتياطية في Google Drive.",
+    "errorSignIn": "تعذر تسجيل الدخول عبر Google (الرمز {{code}})."
   }
 }

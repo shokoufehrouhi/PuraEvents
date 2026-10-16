@@ -443,5 +443,29 @@
   "notification": {
     "comingUpIn": "{{time}} sonra",
     "happeningNow": "Şimdi başlıyor!"
+  },
+  "driveBackup": {
+    "title": "Google Drive yedeği",
+    "connect": "Google hesabını bağla",
+    "backUpNow": "Şimdi yedekle",
+    "restore": "Yedekten geri yükle",
+    "auto": "Otomatik yedekle",
+    "account": "Google hesabı",
+    "lastBackup": "Son yedek: {{date}}",
+    "noBackupYet": "Henüz yedek yok.",
+    "note": "Etkinliklerini, widget'larını, ayarlarını, sesli mesajlarını ve fotoğraflarını kendi Google Drive'ındaki gizli bir klasöre yedekle ve her telefonda geri yükle — uygulama verilerini temizledikten sonra bile.",
+    "doneTitle": "Yedeklendi",
+    "doneMessage": "Verilerin Google Drive'ına kaydedildi.",
+    "restoreTitle": "Google Drive'dan geri yüklensin mi?",
+    "restoreMessage": "Bu cihazdaki her şey — etkinlikler, widget'lar ve ayarlar — {{date}} tarihli yedekle değiştirilecek. Ardından uygulama yeniden başlar.",
+    "restoreAction": "Geri yükle",
+    "disconnectTitle": "Google hesabının bağlantısı kesilsin mi?",
+    "disconnectMessage": "Yedekleme durur. Son yedeğin Google Drive'da kalır; daha sonra yeniden bağlanarak geri yükleyebilirsin.",
+    "disconnect": "Bağlantıyı kes",
+    "errorTitle": "Google Drive yedeği",
+    "errorNetwork": "Google Drive'a ulaşılamadı. Bağlantını kontrol edip tekrar dene.",
+    "errorNoBackup": "Bu Google hesabında henüz yedek yok.",
+    "errorInvalid": "Google Drive'daki yedek okunamadı.",
+    "errorSignIn": "Google ile giriş başarısız oldu (kod {{code}})."
   }
 }

@@ -1,15 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, Pressable, Text } from 'react-native';
+import { AppState, Platform, Pressable, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useTranslation } from 'react-i18next';
 
 import { AdGateProvider } from '../src/ads/adGate';
 import { AppOpenAdController } from '../src/ads/AppOpenAdController';
+import { backUpIfChanged } from '../src/backup/driveBackup';
+import { AppSplash } from '../src/components/AppSplash';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
 import {
@@ -37,6 +40,10 @@ import { restoreLanguage } from '../src/i18n/direction';
 if (Platform.OS === 'android') {
   initAndroidWidgetTaskHandler();
 }
+
+// The native splash stays up until the saved language is in place (see
+// RootLayout) instead of hiding on the first, still-empty frame.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Same module-scope reasoning — RevenueCat must be configured before any
 // screen's usePro()/paywall touches it.
@@ -87,6 +94,16 @@ function Navigation() {
     if (!proReady || !prefsReady) return;
     restoreMissingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
   }, [proReady, prefsReady, isPro, prefs.notificationsEnabled, i18n.language]);
+
+  // Google Drive auto backup (Pro, Android): when the app goes to the
+  // background — the user is done for now — upload if anything changed.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isPro) return;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'background') backUpIfChanged().catch(() => {});
+    });
+    return () => sub.remove();
+  }, [isPro]);
 
   const headerOptions = {
     headerShown: true,
@@ -270,9 +287,10 @@ function Navigation() {
 }
 
 export default function RootLayout() {
-  // Nothing renders until the saved language is in place (an AsyncStorage
-  // read), or while a reload to flip the layout direction is under way —
-  // otherwise the first frame would show the wrong language or mirroring.
+  // Only the splash renders until the saved language is in place (an
+  // AsyncStorage read), or while a reload to flip the layout direction is
+  // under way — otherwise the first frame would show the wrong language or
+  // mirroring.
   const [languageReady, setLanguageReady] = useState(false);
   useEffect(() => {
     restoreLanguage()
@@ -282,7 +300,13 @@ export default function RootLayout() {
       .catch(() => setLanguageReady(true));
   }, []);
 
-  if (!languageReady) return null;
+  useEffect(() => {
+    if (languageReady) SplashScreen.hideAsync().catch(() => {});
+  }, [languageReady]);
+
+  // Also covers a reload in progress (layout direction change, Drive
+  // restore), where the native splash doesn't come back on its own.
+  if (!languageReady) return <AppSplash />;
 
   return (
     <SafeAreaProvider>
