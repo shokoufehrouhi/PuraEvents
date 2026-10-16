@@ -174,7 +174,8 @@
     "helpFeedback": "المساعدة والملاحظات",
     "rateApp": "تقييم PuraEvents",
     "version": "الإصدار",
-    "manageSubscription": "إدارة"
+    "manageSubscription": "إدارة",
+    "calendarSync": "مزامنة التقويم"
   },
   "notificationHistory": {
     "newCount": "{{count}} جديد",
@@ -494,5 +495,17 @@
     "reminders": "التذكيرات",
     "remindersNext7Days": "خلال الأيام السبعة القادمة",
     "notificationsLast30Days": "المستلمة في آخر ٣٠ يومًا"
+  },
+  "calendarSync": {
+    "export": "إضافة أحداثي إلى تقويم الهاتف",
+    "exportNote": "تبقى أحداث PuraEvents محدّثة في تقويم منفصل باسم «PuraEvents». إيقاف هذا الخيار يحذف ذلك التقويم؛ ولا تتغير تقويماتك الأخرى أبدًا.",
+    "import": "جلب الأحداث من تقويماتي",
+    "importNote": "تظهر الأحداث القادمة من التقويمات التي تختارها في PuraEvents وتتبع التغييرات هناك. يمكنك تغيير مظهرها وتذكيراتها هنا.",
+    "noCalendars": "لم يتم العثور على تقويمات على هذا الهاتف.",
+    "syncNow": "المزامنة الآن",
+    "lastSync": "آخر مزامنة: {{date}}",
+    "neverSynced": "لم تتم المزامنة بعد.",
+    "permissionTitle": "يلزم الوصول إلى التقويم",
+    "permissionMessage": "اسمح لـ PuraEvents باستخدام التقويم من إعدادات الهاتف لتفعيل هذا الخيار."
   }
 }

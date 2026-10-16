@@ -174,7 +174,8 @@
     "helpFeedback": "Yardım ve geri bildirim",
     "rateApp": "PuraEvents'i değerlendir",
     "version": "Sürüm",
-    "manageSubscription": "Yönet"
+    "manageSubscription": "Yönet",
+    "calendarSync": "Takvim senkronizasyonu"
   },
   "notificationHistory": {
     "newCount": "{{count}} yeni",
@@ -494,5 +495,17 @@
     "reminders": "Hatırlatıcılar",
     "remindersNext7Days": "Önümüzdeki 7 günde",
     "notificationsLast30Days": "Son 30 günde alınan"
+  },
+  "calendarSync": {
+    "export": "Etkinliklerimi telefon takvimine ekle",
+    "exportNote": "PuraEvents etkinliklerin \"PuraEvents\" adlı ayrı bir takvimde güncel tutulur. Bunu kapatmak o takvimi kaldırır; diğer takvimlerin asla değişmez.",
+    "import": "Takvimlerimden etkinlikleri getir",
+    "importNote": "Seçtiğin takvimlerdeki yaklaşan etkinlikler PuraEvents'te görünür ve oradaki değişiklikleri takip eder. Görünümlerini ve hatırlatıcılarını burada değiştirebilirsin.",
+    "noCalendars": "Bu telefonda takvim bulunamadı.",
+    "syncNow": "Şimdi senkronize et",
+    "lastSync": "Son senkronizasyon: {{date}}",
+    "neverSynced": "Henüz senkronize edilmedi.",
+    "permissionTitle": "Takvim erişimi gerekli",
+    "permissionMessage": "Bunu açmak için telefon ayarlarından PuraEvents'e takvim erişimi ver."
   }
 }

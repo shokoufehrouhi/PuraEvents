@@ -19,6 +19,7 @@ import { Button } from '../../../src/components/ui/Button';
 import { Section } from '../../../src/components/ui/Section';
 import { EventIcon } from '../../../src/components/EventIcon';
 import { cancelRemindersForEvent, scheduleRemindersForEvent } from '../../../src/notifications';
+import { forgetImportedEvent } from '../../../src/calendar/calendarSync';
 import { deleteEvent, getEvent, listEvents } from '../../../src/storage/events';
 import { usePro } from '../../../src/subscription';
 import { getCategoryIcon } from '../../../src/theme/icons';
@@ -126,6 +127,9 @@ export default function EventDetailScreen() {
       // (Xcode's view hierarchy debugger, not just device logs).
       onConfirm: async () => {
         await cancelRemindersForEvent(event!.id);
+        // An event from a phone calendar would otherwise come back on the
+        // next calendar sync.
+        await forgetImportedEvent(event!);
         await deleteEvent(event!.id);
         router.back();
       },

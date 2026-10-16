@@ -11,7 +11,7 @@ import { EventIcon } from '../../src/components/EventIcon';
 import { HeroCountdown } from '../../src/components/HeroCountdown';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
-import { listEvents } from '../../src/storage/events';
+import { listEvents, onEventsChanged } from '../../src/storage/events';
 import { cacheHeroPhoto } from '../../src/storage/heroPhoto';
 import { unseenNotificationCount } from '../../src/storage/notificationLog';
 import { FREE_LIMITS, usePro } from '../../src/subscription';
@@ -154,8 +154,16 @@ export default function EventListScreen() {
       unseenNotificationCount().then((count) => {
         if (!cancelled) setUnseenCount(count);
       });
+      // Changes made while this screen is open — a calendar sync bringing
+      // in or updating events — show up without leaving the tab.
+      const unsubscribe = onEventsChanged(() => {
+        listEvents().then((loaded) => {
+          if (!cancelled) setEvents(loaded);
+        });
+      });
       return () => {
         cancelled = true;
+        unsubscribe();
       };
     }, [])
   );

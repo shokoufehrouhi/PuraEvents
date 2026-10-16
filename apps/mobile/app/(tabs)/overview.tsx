@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { EventIcon } from '../../src/components/EventIcon';
 import { HeroCountdown } from '../../src/components/HeroCountdown';
 import { Button } from '../../src/components/ui/Button';
-import { listEvents } from '../../src/storage/events';
+import { listEvents, onEventsChanged } from '../../src/storage/events';
 import { listNotificationLog, type NotificationLogEntry } from '../../src/storage/notificationLog';
 import { usePro } from '../../src/subscription';
 import { getCategoryIcon } from '../../src/theme/icons';
@@ -36,6 +36,9 @@ export default function OverviewScreen() {
     useCallback(() => {
       listEvents().then(setEvents);
       listNotificationLog().then(setLog);
+      return onEventsChanged(() => {
+        listEvents().then(setEvents);
+      });
     }, []),
   );
 

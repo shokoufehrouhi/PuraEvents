@@ -174,7 +174,8 @@
     "helpFeedback": "Hilfe & Feedback",
     "rateApp": "PuraEvents bewerten",
     "version": "Version",
-    "manageSubscription": "Verwalten"
+    "manageSubscription": "Verwalten",
+    "calendarSync": "Kalender-Sync"
   },
   "notificationHistory": {
     "newCount": "{{count}} neu",
@@ -494,5 +495,17 @@
     "reminders": "Erinnerungen",
     "remindersNext7Days": "In den nächsten 7 Tagen",
     "notificationsLast30Days": "In den letzten 30 Tagen erhalten"
+  },
+  "calendarSync": {
+    "export": "Meine Events in den Handykalender eintragen",
+    "exportNote": "Deine PuraEvents-Events werden in einem eigenen Kalender \"PuraEvents\" aktuell gehalten. Beim Ausschalten wird dieser Kalender entfernt; deine anderen Kalender werden nie verändert.",
+    "import": "Events aus meinen Kalendern übernehmen",
+    "importNote": "Anstehende Events aus den ausgewählten Kalendern erscheinen in PuraEvents und folgen den Änderungen dort. Aussehen und Erinnerungen kannst du hier weiterhin ändern.",
+    "noCalendars": "Auf diesem Handy wurden keine Kalender gefunden.",
+    "syncNow": "Jetzt synchronisieren",
+    "lastSync": "Zuletzt synchronisiert: {{date}}",
+    "neverSynced": "Noch nicht synchronisiert.",
+    "permissionTitle": "Kalenderzugriff erforderlich",
+    "permissionMessage": "Erlaube PuraEvents in den Handy-Einstellungen den Zugriff auf deinen Kalender, um das einzuschalten."
   }
 }

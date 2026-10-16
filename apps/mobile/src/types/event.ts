@@ -86,6 +86,10 @@ export interface PurEvent {
   /** Which bundled alert sound plays for this event's reminders — see
    *  NotificationSoundKey. */
   notificationSound?: NotificationSoundKey;
+  /** Set on events brought in from a phone calendar (see
+   *  calendar/calendarSync.ts): that calendar stays the source of the title,
+   *  date, note and repeat; everything else is the user's to change here. */
+  calendarLink?: { calendarId: string; eventId: string };
   repeat: RepeatRule;
   /** Minutes-before-event offsets; [0] = "at time of event". */
   reminders: number[];

@@ -174,7 +174,8 @@
     "helpFeedback": "Help & feedback",
     "rateApp": "Rate PuraEvents",
     "version": "Version",
-    "manageSubscription": "Manage"
+    "manageSubscription": "Manage",
+    "calendarSync": "Calendar sync"
   },
   "notificationHistory": {
     "newCount": "{{count}} new",
@@ -494,5 +495,17 @@
     "reminders": "Reminders",
     "remindersNext7Days": "Due in the next 7 days",
     "notificationsLast30Days": "Received in the last 30 days"
+  },
+  "calendarSync": {
+    "export": "Add my events to the phone's calendar",
+    "exportNote": "Your PuraEvents events are kept up to date in a separate \"PuraEvents\" calendar. Turning this off removes that calendar; your other calendars are never changed.",
+    "import": "Bring in events from my calendars",
+    "importNote": "Upcoming events from the calendars you tick appear in PuraEvents and follow changes made there. You can still change their look and reminders here.",
+    "noCalendars": "No calendars found on this phone.",
+    "syncNow": "Sync now",
+    "lastSync": "Last synced: {{date}}",
+    "neverSynced": "Not synced yet.",
+    "permissionTitle": "Calendar access needed",
+    "permissionMessage": "Allow PuraEvents to use your calendar in the phone's settings to turn this on."
   }
 }

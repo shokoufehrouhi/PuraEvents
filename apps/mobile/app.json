@@ -199,6 +199,12 @@
           "organization": "pura-65",
           "project": "puraevents"
         }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "$(PRODUCT_NAME) adds your events to a PuraEvents calendar and, if you choose, brings in events from your calendars."
+        }
       ]
     ],
     "experiments": {

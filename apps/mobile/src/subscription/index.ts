@@ -123,6 +123,11 @@ export function initSubscriptions() {
     .catch(() => setState({ ...state, isReady: true }));
 }
 
+/** The same state outside React (background sync, storage hooks). */
+export function getProState(): SubscriptionState {
+  return state;
+}
+
 export function usePro(): SubscriptionState {
   return useSyncExternalStore(subscribe, () => state);
 }

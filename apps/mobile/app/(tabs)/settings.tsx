@@ -96,6 +96,13 @@ export default function SettingsScreen() {
             onPress={() => router.push('/notification-settings')}
           />
           <Row
+            icon="calendar-outline"
+            badgeColor={rowBadgeColors.blue}
+            label={t('settings.calendarSync')}
+            value={isPro ? undefined : t('settings.proOnly')}
+            onPress={() => router.push(isPro ? '/calendar-sync' : '/upgrade')}
+          />
+          <Row
             icon="shield-checkmark-outline"
             badgeColor={rowBadgeColors.green}
             label={t('settings.dataPrivacy')}

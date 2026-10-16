@@ -45,6 +45,16 @@ async function writeAll(events: PurEvent[]): Promise<void> {
   // failing (or just being unavailable, e.g. simulator/no widget added)
   // should never block or fail an otherwise-successful event save.
   syncHomeScreenWidget().catch(() => {});
+  changeListeners.forEach((listener) => listener());
+}
+
+// Other modules that mirror events elsewhere (the phone calendar, see
+// calendar/calendarSync.ts) subscribe here instead of being imported, so
+// storage doesn't depend on them.
+const changeListeners = new Set<() => void>();
+export function onEventsChanged(listener: () => void): () => void {
+  changeListeners.add(listener);
+  return () => changeListeners.delete(listener);
 }
 
 export async function listEvents(): Promise<PurEvent[]> {

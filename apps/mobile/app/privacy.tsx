@@ -28,7 +28,10 @@ const SECTIONS: { heading: string; body: string }[] = [
       '"Your Choices" below), or through your phone\'s own backup: on Android, the system\'s Auto Backup saves the ' +
       'app\'s events and settings (not photos) to your own Google account, and on iPhone they are part of your ' +
       'iCloud device backup. Those backups are run by Google or Apple under your account and your phone\'s backup ' +
-      'settings; we never receive them.',
+      'settings; we never receive them. Calendar sync (optional, Pro): with your permission the app reads events from ' +
+      'the phone calendars you choose and writes your PuraEvents events to a separate "PuraEvents" calendar on the ' +
+      'phone. This happens on the device only; whether those calendars sync to an online account is up to your ' +
+      'calendar settings.',
   },
   {
     heading: '3. Photos You Add',

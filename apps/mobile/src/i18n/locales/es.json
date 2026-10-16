@@ -174,7 +174,8 @@
     "helpFeedback": "Ayuda y comentarios",
     "rateApp": "Calificar PuraEvents",
     "version": "Versión",
-    "manageSubscription": "Gestionar"
+    "manageSubscription": "Gestionar",
+    "calendarSync": "Sincronizar calendario"
   },
   "notificationHistory": {
     "newCount": "{{count}} nuevas",
@@ -494,5 +495,17 @@
     "reminders": "Recordatorios",
     "remindersNext7Days": "En los próximos 7 días",
     "notificationsLast30Days": "Recibidos en los últimos 30 días"
+  },
+  "calendarSync": {
+    "export": "Añadir mis eventos al calendario del teléfono",
+    "exportNote": "Tus eventos de PuraEvents se mantienen al día en un calendario aparte llamado \"PuraEvents\". Al desactivarlo se elimina ese calendario; tus otros calendarios nunca se modifican.",
+    "import": "Traer eventos de mis calendarios",
+    "importNote": "Los próximos eventos de los calendarios que marques aparecen en PuraEvents y siguen los cambios que hagas allí. Aquí puedes seguir cambiando su aspecto y recordatorios.",
+    "noCalendars": "No se encontraron calendarios en este teléfono.",
+    "syncNow": "Sincronizar ahora",
+    "lastSync": "Última sincronización: {{date}}",
+    "neverSynced": "Aún no se ha sincronizado.",
+    "permissionTitle": "Se necesita acceso al calendario",
+    "permissionMessage": "Permite que PuraEvents use tu calendario en los ajustes del teléfono para activarlo."
   }
 }

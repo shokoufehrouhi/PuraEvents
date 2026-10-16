@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { AdGateProvider } from '../src/ads/adGate';
 import { AppOpenAdController } from '../src/ads/AppOpenAdController';
 import { backUpIfChanged } from '../src/backup/driveBackup';
+import { startCalendarSync, syncCalendars } from '../src/calendar/calendarSync';
 import { AppSplash } from '../src/components/AppSplash';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
@@ -44,6 +45,9 @@ if (Platform.OS === 'android') {
 
 // First, so a crash anywhere below is reported (release builds only).
 initCrashReporting();
+
+// Mirrors every event change into the phone calendar when that's on.
+startCalendarSync();
 
 // The native splash stays up until the saved language is in place (see
 // RootLayout) instead of hiding on the first, still-empty frame.
@@ -98,6 +102,17 @@ function Navigation() {
     if (!proReady || !prefsReady) return;
     restoreMissingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
   }, [proReady, prefsReady, isPro, prefs.notificationsEnabled, i18n.language]);
+
+  // Calendar sync (Pro, when switched on): on launch and every time the
+  // app comes back to the foreground, so calendar changes show up here.
+  useEffect(() => {
+    if (!proReady || !isPro) return;
+    syncCalendars();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') syncCalendars();
+    });
+    return () => sub.remove();
+  }, [proReady, isPro]);
 
   // Google Drive auto backup (Pro): when the app goes to the background —
   // the user is done for now — upload if anything changed.
@@ -252,6 +267,10 @@ function Navigation() {
         <Stack.Screen
           name="notification-history"
           options={{ ...headerOptions, title: t('settings.notificationHistory'), headerBackTitle: t('settings.notifications') }}
+        />
+        <Stack.Screen
+          name="calendar-sync"
+          options={{ ...headerOptions, title: t('settings.calendarSync'), headerBackTitle: t('settings.title') }}
         />
         <Stack.Screen
           name="data-privacy"
