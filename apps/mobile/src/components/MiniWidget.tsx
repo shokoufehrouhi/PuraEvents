@@ -1,8 +1,9 @@
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View, type TextStyle } from 'react-native';
+import { StyleSheet, Text, View, type TextStyle } from 'react-native';
 
 import { useTheme } from '../theme/PreferencesContext';
 import { CARD_THEMES } from '../theme/cardThemes';
@@ -159,10 +160,14 @@ export function MiniWidget({ event, size }: Props) {
       // image undersized/misaligned (same bug fixed for the Widgets tab's
       // grid cards — see app/(tabs)/widgets.tsx).
       <View style={[boxStyle, { overflow: 'hidden' }]}>
+        {/* expo-image: remote photos (the Categories gallery) are kept in
+            its own disk cache, so reopening the gallery doesn't download
+            them again; local widget photos are already on the device. */}
         <Image
           source={{ uri: resolvePhotoUri(event.customPhotoUri) }}
           style={StyleSheet.absoluteFill}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy={event.customPhotoUri.startsWith('http') ? 'memory-disk' : 'memory'}
           onError={() => setPhotoFailed(true)}
         />
         <View style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0,0,0,${overlayOpacity})` }} />
