@@ -30,7 +30,7 @@ const DATA_SHEET = '_data';
 const DATA_CHUNK = 30000;
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
-const REPEATS: RepeatRule[] = ['none', 'yearly', 'monthly', 'weekly'];
+const REPEATS: RepeatRule[] = ['none', 'yearly', 'monthly', 'weekly', 'weekdays', 'daily'];
 const CARD_THEMES: CardTheme[] = ['clean', 'color', 'dark', 'custom'];
 const SOUNDS: NotificationSoundKey[] = ['default', 'chime', 'bell', 'ping', 'pulse'];
 

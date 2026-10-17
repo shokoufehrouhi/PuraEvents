@@ -94,9 +94,11 @@
     },
     "repeat": {
       "none": "No repeat",
-      "yearly": "Yearly",
+      "daily": "Daily",
+      "weekdays": "Weekdays",
+      "weekly": "Weekly",
       "monthly": "Monthly",
-      "weekly": "Weekly"
+      "yearly": "Yearly"
     },
     "notificationSoundLabel": "Notification sound",
     "notificationSound": {
@@ -118,6 +120,8 @@
     },
     "repeatSubtitle": "Choose how often this event repeats",
     "repeatNoneDesc": "One-time event",
+    "repeatDailyDesc": "Every day",
+    "repeatWeekdaysDesc": "Monday to Friday",
     "repeatWeeklyDesc": "Every week on {{day}}",
     "repeatMonthlyDesc": "Every month on the {{day}}",
     "repeatYearlyDesc": "Every year on {{date}}",

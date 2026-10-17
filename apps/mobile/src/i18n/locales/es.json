@@ -94,9 +94,11 @@
     },
     "repeat": {
       "none": "No se repite",
-      "yearly": "Anual",
+      "daily": "Diario",
+      "weekdays": "Días laborables",
+      "weekly": "Semanal",
       "monthly": "Mensual",
-      "weekly": "Semanal"
+      "yearly": "Anual"
     },
     "notificationSoundLabel": "Sonido de notificación",
     "notificationSound": {
@@ -118,6 +120,8 @@
     },
     "repeatSubtitle": "Elige con qué frecuencia se repite este evento",
     "repeatNoneDesc": "Evento único",
+    "repeatDailyDesc": "Todos los días",
+    "repeatWeekdaysDesc": "De lunes a viernes",
     "repeatWeeklyDesc": "Cada semana el {{day}}",
     "repeatMonthlyDesc": "Cada mes el {{day}}",
     "repeatYearlyDesc": "Cada año el {{date}}",

@@ -21,6 +21,7 @@ import {
   extractNotificationInfo,
   initNotificationLogListeners,
   requestNotificationPermissions,
+  refreshRepeatingReminders,
   restoreMissingReminders,
   type NotificationInfo,
 } from '../src/notifications';
@@ -104,6 +105,16 @@ function Navigation() {
     if (!proReady || !prefsReady) return;
     restoreMissingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
   }, [proReady, prefsReady, isPro, prefs.notificationsEnabled, i18n.language]);
+
+  // Repeating events only book their next few reminders (see
+  // refreshRepeatingReminders), so top them up on every return to the app.
+  useEffect(() => {
+    if (!proReady || !prefsReady) return;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') refreshRepeatingReminders(isPro, prefs.notificationsEnabled).catch(() => {});
+    });
+    return () => sub.remove();
+  }, [proReady, prefsReady, isPro, prefs.notificationsEnabled]);
 
   // Calendar sync (Pro, when switched on): on launch and every time the
   // app comes back to the foreground, so calendar changes show up here.

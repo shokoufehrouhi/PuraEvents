@@ -94,9 +94,11 @@
     },
     "repeat": {
       "none": "Wiederholt sich nicht",
-      "yearly": "Jährlich",
+      "daily": "Täglich",
+      "weekdays": "Werktags",
+      "weekly": "Wöchentlich",
       "monthly": "Monatlich",
-      "weekly": "Wöchentlich"
+      "yearly": "Jährlich"
     },
     "notificationSoundLabel": "Benachrichtigungston",
     "notificationSound": {
@@ -118,6 +120,8 @@
     },
     "repeatSubtitle": "Wähle, wie oft sich dieses Ereignis wiederholt",
     "repeatNoneDesc": "Einmaliges Ereignis",
+    "repeatDailyDesc": "Jeden Tag",
+    "repeatWeekdaysDesc": "Montag bis Freitag",
     "repeatWeeklyDesc": "Jede Woche am {{day}}",
     "repeatMonthlyDesc": "Jeden Monat am {{day}}",
     "repeatYearlyDesc": "Jedes Jahr am {{date}}",

@@ -25,6 +25,8 @@ export function formatEventDateLine(
   const comma = useFarsiDigits ? '،' : ',';
 
   switch (repeat) {
+    case 'daily':
+    case 'weekdays':
     case 'weekly':
     case 'monthly':
     case 'yearly':

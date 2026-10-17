@@ -94,9 +94,11 @@
     },
     "repeat": {
       "none": "تکرار نمی‌شود",
-      "yearly": "سالانه",
+      "daily": "روزانه",
+      "weekdays": "روزهای کاری",
+      "weekly": "هفتگی",
       "monthly": "ماهانه",
-      "weekly": "هفتگی"
+      "yearly": "سالانه"
     },
     "notificationSoundLabel": "صدای نوتیفیکیشن",
     "notificationSound": {
@@ -118,6 +120,8 @@
     },
     "repeatSubtitle": "انتخاب کن این رویداد چقدر یک‌بار تکرار می‌شود",
     "repeatNoneDesc": "رویداد یک‌باره",
+    "repeatDailyDesc": "هر روز",
+    "repeatWeekdaysDesc": "دوشنبه تا جمعه",
     "repeatWeeklyDesc": "هر هفته، روز {{day}}",
     "repeatMonthlyDesc": "هر ماه، روز {{day}}",
     "repeatYearlyDesc": "هر سال، تاریخ {{date}}",

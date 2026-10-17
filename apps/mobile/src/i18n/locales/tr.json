@@ -94,9 +94,11 @@
     },
     "repeat": {
       "none": "Tekrarlanmaz",
-      "yearly": "Yıllık",
+      "daily": "Her gün",
+      "weekdays": "Hafta içi",
+      "weekly": "Haftalık",
       "monthly": "Aylık",
-      "weekly": "Haftalık"
+      "yearly": "Yıllık"
     },
     "notificationSoundLabel": "Bildirim sesi",
     "notificationSound": {
@@ -118,6 +120,8 @@
     },
     "repeatSubtitle": "Bu etkinliğin ne sıklıkla tekrarlanacağını seç",
     "repeatNoneDesc": "Tek seferlik etkinlik",
+    "repeatDailyDesc": "Her gün",
+    "repeatWeekdaysDesc": "Pazartesiden cumaya",
     "repeatWeeklyDesc": "Her hafta {{day}} günü",
     "repeatMonthlyDesc": "Her ayın {{day}}",
     "repeatYearlyDesc": "Her yıl {{date}}",

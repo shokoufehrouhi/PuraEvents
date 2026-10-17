@@ -94,9 +94,11 @@
     },
     "repeat": {
       "none": "لا يتكرر",
-      "yearly": "سنويًا",
+      "daily": "يوميًا",
+      "weekdays": "أيام العمل",
+      "weekly": "أسبوعيًا",
       "monthly": "شهريًا",
-      "weekly": "أسبوعيًا"
+      "yearly": "سنويًا"
     },
     "notificationSoundLabel": "صوت الإشعار",
     "notificationSound": {
@@ -118,6 +120,8 @@
     },
     "repeatSubtitle": "اختر عدد مرات تكرار هذا الحدث",
     "repeatNoneDesc": "حدث لمرة واحدة",
+    "repeatDailyDesc": "كل يوم",
+    "repeatWeekdaysDesc": "من الإثنين إلى الجمعة",
     "repeatWeeklyDesc": "كل أسبوع يوم {{day}}",
     "repeatMonthlyDesc": "كل شهر في يوم {{day}}",
     "repeatYearlyDesc": "كل سنة في {{date}}",

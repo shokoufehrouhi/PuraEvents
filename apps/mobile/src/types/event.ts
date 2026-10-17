@@ -17,7 +17,7 @@ export type NotificationSoundKey = 'default' | 'chime' | 'bell' | 'ping' | 'puls
 
 export type EventCategory = 'personal' | 'work' | 'travel' | 'finance' | 'health' | 'other';
 
-export type RepeatRule = 'none' | 'yearly' | 'monthly' | 'weekly';
+export type RepeatRule = 'none' | 'yearly' | 'monthly' | 'weekly' | 'weekdays' | 'daily';
 
 /** Free-tier hero card presets (see src/theme/cardThemes.ts). 'custom' is a
  *  user-supplied (or Pro category-gallery) photo background — see

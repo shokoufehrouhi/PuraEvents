@@ -22,7 +22,7 @@ const HERO_PHOTO_KEY = 'heroPhoto';
 const TEXT_KEY = 'text';
 
 const CATEGORIES = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
-const REPEATS = ['none', 'yearly', 'monthly', 'weekly'];
+const REPEATS = ['none', 'yearly', 'monthly', 'weekly', 'weekdays', 'daily'];
 
 async function widgetText() {
   const { language, calendar } = await loadWidgetLocale();

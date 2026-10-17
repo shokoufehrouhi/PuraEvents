@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import {
   CalendarAccessLevel,
   createCalendar,
+  DayOfTheWeek,
   EntityTypes,
   ExpoCalendar,
   ExpoCalendarEvent,
@@ -16,9 +17,10 @@ import {
 import { Platform } from 'react-native';
 
 import { scheduleRemindersForEvent } from '../notifications';
-import { applyImportedEvents, deleteEvent, listEvents, onEventsChanged } from '../storage/events';
+import { applyImportedEvents, deleteEvent, listEvents, onEventsChanged, updateEvent } from '../storage/events';
 import { loadPreferences } from '../storage/preferences';
 import { getProState } from '../subscription';
+import { getNextOccurrence, isWeekday } from '../utils/recurrence';
 import type { NewEventInput, PurEvent, RepeatRule } from '../types/event';
 
 // Two-way sync with the phone's calendars (Pro), each direction its own
@@ -57,11 +59,16 @@ const DEFAULT_SETTINGS: CalendarSyncSettings = {
   lastSyncAt: null,
 };
 
+// Objects are merged over the fallback (settings saved before a field
+// existed); arrays come back as stored — spreading an array into an object
+// would turn the ignored-events list into {0: …} and break .includes().
 async function readJSON<T>(key: string, fallback: T): Promise<T> {
   const raw = await AsyncStorage.getItem(key).catch(() => null);
   if (!raw) return fallback;
   try {
-    return { ...fallback, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(fallback)) return (Array.isArray(parsed) ? parsed : fallback) as T;
+    return { ...fallback, ...parsed };
   } catch {
     return fallback;
   }
@@ -92,7 +99,8 @@ export async function listImportableCalendars(): Promise<ExpoCalendar[]> {
 
 // --- Export ---------------------------------------------------------------
 
-const FREQUENCY: Record<Exclude<RepeatRule, 'none'>, Frequency> = {
+const FREQUENCY: Record<Exclude<RepeatRule, 'none' | 'weekdays'>, Frequency> = {
+  daily: Frequency.DAILY,
   weekly: Frequency.WEEKLY,
   monthly: Frequency.MONTHLY,
   yearly: Frequency.YEARLY,
@@ -121,8 +129,11 @@ async function exportCalendar(settings: CalendarSyncSettings): Promise<ExpoCalen
   return calendar;
 }
 
-function calendarDetails(event: PurEvent) {
-  const start = dayjs(event.dateTimeISO);
+const WEEKDAYS = [DayOfTheWeek.Monday, DayOfTheWeek.Tuesday, DayOfTheWeek.Wednesday, DayOfTheWeek.Thursday, DayOfTheWeek.Friday];
+
+type CalendarDetails = ReturnType<typeof detailsAt>;
+
+function detailsAt(event: PurEvent, start: dayjs.Dayjs, recurrenceRule: Parameters<ExpoCalendar['createEvent']>[0]['recurrenceRule']) {
   return {
     title: event.title,
     startDate: start.toDate(),
@@ -131,8 +142,34 @@ function calendarDetails(event: PurEvent) {
     notes: event.note ?? '',
     // PuraEvents sends its own reminders — no second set from the calendar.
     alarms: [],
-    recurrenceRule: event.repeat === 'none' ? null : { frequency: FREQUENCY[event.repeat] },
+    recurrenceRule,
   };
+}
+
+/** The calendar events one PuraEvents event becomes, keyed by a suffix of
+ *  the export map key. Weekdays is one event repeating Monday to Friday on
+ *  iOS; Android's calendar API can't set the days of a weekly rule, so
+ *  there it's five weekly events, one per weekday. */
+function calendarDetails(event: PurEvent): Record<string, CalendarDetails> {
+  const start = dayjs(event.dateTimeISO);
+  if (event.repeat === 'none') return { '': detailsAt(event, start, null) };
+  if (event.repeat !== 'weekdays') return { '': detailsAt(event, start, { frequency: FREQUENCY[event.repeat] }) };
+
+  const first = isWeekday(start) ? start : getNextOccurrence(event.dateTimeISO, 'weekdays', start);
+  if (Platform.OS === 'ios') {
+    return {
+      '': detailsAt(event, first, {
+        frequency: Frequency.WEEKLY,
+        daysOfTheWeek: WEEKDAYS.map((dayOfTheWeek) => ({ dayOfTheWeek })),
+      }),
+    };
+  }
+  const out: Record<string, CalendarDetails> = {};
+  for (let i = 0; i < 5; i++) {
+    const day = getNextOccurrence(event.dateTimeISO, 'weekdays', first.add(i, 'day'));
+    out[`#${day.day()}`] = detailsAt(event, day, { frequency: Frequency.WEEKLY });
+  }
+  return out;
 }
 
 async function runExport(settings: CalendarSyncSettings, events: PurEvent[]): Promise<void> {
@@ -140,18 +177,21 @@ async function runExport(settings: CalendarSyncSettings, events: PurEvent[]): Pr
   const map = await readJSON<Record<string, string>>(EXPORT_MAP_KEY, {});
   const next: Record<string, string> = {};
   for (const event of events.filter((e) => !e.calendarLink)) {
-    const details = calendarDetails(event);
-    const existing = map[event.id] ? await ExpoCalendarEvent.get(map[event.id]).catch(() => null) : null;
-    if (existing) {
-      await existing.update(details);
-      next[event.id] = existing.id;
-    } else {
-      next[event.id] = (await calendar.createEvent(details)).id;
+    for (const [suffix, details] of Object.entries(calendarDetails(event))) {
+      const key = event.id + suffix;
+      const existing = map[key] ? await ExpoCalendarEvent.get(map[key]).catch(() => null) : null;
+      if (existing) {
+        await existing.update(details);
+        next[key] = existing.id;
+      } else {
+        next[key] = (await calendar.createEvent(details)).id;
+      }
     }
   }
-  // Events deleted in the app go from the calendar too.
-  for (const [eventId, calendarEventId] of Object.entries(map)) {
-    if (next[eventId]) continue;
+  // Events deleted in the app (or a repeat that now needs fewer calendar
+  // events) go from the calendar too.
+  for (const [key, calendarEventId] of Object.entries(map)) {
+    if (next[key]) continue;
     await ExpoCalendarEvent.get(calendarEventId)
       .then((e) => e.delete())
       .catch(() => {});
@@ -172,10 +212,35 @@ export async function removeExportCalendar(): Promise<void> {
 
 // --- Import ---------------------------------------------------------------
 
+// Google Calendar appends a fixed Meet block to every event with a video
+// call (dial-in numbers, a help link, "Please do not edit this section"),
+// framed by lines of "-::~:~::~…::-". It's noise in a countdown note, so
+// it's replaced with just the meeting link.
+const MEET_BLOCK = /-::~[:~]*::-[\s\S]*?-::~[:~]*::-/g;
+
+export function cleanCalendarNote(note: string | undefined): string | undefined {
+  if (!note) return note;
+  const cleaned = note
+    .replace(MEET_BLOCK, (block) => {
+      const link = block.match(/https:\/\/meet\.google\.com\/[\w-]+/);
+      return link ? `Google Meet: ${link[0]}` : '';
+    })
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return cleaned || undefined;
+}
+
 function repeatFor(event: ExpoCalendarEvent): RepeatRule {
   const rule = event.recurrenceRule;
   if (!rule || (rule.interval ?? 1) !== 1) return 'none';
-  if (rule.frequency === Frequency.WEEKLY) return 'weekly';
+  if (rule.frequency === Frequency.DAILY) return 'daily';
+  if (rule.frequency === Frequency.WEEKLY) {
+    // Only iOS reports the days of a weekly rule. Monday to Friday is
+    // weekdays; any other set of several days has no PuraEvents repeat.
+    const days = (rule.daysOfTheWeek ?? []).map((d) => d.dayOfTheWeek).sort();
+    if (days.length <= 1) return 'weekly';
+    return days.join() === [...WEEKDAYS].sort().join() ? 'weekdays' : 'none';
+  }
   if (rule.frequency === Frequency.MONTHLY) return 'monthly';
   if (rule.frequency === Frequency.YEARLY) return 'yearly';
   return 'none';
@@ -206,7 +271,7 @@ async function runImport(settings: CalendarSyncSettings, events: PurEvent[], isP
       title: source.title || '—',
       dateTimeISO: dayjs(source.startDate).toISOString(),
       timezone: source.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      note: source.notes || undefined,
+      note: cleanCalendarNote(source.notes || undefined),
       repeat: repeatFor(source),
       calendarLink: { calendarId: source.calendarId, eventId: source.id },
     };
@@ -235,6 +300,16 @@ async function runImport(settings: CalendarSyncSettings, events: PurEvent[], isP
 
   for (const event of [...added, ...replaced]) {
     await scheduleRemindersForEvent(event, isPro, prefs.notificationsEnabled).catch(() => {});
+  }
+}
+
+/** Events imported before cleanCalendarNote existed still carry Google's
+ *  Meet block; tidied once here, whether or not sync is still on. */
+async function cleanImportedNotes(): Promise<void> {
+  for (const event of await listEvents()) {
+    if (!event.calendarLink || !event.note) continue;
+    const note = cleanCalendarNote(event.note);
+    if (note !== event.note) await updateEvent(event.id, { note });
   }
 }
 
@@ -282,6 +357,7 @@ let exportTimer: ReturnType<typeof setTimeout> | null = null;
 /** Keeps the PuraEvents calendar current after every add/edit/delete in
  *  the app (debounced — a save can write more than once). */
 export function startCalendarSync(): void {
+  cleanImportedNotes().catch(() => {});
   onEventsChanged(() => {
     if (exportTimer) clearTimeout(exportTimer);
     exportTimer = setTimeout(() => {

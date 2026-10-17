@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import dayjs from 'dayjs';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
@@ -8,6 +9,7 @@ import { listEvents } from '../storage/events';
 import { logNotificationFired, markNotificationSeen } from '../storage/notificationLog';
 import type { NotificationSoundKey, PurEvent } from '../types/event';
 import { localizeDigits } from '../utils/calendars';
+import { getNextOccurrence, stepOccurrence } from '../utils/recurrence';
 import { getActiveReminders } from '../utils/reminders';
 
 // Filenames as bundled via the expo-notifications config plugin's own
@@ -132,8 +134,40 @@ export function initNotificationLogListeners(): () => void {
 // matches both so they still get cleaned up instead of becoming orphaned.
 const LEGACY_PREFIX = 'purevents';
 
-function identifierFor(eventId: string, offsetMin: number): string {
-  return `puraevents:${eventId}:${offsetMin}`;
+// A repeating event has a reminder per occurrence, so the occurrence's
+// time is part of the id (also what the notification log dedupes on).
+function identifierFor(eventId: string, offsetMin: number, occurrence: number): string {
+  return `puraevents:${eventId}:${offsetMin}:${occurrence}`;
+}
+
+// How far ahead a repeating event's reminders are scheduled, and at most
+// how many per reminder offset. The rest are scheduled as the app is
+// opened again (see refreshRepeatingReminders) — iOS keeps only 64
+// pending notifications per app, so a daily event can't book months ahead.
+const REPEAT_HORIZON_DAYS = 14;
+const MAX_PER_OFFSET = 3;
+
+/** When a reminder offset fires: once for a one-time event, before each of
+ *  the next few occurrences of a repeating one. */
+function reminderTimes(
+  event: Pick<PurEvent, 'dateTimeISO' | 'repeat'>,
+  offsetMin: number,
+  now: number
+): { fireAt: number; occurrence: number }[] {
+  const offsetMs = offsetMin * 60_000;
+  if (event.repeat === 'none') {
+    const occurrence = new Date(event.dateTimeISO).getTime();
+    return [{ fireAt: occurrence - offsetMs, occurrence }];
+  }
+  const out: { fireAt: number; occurrence: number }[] = [];
+  const horizon = now + REPEAT_HORIZON_DAYS * 86_400_000;
+  // The first occurrence whose reminder is still ahead.
+  let at = getNextOccurrence(event.dateTimeISO, event.repeat, dayjs(now + offsetMs));
+  while (out.length < MAX_PER_OFFSET && at.valueOf() - offsetMs <= horizon) {
+    out.push({ fireAt: at.valueOf() - offsetMs, occurrence: at.valueOf() });
+    at = stepOccurrence(at, event.repeat);
+  }
+  return out;
 }
 
 export async function cancelRemindersForEvent(eventId: string): Promise<void> {
@@ -157,14 +191,13 @@ export async function cancelRemindersForEvent(eventId: string): Promise<void> {
 // first regardless, so flipping the toggle off and saving/reopening an
 // event actually clears them instead of leaving stale ones scheduled.
 export async function scheduleRemindersForEvent(
-  event: Pick<PurEvent, 'id' | 'title' | 'dateTimeISO' | 'reminders' | 'note' | 'notificationSound' | 'accentColor'>,
+  event: Pick<PurEvent, 'id' | 'title' | 'dateTimeISO' | 'repeat' | 'reminders' | 'note' | 'notificationSound' | 'accentColor'>,
   isPro: boolean,
   notificationsEnabled: boolean
 ): Promise<void> {
   await cancelRemindersForEvent(event.id);
   if (!notificationsEnabled) return;
 
-  const eventTime = new Date(event.dateTimeISO).getTime();
   const now = Date.now();
   const activeReminders = getActiveReminders(event.reminders, isPro);
 
@@ -177,35 +210,36 @@ export async function scheduleRemindersForEvent(
   const channelId = isCustomSound ? await ensureAndroidChannel(sound) : undefined;
 
   for (const offsetMin of activeReminders) {
-    const fireAt = eventTime - offsetMin * 60_000;
-    if (fireAt <= now) continue; // don't schedule reminders in the past
+    for (const { fireAt, occurrence } of reminderTimes(event, offsetMin, now)) {
+      if (fireAt <= now) continue; // don't schedule reminders in the past
 
-    // Always auto-generated, never manually typed — title is just the
-    // event's own name, and the body leads with the note (when there is
-    // one) followed by how much time is actually left, so a reminder
-    // reads like "Don't forget the passport — coming up in 2h" instead of
-    // needing the user to retype that same info as a separate message.
-    const timeLine =
-      offsetMin === 0 ? i18n.t('notification.happeningNow') : i18n.t('notification.comingUpIn', { time: describeOffset(offsetMin) });
-    const body = event.note?.trim() ? `${event.note.trim()} — ${timeLine}` : timeLine;
+      // Always auto-generated, never manually typed — title is just the
+      // event's own name, and the body leads with the note (when there is
+      // one) followed by how much time is actually left, so a reminder
+      // reads like "Don't forget the passport — coming up in 2h" instead of
+      // needing the user to retype that same info as a separate message.
+      const timeLine =
+        offsetMin === 0 ? i18n.t('notification.happeningNow') : i18n.t('notification.comingUpIn', { time: describeOffset(offsetMin) });
+      const body = event.note?.trim() ? `${event.note.trim()} — ${timeLine}` : timeLine;
 
-    await Notifications.scheduleNotificationAsync({
-      identifier: identifierFor(event.id, offsetMin),
-      content: {
-        title: event.title,
-        body,
-        data: { eventId: event.id },
-        // Filename (with extension) on iOS / pre-8 Android; the fixed
-        // channel above is what actually controls it on Android 8+ (see
-        // ensureAndroidChannel's own comment).
-        sound: isCustomSound ? NOTIFICATION_SOUND_FILES[sound] : true,
-        // Android: the notification is tinted with the event's own accent
-        // color (the small icon and app name), so each event's reminders
-        // are recognizable at a glance. iOS ignores it.
-        color: accents[event.accentColor] ?? accents.violet,
-      },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(fireAt), channelId },
-    });
+      await Notifications.scheduleNotificationAsync({
+        identifier: identifierFor(event.id, offsetMin, occurrence),
+        content: {
+          title: event.title,
+          body,
+          data: { eventId: event.id },
+          // Filename (with extension) on iOS / pre-8 Android; the fixed
+          // channel above is what actually controls it on Android 8+ (see
+          // ensureAndroidChannel's own comment).
+          sound: isCustomSound ? NOTIFICATION_SOUND_FILES[sound] : true,
+          // Android: the notification is tinted with the event's own accent
+          // color (the small icon and app name), so each event's reminders
+          // are recognizable at a glance. iOS ignores it.
+          color: accents[event.accentColor] ?? accents.violet,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(fireAt), channelId },
+      });
+    }
   }
 }
 
@@ -226,6 +260,15 @@ export async function applyNotificationsEnabledChange(enabled: boolean, isPro: b
   }
   const events = await listEvents();
   await Promise.all(events.map((event) => scheduleRemindersForEvent(event, isPro, true)));
+}
+
+// A repeating event only has its next few reminders scheduled (see
+// reminderTimes), so they're topped up whenever the app comes to the
+// foreground.
+export async function refreshRepeatingReminders(isPro: boolean, notificationsEnabled: boolean): Promise<void> {
+  if (!notificationsEnabled) return;
+  const events = await listEvents();
+  await Promise.all(events.filter((e) => e.repeat !== 'none').map((event) => scheduleRemindersForEvent(event, isPro, true)));
 }
 
 const REMINDER_LANGUAGE_KEY = 'puraevents:reminderLanguage';

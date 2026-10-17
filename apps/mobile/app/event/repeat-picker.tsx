@@ -29,7 +29,7 @@ function ordinal(n: number): string {
   }
 }
 
-const REPEATS: RepeatRule[] = ['none', 'weekly', 'monthly', 'yearly'];
+const REPEATS: RepeatRule[] = ['none', 'daily', 'weekdays', 'weekly', 'monthly', 'yearly'];
 
 // Full-screen repeat picker matching the approved design: each option has
 // its own accent color and a date-aware description ("Every week on
@@ -46,6 +46,10 @@ export default function RepeatPickerScreen() {
 
   function describeRepeat(key: RepeatRule): string {
     switch (key) {
+      case 'daily':
+        return t('events.repeatDailyDesc');
+      case 'weekdays':
+        return t('events.repeatWeekdaysDesc');
       case 'weekly':
         return t('events.repeatWeeklyDesc', { day: dayjs(dateISO).format('dddd') });
       case 'monthly': {

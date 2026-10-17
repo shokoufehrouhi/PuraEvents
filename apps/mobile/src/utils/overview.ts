@@ -1,8 +1,8 @@
 import dayjs, { type Dayjs } from 'dayjs';
 
 import type { NotificationLogEntry } from '../storage/notificationLog';
-import type { EventCategory, PurEvent, RepeatRule } from '../types/event';
-import { getNextOccurrence } from './recurrence';
+import type { EventCategory, PurEvent } from '../types/event';
+import { getNextOccurrence, stepOccurrence } from './recurrence';
 import { getActiveReminders } from './reminders';
 
 // Numbers for the Overview tab, all computed from what's on the device —
@@ -29,17 +29,16 @@ export interface OverviewData {
 }
 
 const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
-const STEP: Record<Exclude<RepeatRule, 'none'>, 'week' | 'month' | 'year'> = { weekly: 'week', monthly: 'month', yearly: 'year' };
 
 /** Every time the event happened (or happens) within [from, to). */
 function occurrencesBetween(event: PurEvent, from: Dayjs, to: Dayjs): Dayjs[] {
   const first = dayjs(event.dateTimeISO);
   if (event.repeat === 'none') return !first.isBefore(from) && first.isBefore(to) ? [first] : [];
   const out: Dayjs[] = [];
-  let at = first.isBefore(from) ? getNextOccurrence(event.dateTimeISO, event.repeat, from) : first;
+  let at = getNextOccurrence(event.dateTimeISO, event.repeat, first.isBefore(from) ? from : first);
   while (at.isBefore(to)) {
     out.push(at);
-    at = at.add(1, STEP[event.repeat]);
+    at = stepOccurrence(at, event.repeat);
   }
   return out;
 }
