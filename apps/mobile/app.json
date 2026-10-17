@@ -34,7 +34,7 @@
         "com.android.launcher.permission.INSTALL_SHORTCUT"
       ],
       "package": "com.puraapps.puraevents",
-      "versionCode": 8
+      "versionCode": 9
     },
     "web": {
       "favicon": "./assets/favicon.png"
