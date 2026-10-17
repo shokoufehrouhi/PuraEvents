@@ -507,5 +507,85 @@
     "neverSynced": "Henüz senkronize edilmedi.",
     "permissionTitle": "Takvim erişimi gerekli",
     "permissionMessage": "Bunu açmak için telefon ayarlarından PuraEvents'e takvim erişimi ver."
+  },
+  "photoGroups": {
+    "personal": {
+      "title": "Doğum günü",
+      "note": "Pastayı sipariş et"
+    },
+    "work": {
+      "title": "Toplantı",
+      "note": "Laptopu getir"
+    },
+    "travel": {
+      "title": "New York",
+      "note": "Pasaportunu unutma"
+    },
+    "finance": {
+      "title": "Kira günü",
+      "note": "Bütçeni kontrol et"
+    },
+    "health": {
+      "title": "Diş randevusu",
+      "note": "Sigorta kartını getir"
+    },
+    "other": {
+      "title": "Alex ile görüşme",
+      "note": "Konuşma notlarını hazırla"
+    },
+    "birthday": {
+      "name": "Doğum günü",
+      "title": "Annemin doğum günü",
+      "note": "Çiçek al"
+    },
+    "love": {
+      "name": "Aşk",
+      "title": "Yıl dönümü",
+      "note": "Restoranı ayırt"
+    },
+    "celebration": {
+      "name": "Kutlama",
+      "title": "Yılbaşı",
+      "note": "Partiyi planla"
+    },
+    "baby": {
+      "name": "Bebek",
+      "title": "Bebeğin gelişi",
+      "note": "Hastane çantasını hazırla"
+    },
+    "study": {
+      "name": "Ders",
+      "title": "Final sınavı",
+      "note": "5. üniteyi tekrar et"
+    },
+    "sport": {
+      "name": "Spor",
+      "title": "Maraton",
+      "note": "Önce esneme"
+    },
+    "nature": {
+      "name": "Doğa",
+      "title": "Doğa yürüyüşü",
+      "note": "Yeterince su al"
+    },
+    "beach": {
+      "name": "Plaj",
+      "title": "Yaz tatili",
+      "note": "Güneş kremi al"
+    },
+    "city": {
+      "name": "Şehir",
+      "title": "Konser",
+      "note": "Biletleri yazdır"
+    },
+    "winter": {
+      "name": "Kış",
+      "title": "Kayak tatili",
+      "note": "Sıcak eldiven al"
+    }
+  },
+  "shortcuts": {
+    "newEvent": "Yeni etkinlik",
+    "overview": "Genel bakış"
   }
 }

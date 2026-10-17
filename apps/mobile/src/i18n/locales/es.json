@@ -507,5 +507,85 @@
     "neverSynced": "Aún no se ha sincronizado.",
     "permissionTitle": "Se necesita acceso al calendario",
     "permissionMessage": "Permite que PuraEvents use tu calendario en los ajustes del teléfono para activarlo."
+  },
+  "photoGroups": {
+    "personal": {
+      "title": "Cumpleaños",
+      "note": "Encargar la tarta"
+    },
+    "work": {
+      "title": "Reunión",
+      "note": "Llevar el portátil"
+    },
+    "travel": {
+      "title": "Nueva York",
+      "note": "No olvides el pasaporte"
+    },
+    "finance": {
+      "title": "Pago del alquiler",
+      "note": "Revisa tu presupuesto"
+    },
+    "health": {
+      "title": "Cita con el dentista",
+      "note": "Lleva la tarjeta del seguro"
+    },
+    "other": {
+      "title": "Llamada con Alex",
+      "note": "Preparar los temas"
+    },
+    "birthday": {
+      "name": "Cumpleaños",
+      "title": "Cumpleaños de mamá",
+      "note": "Comprar flores"
+    },
+    "love": {
+      "name": "Amor",
+      "title": "Aniversario",
+      "note": "Reservar el restaurante"
+    },
+    "celebration": {
+      "name": "Celebración",
+      "title": "Año Nuevo",
+      "note": "Organizar la fiesta"
+    },
+    "baby": {
+      "name": "Bebé",
+      "title": "Llegada del bebé",
+      "note": "Preparar la bolsa del hospital"
+    },
+    "study": {
+      "name": "Estudios",
+      "title": "Examen final",
+      "note": "Repasar el tema 5"
+    },
+    "sport": {
+      "name": "Deporte",
+      "title": "Maratón",
+      "note": "Estirar primero"
+    },
+    "nature": {
+      "name": "Naturaleza",
+      "title": "Excursión",
+      "note": "Llevar suficiente agua"
+    },
+    "beach": {
+      "name": "Playa",
+      "title": "Vacaciones de verano",
+      "note": "Llevar protector solar"
+    },
+    "city": {
+      "name": "Ciudad",
+      "title": "Concierto",
+      "note": "Imprimir las entradas"
+    },
+    "winter": {
+      "name": "Invierno",
+      "title": "Viaje de esquí",
+      "note": "Llevar guantes"
+    }
+  },
+  "shortcuts": {
+    "newEvent": "Nuevo evento",
+    "overview": "Resumen"
   }
 }

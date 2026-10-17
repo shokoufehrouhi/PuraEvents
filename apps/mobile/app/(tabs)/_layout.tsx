@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import type { ComponentProps } from 'react';
+import * as QuickActions from 'expo-quick-actions';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { openShortcut } from '../../src/shortcuts/appShortcuts';
 import { useTheme } from '../../src/theme/PreferencesContext';
 
 // Derived from Tabs' own `tabBar` prop type rather than importing
@@ -85,6 +87,16 @@ function CustomTabBar({ state, descriptors, navigation }: TabBarProps) {
 
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const router = useRouter();
+
+  // App icon shortcuts (see shortcuts/appShortcuts.ts): the one the app was
+  // launched from, then any used while it's running. Handled here, not in
+  // the root layout, so the navigator is mounted before navigating.
+  useEffect(() => {
+    if (QuickActions.initial) openShortcut(QuickActions.initial, router);
+    const sub = QuickActions.addListener((action) => openShortcut(action, router));
+    return () => sub.remove();
+  }, [router]);
 
   return (
     <Tabs tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>

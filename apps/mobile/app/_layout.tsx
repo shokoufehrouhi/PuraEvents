@@ -28,6 +28,8 @@ import { initSubscriptions, usePro } from '../src/subscription';
 import { PreferencesProvider, usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
+import { syncAppShortcuts } from '../src/shortcuts/appShortcuts';
+import { onEventsChanged } from '../src/storage/events';
 
 // Side-effect import: initializes i18next before any screen renders.
 // RootLayout then swaps in the saved language and its layout direction
@@ -113,6 +115,22 @@ function Navigation() {
     });
     return () => sub.remove();
   }, [proReady, isPro]);
+
+  // App icon shortcuts: rebuilt on launch, when the app comes back to the
+  // foreground, after any event change, and when the language or calendar
+  // changes (their titles and dates are translated).
+  useEffect(() => {
+    if (!prefsReady) return;
+    syncAppShortcuts();
+    const appSub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') syncAppShortcuts();
+    });
+    const offEvents = onEventsChanged(() => syncAppShortcuts());
+    return () => {
+      appSub.remove();
+      offEvents();
+    };
+  }, [prefsReady, i18n.language, prefs.calendar]);
 
   // Google Drive auto backup (Pro): when the app goes to the background —
   // the user is done for now — upload if anything changed.

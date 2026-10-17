@@ -507,5 +507,85 @@
     "neverSynced": "Not synced yet.",
     "permissionTitle": "Calendar access needed",
     "permissionMessage": "Allow PuraEvents to use your calendar in the phone's settings to turn this on."
+  },
+  "photoGroups": {
+    "personal": {
+      "title": "Birthday",
+      "note": "Order the cake"
+    },
+    "work": {
+      "title": "Meeting",
+      "note": "Bring the laptop"
+    },
+    "travel": {
+      "title": "New York",
+      "note": "Don't forget your passport"
+    },
+    "finance": {
+      "title": "Rent Due",
+      "note": "Check your budget"
+    },
+    "health": {
+      "title": "Dentist Appointment",
+      "note": "Bring your insurance card"
+    },
+    "other": {
+      "title": "Call with Alex",
+      "note": "Prepare talking points"
+    },
+    "birthday": {
+      "name": "Birthday",
+      "title": "Mom's Birthday",
+      "note": "Buy flowers"
+    },
+    "love": {
+      "name": "Love",
+      "title": "Anniversary",
+      "note": "Book the restaurant"
+    },
+    "celebration": {
+      "name": "Celebration",
+      "title": "New Year",
+      "note": "Plan the party"
+    },
+    "baby": {
+      "name": "Baby",
+      "title": "Baby Due",
+      "note": "Pack the hospital bag"
+    },
+    "study": {
+      "name": "Study",
+      "title": "Final Exam",
+      "note": "Review chapter 5"
+    },
+    "sport": {
+      "name": "Sport",
+      "title": "Marathon",
+      "note": "Stretch first"
+    },
+    "nature": {
+      "name": "Nature",
+      "title": "Hiking Trip",
+      "note": "Pack enough water"
+    },
+    "beach": {
+      "name": "Beach",
+      "title": "Summer Vacation",
+      "note": "Pack sunscreen"
+    },
+    "city": {
+      "name": "City",
+      "title": "Concert",
+      "note": "Print the tickets"
+    },
+    "winter": {
+      "name": "Winter",
+      "title": "Ski Trip",
+      "note": "Bring warm gloves"
+    }
+  },
+  "shortcuts": {
+    "newEvent": "New event",
+    "overview": "Overview"
   }
 }

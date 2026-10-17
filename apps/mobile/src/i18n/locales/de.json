@@ -507,5 +507,85 @@
     "neverSynced": "Noch nicht synchronisiert.",
     "permissionTitle": "Kalenderzugriff erforderlich",
     "permissionMessage": "Erlaube PuraEvents in den Handy-Einstellungen den Zugriff auf deinen Kalender, um das einzuschalten."
+  },
+  "photoGroups": {
+    "personal": {
+      "title": "Geburtstag",
+      "note": "Kuchen bestellen"
+    },
+    "work": {
+      "title": "Meeting",
+      "note": "Laptop mitnehmen"
+    },
+    "travel": {
+      "title": "New York",
+      "note": "Reisepass nicht vergessen"
+    },
+    "finance": {
+      "title": "Miete fällig",
+      "note": "Budget prüfen"
+    },
+    "health": {
+      "title": "Zahnarzttermin",
+      "note": "Versicherungskarte mitnehmen"
+    },
+    "other": {
+      "title": "Anruf mit Alex",
+      "note": "Gesprächspunkte vorbereiten"
+    },
+    "birthday": {
+      "name": "Geburtstag",
+      "title": "Mamas Geburtstag",
+      "note": "Blumen kaufen"
+    },
+    "love": {
+      "name": "Liebe",
+      "title": "Jahrestag",
+      "note": "Restaurant reservieren"
+    },
+    "celebration": {
+      "name": "Feiern",
+      "title": "Silvester",
+      "note": "Party planen"
+    },
+    "baby": {
+      "name": "Baby",
+      "title": "Geburtstermin",
+      "note": "Kliniktasche packen"
+    },
+    "study": {
+      "name": "Studium",
+      "title": "Abschlussprüfung",
+      "note": "Kapitel 5 wiederholen"
+    },
+    "sport": {
+      "name": "Sport",
+      "title": "Marathon",
+      "note": "Erst dehnen"
+    },
+    "nature": {
+      "name": "Natur",
+      "title": "Wanderung",
+      "note": "Genug Wasser einpacken"
+    },
+    "beach": {
+      "name": "Strand",
+      "title": "Sommerurlaub",
+      "note": "Sonnencreme einpacken"
+    },
+    "city": {
+      "name": "Stadt",
+      "title": "Konzert",
+      "note": "Tickets ausdrucken"
+    },
+    "winter": {
+      "name": "Winter",
+      "title": "Skiurlaub",
+      "note": "Warme Handschuhe mitnehmen"
+    }
+  },
+  "shortcuts": {
+    "newEvent": "Neues Event",
+    "overview": "Übersicht"
   }
 }

@@ -205,6 +205,25 @@
         {
           "calendarPermission": "$(PRODUCT_NAME) adds your events to a PuraEvents calendar and, if you choose, brings in events from your calendars."
         }
+      ],
+      [
+        "expo-quick-actions",
+        {
+          "androidIcons": {
+            "shortcut_add": {
+              "foregroundImage": "./assets/shortcut-add.png",
+              "backgroundColor": "#FFFFFF"
+            },
+            "shortcut_event": {
+              "foregroundImage": "./assets/shortcut-event.png",
+              "backgroundColor": "#FFFFFF"
+            },
+            "shortcut_overview": {
+              "foregroundImage": "./assets/shortcut-overview.png",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        }
       ]
     ],
     "experiments": {

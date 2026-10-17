@@ -3,10 +3,10 @@ import dayjs from 'dayjs';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { EventIcon } from '../src/components/EventIcon';
+import { PhotoGroupGallery } from '../src/components/PhotoGroupGallery';
 import { MiniWidget } from '../src/components/MiniWidget';
 import { Button } from '../src/components/ui/Button';
 import { SegmentedControl } from '../src/components/ui/SegmentedControl';
@@ -15,9 +15,7 @@ import { createWidget, listWidgets } from '../src/storage/widgets';
 import { FREE_LIMITS, usePro } from '../src/subscription';
 import { useTheme } from '../src/theme/PreferencesContext';
 import { CARD_THEME_KEYS } from '../src/theme/cardThemes';
-import { ACCENT_KEYS } from '../src/theme/tokens';
 import type { CardTheme, EventCategory, PurEvent, Widget, WidgetCornerStyle, WidgetSelection, WidgetTextStyle } from '../src/types/event';
-import { getCategoryPhotos } from '../src/utils/categoryPhoto';
 import { awaitPick, resolvePick } from '../src/utils/pickerBridge';
 import { persistRemoteImage } from '../src/utils/persistImage';
 import { getActiveWidgetIds, isWidgetFrozen } from '../src/utils/widgetAccess';
@@ -25,22 +23,7 @@ import { flipInRTL } from '../src/utils/rtl';
 
 type Tab = 'builtin' | 'mine' | 'categories';
 
-const CATEGORIES: EventCategory[] = ['personal', 'work', 'travel', 'finance', 'health', 'other'];
-const CATEGORY_PHOTO_COUNT = 4;
 
-// Same demo overlay as the Widgets tab's own Categories section (see
-// app/(tabs)/widgets.tsx) — Pro photo tiles aren't tied to a real event, so
-// one fixed title/note per category (not cycled per photo slot) — a
-// believable event that category would actually hold, not an arbitrary
-// rotation — not persisted/real data.
-const CATEGORY_PREVIEWS: Record<EventCategory, { title: string; days: number; note: string }> = {
-  personal: { title: 'Birthday', days: 2, note: 'Order the cake' },
-  work: { title: 'Meeting', days: 1, note: 'Bring the laptop' },
-  travel: { title: 'New York', days: 3, note: "Don't forget your passport" },
-  finance: { title: 'Rent Due', days: 5, note: 'Check your budget' },
-  health: { title: 'Dentist Appointment', days: 4, note: 'Bring your insurance card' },
-  other: { title: 'Call with Alex', days: 2, note: 'Prepare talking points' },
-};
 
 // Full-screen "gallery" replacement for the old inline swatch row — Pro can
 // hold more than 1 custom widget, so browsing/searching/picking one needs
@@ -66,7 +49,6 @@ export default function WidgetPickerScreen() {
   const [query, setQuery] = useState('');
   const [events, setEvents] = useState<PurEvent[]>([]);
   const [widgets, setWidgets] = useState<Widget[]>([]);
-  const [categoryPhotos, setCategoryPhotos] = useState<Partial<Record<EventCategory, string[]>>>({});
   // The event actually being edited (eventId), when it already exists —
   // gives the Built-in tab's preview cards the real title/date/note
   // instead of made-up placeholder text. Null for a brand-new event
@@ -154,21 +136,6 @@ export default function WidgetPickerScreen() {
       updatedAt: '',
     };
 
-  // All 6 categories' curated photos fetched once up front — the
-  // Categories tab lists every category as its own section, not just one
-  // selected at a time, filterable via the search bar above.
-  // getCategoryPhotos caches the result for the whole day, so this only
-  // hits Pexels once per day, not once per mount.
-  useEffect(() => {
-    let cancelled = false;
-    getCategoryPhotos(CATEGORIES, CATEGORY_PHOTO_COUNT).then((map) => {
-      if (cancelled) return;
-      setCategoryPhotos(map);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Free plan: 1 saved widget total. Pro: unlimited. Picking an existing
   // widget (selectWidget below) is never gated by this — it doesn't create
@@ -181,13 +148,6 @@ export default function WidgetPickerScreen() {
     return widgetCards.filter(({ widget, linkedEvent }) => (widget.name || linkedEvent?.title || '').toLowerCase().includes(q));
   }, [widgetCards, query]);
 
-  // Searchable by category name/type — typing "trav" narrows the sections
-  // below to just Travel, for example.
-  const visibleCategories = useMemo(() => {
-    if (!query.trim()) return CATEGORIES;
-    const q = query.trim().toLowerCase();
-    return CATEGORIES.filter((c) => t(`events.category.${c}`).toLowerCase().includes(q));
-  }, [query, t]);
 
   function confirm(selection: WidgetSelection) {
     resolvePick(JSON.stringify(selection));
@@ -280,7 +240,7 @@ export default function WidgetPickerScreen() {
     }
     // Persist it locally first — it's a remote Pexels URL, not a saved
     // widget's own photo, so nothing else keeps it alive once tomorrow's
-    // daily rotation drops it from the Categories tab (see getCategoryPhotos).
+    // daily rotation drops it from the Categories tab (see widgets/photoGroups.ts).
     // The saved copy has a local path, not this URL — remember which card
     // was picked so it stays highlighted.
     setPickedPhotoUrl(url);
@@ -419,73 +379,14 @@ export default function WidgetPickerScreen() {
           </View>
         ) : null}
 
-        {/* Every category as its own section of Pro curated photos only
-            (not my own saved widgets — this tab is for browsing new
-            looks, not the "My Widgets" library), filterable via the
-            search bar above instead of a single-select chip row. */}
-        {tab === 'categories'
-          ? visibleCategories.map((category) => {
-              const photos = categoryPhotos[category] ?? [];
-              return (
-                <View key={category} style={{ marginBottom: spacing.lg }}>
-                  <View style={styles.categoryHeader}>
-                    <EventIcon category={category} size={22} />
-                    <Text style={[typography.bodyStrong, { color: colors.text, marginLeft: 8 }]}>{t(`events.category.${category}`)}</Text>
-                  </View>
-                  <View style={[styles.list, { gap: spacing.md }]}>
-                    {/* Fixed CATEGORY_PHOTO_COUNT slots, not photos.map —
-                        when Pexels returns nothing (no API key, offline, no
-                        results) or fewer than requested, the missing slots
-                        still render as a card (url undefined), which
-                        MiniWidget itself falls back to its own accent-color
-                        gradient for. Colors cycled per slot (ACCENT_KEYS)
-                        so a whole run of fallbacks isn't one flat color. */}
-                    {Array.from({ length: CATEGORY_PHOTO_COUNT }).map((_, i) => {
-                      const url = photos[i];
-                      const preview = CATEGORY_PREVIEWS[category];
-                      const previewEvent: PurEvent = {
-                        id: `preview-${category}-${i}`,
-                        title: preview.title,
-                        note: preview.note,
-                        dateTimeISO: dayjs().add(preview.days, 'day').toISOString(),
-                        timezone: 'UTC',
-                        category,
-                        accentColor: ACCENT_KEYS[i % ACCENT_KEYS.length],
-                        cardTheme: 'custom',
-                        customPhotoUri: url,
-                        repeat: 'none',
-                        reminders: [],
-                        createdAt: '',
-                        updatedAt: '',
-                      };
-                      return (
-                        <Pressable key={`${category}-${i}`} disabled={!url} onPress={() => url && pickCategoryPhoto(url)}>
-                          <View style={[styles.widgetCardFrame, { borderRadius: radius.lg, borderWidth: url && pickedPhotoUrl === url ? 2 : 0, borderColor: colors.primary }]}>
-                            <MiniWidget event={previewEvent} size="small" />
-                            {downloadingUrl === url ? (
-                              <View style={[StyleSheet.absoluteFill, styles.downloading]}>
-                                <ActivityIndicator color="#fff" />
-                              </View>
-                            ) : null}
-                            {!isPro && url ? (
-                              <View style={[styles.proBadge, { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999 }]}>
-                                <Ionicons name="lock-closed" size={11} color="#fff" />
-                                <Text style={styles.proBadgeText}>PRO</Text>
-                              </View>
-                            ) : null}
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              );
-            })
-          : null}
-        {tab === 'categories' && !isPro ? (
-          <Text style={[typography.caption, { color: colors.secondary, textAlign: 'center' }]}>
-            {t('widgets.premiumPerCategory', { count: 4 })}
-          </Text>
+        {tab === 'categories' ? (
+          <PhotoGroupGallery
+            query={query}
+            isPro={isPro}
+            pickedPhotoUrl={pickedPhotoUrl}
+            downloadingUrl={downloadingUrl}
+            onPick={pickCategoryPhoto}
+          />
         ) : null}
       </ScrollView>
 
@@ -516,7 +417,5 @@ const styles = StyleSheet.create({
   // countdown numbers and the (short, left-aligned) note.
   proBadge: { position: 'absolute', bottom: 10, right: 10, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   proBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-  categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  downloading: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)' },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopWidth: StyleSheet.hairlineWidth, padding: 16 },
 });
