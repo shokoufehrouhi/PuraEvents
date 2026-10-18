@@ -35,7 +35,7 @@
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "package": "com.puraapps.puraevents",
-      "versionCode": 10
+      "versionCode": 11
     },
     "web": {
       "favicon": "./assets/favicon.png"
