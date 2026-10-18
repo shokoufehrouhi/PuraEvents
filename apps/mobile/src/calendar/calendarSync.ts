@@ -337,6 +337,12 @@ async function cleanImportedNotes(): Promise<void> {
   }
 }
 
+/** Turning import back on starts over: events deleted in the app before
+ *  come in again on the next sync. */
+export async function forgetDeletedImports(): Promise<void> {
+  await AsyncStorage.removeItem(IGNORED_KEY);
+}
+
 /** Deleting an imported event in the app keeps it from being imported again. */
 export async function forgetImportedEvent(event: PurEvent): Promise<void> {
   if (!event.calendarLink) return;

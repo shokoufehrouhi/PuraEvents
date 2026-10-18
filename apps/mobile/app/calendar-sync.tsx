@@ -7,6 +7,7 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'r
 
 import {
   ensureCalendarPermission,
+  forgetDeletedImports,
   listImportableCalendars,
   loadCalendarSettings,
   removeExportCalendar,
@@ -80,8 +81,13 @@ export default function CalendarSyncScreen() {
 
   async function toggleImport(on: boolean) {
     if (on && !(await withPermission())) return;
+    // Off and on again brings back events deleted in the app earlier.
+    if (on) await forgetDeletedImports();
     setSettings(await saveCalendarSettings({ importEnabled: on }));
-    if (on) setCalendars(await listImportableCalendars().catch(() => []));
+    if (on) {
+      setCalendars(await listImportableCalendars().catch(() => []));
+      await run();
+    }
   }
 
   async function toggleCalendar(id: string) {
