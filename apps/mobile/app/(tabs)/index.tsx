@@ -327,7 +327,7 @@ export default function EventListScreen() {
             {tab === 'upcoming' ? (
               <View style={{ marginBottom: spacing.sm }}>
                 <Pressable onPress={() => router.push('/day')}>
-                  <EventHeroCard photoUri={heroPhotoUri ?? undefined} />
+                  <EventHeroCard photoUri={heroPhotoUri ?? undefined} sky />
                 </Pressable>
                 {/* Top-right of the hero photo, not the header — an
                     overlay button here (same posture as a real widget's

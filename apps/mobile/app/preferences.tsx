@@ -1,6 +1,6 @@
 import * as Localization from 'expo-localization';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 
@@ -11,7 +11,7 @@ import i18n from '../src/i18n';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
 import type { PurEvent } from '../src/types/event';
-import { fetchLocationPhotoUrl, getLocalPlaceName } from '../src/utils/locationPhoto';
+import { getLocalPlaceName } from '../src/utils/locationPhoto';
 import { awaitPick } from '../src/utils/pickerBridge';
 
 const LANGUAGE_NAMES: Record<string, string> = {
@@ -30,7 +30,6 @@ export default function PreferencesScreen() {
   const router = useRouter();
   const { colors, spacing, typography } = useTheme();
   const { prefs, setPrefs } = usePreferences();
-  const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
   const deviceTimezone = Localization.getCalendars()[0]?.timeZone ?? '—';
   // When automatic is on, this always reflects the device — matches the
   // toggle's own meaning and can't be edited. When it's off, it's whatever
@@ -63,20 +62,6 @@ export default function PreferencesScreen() {
     const picked = await awaitPick();
     setPrefs({ manualTimezone: picked });
   }
-
-  // Same helper the Events tab's own "Today" banner uses, but for
-  // *this* screen's effective timezone (not always the device's) — so
-  // toggling Automatic or picking a different manual zone refetches a
-  // matching photo instead of always showing wherever the device is.
-  useEffect(() => {
-    let cancelled = false;
-    fetchLocationPhotoUrl(currentTimezone).then((url) => {
-      if (!cancelled) setPreviewPhotoUri(url);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentTimezone]);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
@@ -142,8 +127,7 @@ export default function PreferencesScreen() {
       <EventHeroCard
         event={previewEvent}
         height={140}
-        photoUri={previewPhotoUri ?? undefined}
-        showPhoto
+        season
         countdownNumberSize={24}
         countdownLabelSize={8}
         titleSize={20}

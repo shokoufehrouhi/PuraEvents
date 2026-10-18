@@ -8,6 +8,8 @@ import type { PurEvent, WidgetCornerStyle, WidgetTextStyle } from '../types/even
 import { formatEventDateLine, formatTodayLine } from '../utils/eventDate';
 import { resolvePhotoUri } from '../utils/persistImage';
 import { getNextOccurrenceISO } from '../utils/recurrence';
+import { LivingSky } from './LivingSky';
+import { SeasonScene, type Season } from './SeasonScene';
 import { EventIcon } from './EventIcon';
 import { HeroCountdown } from './HeroCountdown';
 
@@ -49,6 +51,14 @@ interface Props {
   // photo background regardless of fetch success, e.g. the Preferences
   // screen's live preview.
   showPhoto?: boolean;
+  // The generic "Today" banner draws a live sky for the current time of
+  // day (see LivingSky) instead of the location photo. `skyHour` pins it
+  // to an hour, for previews.
+  sky?: boolean;
+  skyHour?: number;
+  // Draws the current season's landscape (see SeasonScene) behind the card
+  // instead of a photo; a Season pins it, for previews.
+  season?: boolean | Season;
   // Shrinks just the D/H/M countdown's own text — for a compact card (e.g.
   // Preferences' Preview) without affecting every other hero card that
   // shares HeroCountdown's default size.
@@ -65,7 +75,7 @@ interface Props {
 // independent of accent/category; 'custom' uses the event's own
 // customPhotoUri (a user-picked photo, free: 1 event/Pro: unlimited, or a
 // Pro category-gallery pick — see the Widgets tab).
-export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countdownNumberSize, countdownLabelSize, titleSize }: Props) {
+export function EventHeroCard({ event, height = 170, photoUri, showPhoto, sky, skyHour, season, countdownNumberSize, countdownLabelSize, titleSize }: Props) {
   const { t, i18n } = useTranslation();
   const { radius, spacing, prefs } = usePreferences();
   const preset = event ? CARD_THEMES[event.cardTheme] ?? CARD_THEMES.color : CARD_THEMES.color;
@@ -89,7 +99,7 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
   // preview) or when the event's own cardTheme is 'custom' with a photo
   // set — event cards without either keep their flat CARD_THEMES look.
   const isGenericBanner = !event;
-  const hasPhoto = isGenericBanner || Boolean(photoUri) || Boolean(showPhoto) || Boolean(customPhoto);
+  const hasPhoto = isGenericBanner || Boolean(photoUri) || Boolean(showPhoto) || Boolean(customPhoto) || Boolean(season);
   const textColor = hasPhoto ? '#FFFFFF' : preset.text;
   const secondaryColor = hasPhoto ? 'rgba(255,255,255,0.85)' : preset.secondary;
 
@@ -164,6 +174,24 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
       </>
     );
 
+  if (season) {
+    return (
+      <View style={[styles.card, { borderRadius: cornerRadius, minHeight: height, overflow: 'hidden' }]}>
+        <SeasonScene season={season === true ? undefined : season} />
+        <View style={[styles.skyContent, { padding: spacing.md }]}>{content}</View>
+      </View>
+    );
+  }
+
+  if (sky && isGenericBanner) {
+    return (
+      <View style={[styles.card, { borderRadius: cornerRadius, minHeight: height, overflow: 'hidden' }]}>
+        <LivingSky hour={skyHour} />
+        <View style={[styles.skyContent, { padding: spacing.md }]}>{content}</View>
+      </View>
+    );
+  }
+
   if (hasPhoto) {
     return (
       <ImageBackground
@@ -201,6 +229,7 @@ export function EventHeroCard({ event, height = 170, photoUri, showPhoto, countd
 const styles = StyleSheet.create({
   card: { justifyContent: 'space-between', overflow: 'hidden' },
   photoScrim: { flex: 1, justifyContent: 'space-between', backgroundColor: 'rgba(0,0,0,0.32)' },
+  skyContent: { flex: 1, justifyContent: 'space-between' },
   heroCaption: {
     fontSize: 19,
     fontWeight: '900',

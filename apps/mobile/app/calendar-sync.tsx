@@ -56,7 +56,6 @@ export default function CalendarSyncScreen() {
       setSettings(s);
       if (s.importEnabled) loadCalendars(s);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Lists the calendars to pick from. Narrowed to the connected Google
