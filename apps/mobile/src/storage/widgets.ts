@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import i18n from '../i18n';
 import type { PurEvent, Widget } from '../types/event';
 import { listEvents, updateEvent } from './events';
 
@@ -52,7 +53,9 @@ async function migrateLegacyWidgets(existing: Widget[]): Promise<Widget[]> {
     for (const event of legacy) {
       const widget: Widget = {
         id: newId(),
-        name: event.customWidgetName,
+        // A Category photo carries its group's name; anything else falls
+        // back to the event's category, so no widget is left unnamed.
+        name: event.customWidgetName || i18n.t(`events.category.${event.category}`),
         photoUri: event.customPhotoUri,
         overlayOpacity: event.customOverlayOpacity,
         cornerStyle: event.customCornerStyle,
@@ -73,7 +76,24 @@ async function migrateLegacyWidgets(existing: Widget[]): Promise<Widget[]> {
 }
 
 export async function listWidgets(): Promise<Widget[]> {
-  return migrateLegacyWidgets(await readAll());
+  return nameUnnamedWidgets(await migrateLegacyWidgets(await readAll()));
+}
+
+/** Widgets saved without a name (before migration named them) take their
+ *  event's widget name or, failing that, its category. */
+async function nameUnnamedWidgets(widgets: Widget[]): Promise<Widget[]> {
+  if (widgets.every((w) => w.name)) return widgets;
+  const events = await listEvents();
+  let changed = false;
+  const named = widgets.map((w) => {
+    if (w.name) return w;
+    const event = events.find((e) => e.widgetId === w.id);
+    if (!event) return w;
+    changed = true;
+    return { ...w, name: event.customWidgetName || i18n.t(`events.category.${event.category}`) };
+  });
+  if (changed) await writeAll(named);
+  return named;
 }
 
 export async function getWidget(id: string): Promise<Widget | undefined> {

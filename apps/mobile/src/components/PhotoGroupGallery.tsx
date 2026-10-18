@@ -19,7 +19,8 @@ interface Props {
   pickedPhotoUrl: string | null;
   /** Remote URL still being saved locally, shown with a spinner. */
   downloadingUrl: string | null;
-  onPick: (url: string) => void;
+  /** `name` is the group's display name — saved as the widget's name. */
+  onPick: (url: string, name: string) => void;
 }
 
 // The "Categories" tab of both the Widgets tab and the Choose Widget
@@ -85,7 +86,7 @@ export function PhotoGroupGallery({ query, isPro, pickedPhotoUrl, downloadingUrl
                   updatedAt: '',
                 };
                 return (
-                  <Pressable key={`${group.id}-${i}`} disabled={!url} onPress={() => url && onPick(url)}>
+                  <Pressable key={`${group.id}-${i}`} disabled={!url} onPress={() => url && onPick(url, name(group))}>
                     <View
                       style={[
                         styles.cardFrame,

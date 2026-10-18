@@ -177,7 +177,7 @@ export default function WidgetsScreen() {
   const [pickedPhotoUrl, setPickedPhotoUrl] = useState<string | null>(null);
   const [downloadingUrl, setDownloadingUrl] = useState<string | null>(null);
 
-  async function pickCategoryPhoto(url: string) {
+  async function pickCategoryPhoto(url: string, groupName: string) {
     if (!isPro) {
       router.push('/upgrade');
       return;
@@ -190,7 +190,9 @@ export default function WidgetsScreen() {
     setPickedPhotoUrl(url);
     setDownloadingUrl(url);
     const persistedUri = await persistRemoteImage(url).finally(() => setDownloadingUrl(null));
-    applySelection({ cardTheme: 'custom', customPhotoUri: persistedUri });
+    // Named after its group, so it's labelled wherever it shows up (the
+    // wizard's Appearance row, My Widgets if it's ever saved there).
+    applySelection({ cardTheme: 'custom', customPhotoUri: persistedUri, customWidgetName: groupName });
   }
 
   const filteredMyWidgets = useMemo(() => {

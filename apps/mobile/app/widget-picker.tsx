@@ -233,7 +233,7 @@ export default function WidgetPickerScreen() {
   const [pickedPhotoUrl, setPickedPhotoUrl] = useState<string | null>(null);
   const [downloadingUrl, setDownloadingUrl] = useState<string | null>(null);
 
-  async function pickCategoryPhoto(url: string) {
+  async function pickCategoryPhoto(url: string, groupName: string) {
     if (!isPro) {
       router.push('/upgrade');
       return;
@@ -246,7 +246,8 @@ export default function WidgetPickerScreen() {
     setPickedPhotoUrl(url);
     setDownloadingUrl(url);
     const persistedUri = await persistRemoteImage(url).finally(() => setDownloadingUrl(null));
-    setStaged({ cardTheme: 'custom', customPhotoUri: persistedUri });
+    // Named after its group — see the Widgets tab's pickCategoryPhoto.
+    setStaged({ cardTheme: 'custom', customPhotoUri: persistedUri, customWidgetName: groupName });
   }
 
   return (
