@@ -14,11 +14,15 @@ import {
 } from '../src/storage/notificationLog';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { accents } from '../src/theme/tokens';
+import { formatCivilDateMonthDay, localizeDigits } from '../src/utils/calendars';
 
 function NotificationRow({ entry, onPress }: { entry: NotificationLogEntry; onPress: () => void }) {
   const { colors, spacing, radius, typography } = useTheme();
   const { prefs } = usePreferences();
-  const timeLabel = dayjs(entry.firedAt).format(prefs.timeFormat === '12h' ? 'MMM D, h:mm A' : 'MMM D, HH:mm');
+  const { i18n } = useTranslation();
+  // In the app's language and calendar, like every other date in the app.
+  const time = localizeDigits(dayjs(entry.firedAt).format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm'), i18n.language);
+  const timeLabel = `${formatCivilDateMonthDay(entry.firedAt, prefs.calendar, i18n.language)} · ${time}`;
 
   return (
     <Pressable

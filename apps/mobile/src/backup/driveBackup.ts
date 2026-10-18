@@ -4,6 +4,8 @@ import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/goo
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
 
+import { forgetScheduled } from '../storage/notificationLog';
+
 // Backup to the user's own Google Drive, in the app's hidden appDataFolder
 // (drive.appdata: only this app can see those files, nothing shows up in
 // the user's Drive). Unlike Android Auto Backup this one is the user's to
@@ -270,5 +272,6 @@ export async function restoreFromDrive(): Promise<void> {
   // The old events' reminders go; the restored ones are scheduled on the
   // next launch (restoreMissingReminders sees nothing scheduled).
   await Notifications.cancelAllScheduledNotificationsAsync();
+  await forgetScheduled();
   await saveState({ lastHash: fingerprint(backup.records, backup.media), lastBackupAt: backup.createdAt });
 }

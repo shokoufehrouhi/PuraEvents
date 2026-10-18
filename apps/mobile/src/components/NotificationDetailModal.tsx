@@ -6,7 +6,8 @@ import { Modal, Pressable, Text, View } from 'react-native';
 
 import { describeOffset, type NotificationInfo } from '../notifications';
 import { getEvent } from '../storage/events';
-import { useTheme } from '../theme/PreferencesContext';
+import { usePreferences, useTheme } from '../theme/PreferencesContext';
+import { formatCivilDateFull, localizeDigits } from '../utils/calendars';
 import { getNextOccurrence } from '../utils/recurrence';
 import { Button } from './ui/Button';
 
@@ -23,7 +24,8 @@ interface Props {
 // either way, so a notification reads the same regardless of how you
 // opened it.
 export function NotificationDetailModal({ notification, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { prefs } = usePreferences();
   const router = useRouter();
   const { colors, radius, spacing, typography } = useTheme();
   // How long until the event's *next* occurrence, computed fresh from now
@@ -73,7 +75,12 @@ export function NotificationDetailModal({ notification, onClose }: Props) {
               </Text>
             ) : null}
             <Text style={[typography.caption, { color: colors.secondary }]}>
-              {t('notificationPopup.sentLabel')}: {notification ? dayjs(notification.firedAt).format('MMM D, YYYY · h:mm A') : ''}
+              {t('notificationPopup.sentLabel')}: {notification
+                ? `${formatCivilDateFull(notification.firedAt, prefs.calendar, i18n.language)} · ${localizeDigits(
+                    dayjs(notification.firedAt).format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm'),
+                    i18n.language,
+                  )}`
+                : ''}
             </Text>
             {timeUntilEvent ? (
               <Text style={[typography.caption, { color: colors.secondary }]}>

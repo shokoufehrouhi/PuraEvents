@@ -10,7 +10,8 @@ import { unseenNotificationCount } from '../src/storage/notificationLog';
 import { usePro } from '../src/subscription';
 import { usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { rowBadgeColors } from '../src/theme/tokens';
-import { reminderLabel } from '../src/utils/reminders';
+import { awaitPick } from '../src/utils/pickerBridge';
+import { getActiveReminders, reminderLabel } from '../src/utils/reminders';
 
 // Sub-screen for the Settings "Notifications" menu row — moved out of the
 // Settings tab's own inline Section per explicit request that each of its
@@ -39,6 +40,23 @@ export default function NotificationSettingsScreen() {
     }, [])
   );
 
+  // The reminders a new event starts with. Shown as the plan actually
+  // applies them (a free plan keeps only "1 day before").
+  const defaultReminders = getActiveReminders(prefs.defaultReminderOffsets, isPro);
+  const defaultRemindersLabel =
+    defaultReminders.length === 0
+      ? t('events.noReminders')
+      : defaultReminders.length === 1
+        ? reminderLabel(defaultReminders[0], t)
+        : t('events.reminderCountMany', { count: defaultReminders.length });
+
+  // Same list the New/Edit Event screen uses, saved as the default.
+  async function pickDefaultReminders() {
+    router.push({ pathname: '/reminder-picker', params: { current: JSON.stringify(prefs.defaultReminderOffsets) } });
+    const picked = await awaitPick();
+    setPrefs({ defaultReminderOffsets: JSON.parse(picked) as number[] });
+  }
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
       <Section>
@@ -62,8 +80,8 @@ export default function NotificationSettingsScreen() {
           icon="alarm-outline"
           badgeColor={rowBadgeColors.orange}
           label={t('settings.defaultReminders')}
-          value={reminderLabel(prefs.defaultReminderOffsets[0] ?? 1440, t)}
-          onPress={() => router.push('/preferences')}
+          value={defaultRemindersLabel}
+          onPress={pickDefaultReminders}
         />
         <Row
           type="switch"

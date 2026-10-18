@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 import i18n from '../i18n';
 import { accents } from '../theme/tokens';
 import { listEvents } from '../storage/events';
-import { logNotificationFired, markNotificationSeen } from '../storage/notificationLog';
+import { logNotificationFired, logScheduledThatFired, replaceScheduled, type ScheduledReminder } from '../storage/notificationLog';
 import type { NotificationSoundKey, PurEvent } from '../types/event';
 import { localizeDigits } from '../utils/calendars';
 import { getNextOccurrence, stepOccurrence } from '../utils/recurrence';
@@ -115,13 +115,20 @@ function logFromNotification(notification: Notifications.Notification): void {
 //    one the received-listener already caught.
 export function initNotificationLogListeners(): () => void {
   const receivedSub = Notifications.addNotificationReceivedListener(logFromNotification);
+  // A tap logs it too (already seen): tapping a notification while the app
+  // was closed launches it with nothing having logged that one yet.
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
-    markNotificationSeen(response.notification.request.identifier);
+    logNotificationFired(extractNotificationInfo(response.notification), true);
+  });
+  Notifications.getLastNotificationResponseAsync().then((response) => {
+    if (response) logNotificationFired(extractNotificationInfo(response.notification), true);
   });
 
   Notifications.getPresentedNotificationsAsync().then((presented) => {
     presented.forEach(logFromNotification);
   });
+  // Anything else that fired while the app was closed and was swiped away.
+  logScheduledThatFired();
 
   return () => {
     receivedSub.remove();
@@ -171,6 +178,7 @@ function reminderTimes(
 }
 
 export async function cancelRemindersForEvent(eventId: string): Promise<void> {
+  await replaceScheduled(eventId, []);
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const toCancel = scheduled.filter(
     (n) => n.identifier.startsWith(`puraevents:${eventId}:`) || n.identifier.startsWith(`${LEGACY_PREFIX}:${eventId}:`)
@@ -197,6 +205,9 @@ export async function scheduleRemindersForEvent(
 ): Promise<void> {
   await cancelRemindersForEvent(event.id);
   if (!notificationsEnabled) return;
+  // Reminders only reach the history when they can actually show.
+  const canShow = (await Notifications.getPermissionsAsync()).granted;
+  const noted: ScheduledReminder[] = [];
 
   const now = Date.now();
   const activeReminders = getActiveReminders(event.reminders, isPro);
@@ -239,8 +250,16 @@ export async function scheduleRemindersForEvent(
         },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(fireAt), channelId },
       });
+      noted.push({
+        id: identifierFor(event.id, offsetMin, occurrence),
+        eventId: event.id,
+        title: event.title,
+        body,
+        fireAt: new Date(fireAt).toISOString(),
+      });
     }
   }
+  if (canShow) await replaceScheduled(event.id, noted);
 }
 
 // Called from notification-settings.tsx's own toggle — scheduleRemindersForEvent
@@ -256,6 +275,7 @@ export async function scheduleRemindersForEvent(
 export async function applyNotificationsEnabledChange(enabled: boolean, isPro: boolean): Promise<void> {
   if (!enabled) {
     await Notifications.cancelAllScheduledNotificationsAsync();
+    await replaceScheduled(null, []);
     return;
   }
   const events = await listEvents();
