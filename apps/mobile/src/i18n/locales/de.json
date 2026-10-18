@@ -50,6 +50,8 @@
     "noReminders": "Keine Erinnerungen",
     "reminderAdd": "Hinzufügen",
     "reminderAtTime": "Zum Zeitpunkt des Ereignisses",
+    "reminder10Minutes": "10 Minuten vorher",
+    "reminder30Minutes": "30 Minuten vorher",
     "reminder1Hour": "1 Stunde vorher",
     "reminder1Day": "1 Tag vorher",
     "reminder1Week": "1 Woche vorher",

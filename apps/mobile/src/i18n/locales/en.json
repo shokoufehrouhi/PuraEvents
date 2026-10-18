@@ -50,6 +50,8 @@
     "noReminders": "No reminders",
     "reminderAdd": "Add",
     "reminderAtTime": "At time of event",
+    "reminder10Minutes": "10 minutes before",
+    "reminder30Minutes": "30 minutes before",
     "reminder1Hour": "1 hour before",
     "reminder1Day": "1 day before",
     "reminder1Week": "1 week before",

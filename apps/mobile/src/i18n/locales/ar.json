@@ -50,6 +50,8 @@
     "noReminders": "لا توجد تذكيرات",
     "reminderAdd": "إضافة",
     "reminderAtTime": "عند وقوع الحدث",
+    "reminder10Minutes": "قبل ١٠ دقائق",
+    "reminder30Minutes": "قبل ٣٠ دقيقة",
     "reminder1Hour": "قبل ساعة واحدة",
     "reminder1Day": "قبل يوم واحد",
     "reminder1Week": "قبل أسبوع واحد",

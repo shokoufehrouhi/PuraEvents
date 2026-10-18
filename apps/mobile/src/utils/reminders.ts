@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next';
 import { FREE_LIMITS } from '../subscription';
 
 /** Preset reminder offsets (minutes-before-event) offered in the wizard. */
-export const PRESET_REMINDER_OFFSETS = [0, 60, 1440, 10080];
+export const PRESET_REMINDER_OFFSETS = [0, 10, 30, 60, 1440, 10080];
 
 // Same freeze pattern as widgetAccess.ts: a saved event's `reminders` array
 // is never rewritten just because Pro lapsed — only what's *active* (shown
@@ -18,6 +18,10 @@ export function reminderLabel(minutes: number, t: TFunction): string {
   switch (minutes) {
     case 0:
       return t('events.reminderAtTime');
+    case 10:
+      return t('events.reminder10Minutes');
+    case 30:
+      return t('events.reminder30Minutes');
     case 60:
       return t('events.reminder1Hour');
     case 1440:
