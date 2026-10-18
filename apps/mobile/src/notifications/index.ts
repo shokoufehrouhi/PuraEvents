@@ -115,13 +115,10 @@ function logFromNotification(notification: Notifications.Notification): void {
 //    one the received-listener already caught.
 export function initNotificationLogListeners(): () => void {
   const receivedSub = Notifications.addNotificationReceivedListener(logFromNotification);
-  // A tap logs it too (already seen): tapping a notification while the app
-  // was closed launches it with nothing having logged that one yet.
+  // A tap logs it too (already seen). The one that launched a closed app
+  // is logged by app/_layout.tsx, which also clears it.
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
     logNotificationFired(extractNotificationInfo(response.notification), true);
-  });
-  Notifications.getLastNotificationResponseAsync().then((response) => {
-    if (response) logNotificationFired(extractNotificationInfo(response.notification), true);
   });
 
   Notifications.getPresentedNotificationsAsync().then((presented) => {

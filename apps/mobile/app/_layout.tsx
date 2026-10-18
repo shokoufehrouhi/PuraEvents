@@ -33,6 +33,7 @@ import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 import { syncAppShortcuts } from '../src/shortcuts/appShortcuts';
 import { onEventsChanged } from '../src/storage/events';
+import { logNotificationFired } from '../src/storage/notificationLog';
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { canScheduleExactAlarms, openExactAlarmSettings } from '../modules/exact-alarms';
 
@@ -103,15 +104,24 @@ function Navigation() {
     syncHomeScreenWidget().catch(() => {});
     const cleanupLog = initNotificationLogListeners();
 
+    // A tap is shown once: the OS keeps returning the last response from
+    // getLastNotificationResponseAsync until it's cleared, so without that
+    // every later launch (e.g. the reload after a language change) would
+    // pop the same notification up again.
     const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
       setTappedNotification(extractNotificationInfo(response.notification));
+      Notifications.clearLastNotificationResponseAsync().catch(() => {});
     });
     // Cold start (app was fully closed, launched *by* tapping the
     // notification) — the listener above only catches taps received while
     // it's already subscribed, so also check for one that was already
-    // waiting.
+    // waiting. Logged here too (as seen), since it's cleared right after.
     Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) setTappedNotification(extractNotificationInfo(response.notification));
+      if (!response) return;
+      const info = extractNotificationInfo(response.notification);
+      setTappedNotification(info);
+      logNotificationFired(info, true);
+      Notifications.clearLastNotificationResponseAsync().catch(() => {});
     });
 
     return () => {
