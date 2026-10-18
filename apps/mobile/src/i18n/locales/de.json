@@ -523,7 +523,8 @@
     "lastSync": "Zuletzt synchronisiert: {{date}}",
     "neverSynced": "Noch nicht synchronisiert.",
     "permissionTitle": "Kalenderzugriff erforderlich",
-    "permissionMessage": "Erlaube PuraEvents in den Handy-Einstellungen den Zugriff auf deinen Kalender, um das einzuschalten."
+    "permissionMessage": "Erlaube PuraEvents in den Handy-Einstellungen den Zugriff auf deinen Kalender, um das einzuschalten.",
+    "accountCalendars": "Kalender von {{email}}, dem für das Google-Drive-Backup verbundenen Konto"
   },
   "photoGroups": {
     "personal": {

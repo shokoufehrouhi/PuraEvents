@@ -523,7 +523,8 @@
     "lastSync": "آخرین همگام‌سازی: {{date}}",
     "neverSynced": "هنوز همگام‌سازی نشده.",
     "permissionTitle": "دسترسی به تقویم لازم است",
-    "permissionMessage": "برای روشن کردن این گزینه، در تنظیمات گوشی به PuraEvents اجازه‌ی دسترسی به تقویم را بدهید."
+    "permissionMessage": "برای روشن کردن این گزینه، در تنظیمات گوشی به PuraEvents اجازه‌ی دسترسی به تقویم را بدهید.",
+    "accountCalendars": "تقویم‌های {{email}}، حسابی که برای پشتیبان Google Drive وصل شده"
   },
   "photoGroups": {
     "personal": {

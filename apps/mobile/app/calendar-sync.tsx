@@ -18,6 +18,7 @@ import {
   syncCalendars,
   type CalendarSyncSettings,
 } from '../src/calendar/calendarSync';
+import { loadDriveBackupState } from '../src/backup/driveBackup';
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
@@ -37,6 +38,8 @@ export default function CalendarSyncScreen() {
   const { isPro } = usePro();
   const [settings, setSettings] = useState<CalendarSyncSettings | null>(null);
   const [calendars, setCalendars] = useState<ExpoCalendar[]>([]);
+  // The Google account (connected for Drive backup) the list is narrowed to.
+  const [account, setAccount] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
   // Calendars ticked or unticked since the last sync — synced on leaving.
@@ -51,9 +54,27 @@ export default function CalendarSyncScreen() {
   useEffect(() => {
     loadCalendarSettings().then((s) => {
       setSettings(s);
-      if (s.importEnabled) listImportableCalendars().then(setCalendars, () => {});
+      if (s.importEnabled) loadCalendars(s);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Lists the calendars to pick from. Narrowed to the connected Google
+  // account, calendars of other accounts ticked earlier are unticked (their
+  // events go on the next sync).
+  async function loadCalendars(current: CalendarSyncSettings) {
+    const { email } = await loadDriveBackupState();
+    const listed = await listImportableCalendars(email).catch(() => ({ calendars: [] as ExpoCalendar[], account: null }));
+    setCalendars(listed.calendars);
+    setAccount(listed.account);
+    if (!listed.account) return;
+    const shown = new Set(listed.calendars.map((c) => c.id));
+    const ids = current.importCalendarIds.filter((id) => shown.has(id));
+    if (ids.length === current.importCalendarIds.length) return;
+    const keys = Object.fromEntries(Object.entries(current.importCalendarKeys).filter(([id]) => shown.has(id)));
+    setSettings(await saveCalendarSettings({ importCalendarIds: ids, importCalendarKeys: keys }));
+    pendingSync.current = true;
+  }
 
   async function run() {
     pendingSync.current = false;
@@ -97,7 +118,7 @@ export default function CalendarSyncScreen() {
     if (on) await forgetDeletedImports();
     setSettings(await saveCalendarSettings({ importEnabled: on }));
     if (on) {
-      setCalendars(await listImportableCalendars().catch(() => []));
+      await loadCalendars(await loadCalendarSettings());
       await run();
     } else {
       // Off takes the imported events out too; on brings them back.
@@ -150,6 +171,11 @@ export default function CalendarSyncScreen() {
           value={settings.importEnabled}
           onValueChange={toggleImport}
         />
+        {settings.importEnabled && account ? (
+          <Text style={[typography.caption, { color: colors.secondary, paddingHorizontal: spacing.md, paddingTop: spacing.sm }]}>
+            {t('calendarSync.accountCalendars', { email: account })}
+          </Text>
+        ) : null}
         {settings.importEnabled
           ? calendars.map((calendar) => {
               const selected = isTickedCalendar(settings, calendar);

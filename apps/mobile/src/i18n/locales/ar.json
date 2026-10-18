@@ -523,7 +523,8 @@
     "lastSync": "آخر مزامنة: {{date}}",
     "neverSynced": "لم تتم المزامنة بعد.",
     "permissionTitle": "يلزم الوصول إلى التقويم",
-    "permissionMessage": "اسمح لـ PuraEvents باستخدام التقويم من إعدادات الهاتف لتفعيل هذا الخيار."
+    "permissionMessage": "اسمح لـ PuraEvents باستخدام التقويم من إعدادات الهاتف لتفعيل هذا الخيار.",
+    "accountCalendars": "تقويمات {{email}}، الحساب المتصل للنسخ الاحتياطي على Google Drive"
   },
   "photoGroups": {
     "personal": {

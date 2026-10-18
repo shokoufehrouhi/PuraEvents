@@ -523,7 +523,8 @@
     "lastSync": "Son senkronizasyon: {{date}}",
     "neverSynced": "Henüz senkronize edilmedi.",
     "permissionTitle": "Takvim erişimi gerekli",
-    "permissionMessage": "Bunu açmak için telefon ayarlarından PuraEvents'e takvim erişimi ver."
+    "permissionMessage": "Bunu açmak için telefon ayarlarından PuraEvents'e takvim erişimi ver.",
+    "accountCalendars": "Google Drive yedeklemesi için bağlı hesap olan {{email}} takvimleri"
   },
   "photoGroups": {
     "personal": {

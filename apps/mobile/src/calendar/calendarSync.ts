@@ -108,11 +108,18 @@ export async function ensureCalendarPermission(): Promise<boolean> {
   return (await requestCalendarPermissions()).granted;
 }
 
-/** Calendars the user can import from: every calendar except our own. */
-export async function listImportableCalendars(): Promise<ExpoCalendar[]> {
+/** Calendars the user can import from: every calendar except our own.
+ *  With `account` (the Google account connected for Drive backup), only
+ *  that account's — a phone often carries several accounts' calendars
+ *  (work, family, auto-added holidays). Falls back to all of them when none
+ *  belong to it (e.g. that account isn't on the phone). `account` in the
+ *  result is set when the list was narrowed to it. */
+export async function listImportableCalendars(account?: string | null): Promise<{ calendars: ExpoCalendar[]; account: string | null }> {
   const settings = await loadCalendarSettings();
-  const calendars = await getCalendars(EntityTypes.EVENT);
-  return calendars.filter((c) => c.id !== settings.exportCalendarId && c.title !== CALENDAR_TITLE);
+  const all = (await getCalendars(EntityTypes.EVENT)).filter((c) => c.id !== settings.exportCalendarId && c.title !== CALENDAR_TITLE);
+  if (!account) return { calendars: all, account: null };
+  const own = all.filter((c) => (c.source?.name ?? '').toLowerCase() === account.toLowerCase());
+  return own.length ? { calendars: own, account } : { calendars: all, account: null };
 }
 
 // --- Export ---------------------------------------------------------------

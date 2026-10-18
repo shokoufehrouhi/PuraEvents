@@ -523,7 +523,8 @@
     "lastSync": "Última sincronización: {{date}}",
     "neverSynced": "Aún no se ha sincronizado.",
     "permissionTitle": "Se necesita acceso al calendario",
-    "permissionMessage": "Permite que PuraEvents use tu calendario en los ajustes del teléfono para activarlo."
+    "permissionMessage": "Permite que PuraEvents use tu calendario en los ajustes del teléfono para activarlo.",
+    "accountCalendars": "Calendarios de {{email}}, la cuenta conectada para la copia en Google Drive"
   },
   "photoGroups": {
     "personal": {
