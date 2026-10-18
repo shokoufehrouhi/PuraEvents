@@ -517,7 +517,7 @@
     "export": "Meine Events in den Handykalender eintragen",
     "exportNote": "Deine PuraEvents-Events werden in einem eigenen Kalender \"PuraEvents\" aktuell gehalten. Beim Ausschalten wird dieser Kalender entfernt; deine anderen Kalender werden nie verändert.",
     "import": "Events aus meinen Kalendern übernehmen",
-    "importNote": "Anstehende Events aus den ausgewählten Kalendern erscheinen in PuraEvents und folgen den Änderungen dort. Aussehen und Erinnerungen kannst du hier weiterhin ändern.",
+    "importNote": "Anstehende Events aus den ausgewählten Kalendern erscheinen in PuraEvents und folgen den Änderungen dort. Aussehen und Erinnerungen kannst du hier weiterhin ändern. Beim Ausschalten werden sie aus PuraEvents entfernt.",
     "noCalendars": "Auf diesem Handy wurden keine Kalender gefunden.",
     "syncNow": "Jetzt synchronisieren",
     "lastSync": "Zuletzt synchronisiert: {{date}}",

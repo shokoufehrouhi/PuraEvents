@@ -517,7 +517,7 @@
     "export": "Etkinliklerimi telefon takvimine ekle",
     "exportNote": "PuraEvents etkinliklerin \"PuraEvents\" adlı ayrı bir takvimde güncel tutulur. Bunu kapatmak o takvimi kaldırır; diğer takvimlerin asla değişmez.",
     "import": "Takvimlerimden etkinlikleri getir",
-    "importNote": "Seçtiğin takvimlerdeki yaklaşan etkinlikler PuraEvents'te görünür ve oradaki değişiklikleri takip eder. Görünümlerini ve hatırlatıcılarını burada değiştirebilirsin.",
+    "importNote": "Seçtiğin takvimlerdeki yaklaşan etkinlikler PuraEvents'te görünür ve oradaki değişiklikleri takip eder. Görünümlerini ve hatırlatıcılarını burada değiştirebilirsin. Bunu kapatmak onları PuraEvents'ten kaldırır.",
     "noCalendars": "Bu telefonda takvim bulunamadı.",
     "syncNow": "Şimdi senkronize et",
     "lastSync": "Son senkronizasyon: {{date}}",

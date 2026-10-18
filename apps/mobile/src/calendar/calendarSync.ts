@@ -16,7 +16,7 @@ import {
 } from 'expo-calendar';
 import { Platform } from 'react-native';
 
-import { scheduleRemindersForEvent } from '../notifications';
+import { cancelRemindersForEvent, scheduleRemindersForEvent } from '../notifications';
 import { applyImportedEvents, deleteEvent, listEvents, onEventsChanged, updateEvent } from '../storage/events';
 import { loadPreferences } from '../storage/preferences';
 import { getProState } from '../subscription';
@@ -47,6 +47,10 @@ export interface CalendarSyncSettings {
   exportEnabled: boolean;
   importEnabled: boolean;
   importCalendarIds: string[];
+  /** Which calendar each ticked id was (see calendarKey): Android reuses
+   *  the number of a deleted calendar for the next new one, so an id alone
+   *  can come to mean a calendar the user never ticked. */
+  importCalendarKeys: Record<string, string>;
   exportCalendarId: string | null;
   lastSyncAt: string | null;
 }
@@ -55,9 +59,23 @@ const DEFAULT_SETTINGS: CalendarSyncSettings = {
   exportEnabled: false,
   importEnabled: false,
   importCalendarIds: [],
+  importCalendarKeys: {},
   exportCalendarId: null,
   lastSyncAt: null,
 };
+
+/** A calendar's identity beyond its number: account and name. */
+export function calendarKey(calendar: ExpoCalendar): string {
+  return `${calendar.source?.name ?? ''}|${calendar.title}`;
+}
+
+/** Whether a ticked id still is the calendar that was ticked. Ids ticked
+ *  before keys were kept can't be checked, so they count as unticked and
+ *  are picked again once. */
+export function isTickedCalendar(settings: CalendarSyncSettings, calendar: ExpoCalendar): boolean {
+  if (!settings.importCalendarIds.includes(calendar.id)) return false;
+  return settings.importCalendarKeys[calendar.id] === calendarKey(calendar);
+}
 
 // Objects are merged over the fallback (settings saved before a field
 // existed); arrays come back as stored — spreading an array into an object
@@ -271,10 +289,20 @@ function repeatFor(event: ExpoCalendarEvent): RepeatRule {
 }
 
 async function runImport(settings: CalendarSyncSettings, events: PurEvent[], isPro: boolean): Promise<void> {
+  // Only ticked ids that still are the calendar ticked: one deleted (or
+  // whose number now belongs to another calendar) drops out of the list.
+  const calendars = await getCalendars(EntityTypes.EVENT);
+  const valid = calendars.filter((c) => isTickedCalendar(settings, c));
+  const ids = valid.map((c) => c.id);
+  const keys = Object.fromEntries(valid.map((c) => [c.id, calendarKey(c)]));
+  if (ids.length !== settings.importCalendarIds.length || ids.some((id) => settings.importCalendarKeys[id] !== keys[id])) {
+    await saveCalendarSettings({ importCalendarIds: ids, importCalendarKeys: keys });
+  }
+
   const ignored = new Set(await readJSON<string[]>(IGNORED_KEY, []));
   const now = new Date();
   const until = dayjs().add(IMPORT_WINDOW_DAYS, 'day').toDate();
-  const found = settings.importCalendarIds.length ? await listCalendarEvents(settings.importCalendarIds, now, until) : [];
+  const found = ids.length ? await listCalendarEvents(ids, now, until) : [];
 
   // A recurring event comes back once per occurrence — keep the next one.
   const byId = new Map<string, ExpoCalendarEvent>();
@@ -337,6 +365,29 @@ async function cleanImportedNotes(): Promise<void> {
   }
 }
 
+/** Every event brought in from a phone calendar goes (import switched
+ *  off): they're the calendar's, not the user's, and come back when import
+ *  is switched on again. */
+export async function removeImportedEvents(): Promise<void> {
+  for (const event of await listEvents()) {
+    if (!event.calendarLink) continue;
+    await cancelRemindersForEvent(event.id);
+    await deleteEvent(event.id);
+  }
+}
+
+/** After a backup is restored. Calendar ids are the phone's own numbering —
+ *  they change when an account is added or removed, and differ on another
+ *  phone — so a restored selection can point at calendars the user never
+ *  picked. Sync starts over instead: import off with nothing ticked and its
+ *  events gone, and export making its calendar afresh (leftovers of the old
+ *  one are cleaned up by exportCalendar). */
+export async function resetCalendarSyncAfterRestore(): Promise<void> {
+  await removeImportedEvents();
+  await saveCalendarSettings({ importEnabled: false, importCalendarIds: [], importCalendarKeys: {}, exportCalendarId: null, lastSyncAt: null });
+  await AsyncStorage.multiRemove([EXPORT_MAP_KEY, IGNORED_KEY]);
+}
+
 /** Turning import back on starts over: events deleted in the app before
  *  come in again on the next sync. */
 export async function forgetDeletedImports(): Promise<void> {
@@ -388,6 +439,11 @@ let exportTimer: ReturnType<typeof setTimeout> | null = null;
  *  the app (debounced — a save can write more than once). */
 export function startCalendarSync(): void {
   cleanImportedNotes().catch(() => {});
+  // Import off means no imported events — e.g. ones a restored backup
+  // brought back while import is off.
+  loadCalendarSettings()
+    .then((s) => (s.importEnabled ? undefined : removeImportedEvents()))
+    .catch(() => {});
   onEventsChanged(() => {
     if (exportTimer) clearTimeout(exportTimer);
     exportTimer = setTimeout(() => {

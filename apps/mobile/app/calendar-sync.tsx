@@ -1,13 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ExpoCalendar } from 'expo-calendar';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 
 import {
+  calendarKey,
   ensureCalendarPermission,
+  isTickedCalendar,
   forgetDeletedImports,
+  removeImportedEvents,
   listImportableCalendars,
   loadCalendarSettings,
   removeExportCalendar,
@@ -36,6 +39,14 @@ export default function CalendarSyncScreen() {
   const [calendars, setCalendars] = useState<ExpoCalendar[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
+  // Calendars ticked or unticked since the last sync — synced on leaving.
+  const pendingSync = useRef(false);
+  useEffect(
+    () => () => {
+      if (pendingSync.current) syncCalendars();
+    },
+    [],
+  );
 
   useEffect(() => {
     loadCalendarSettings().then((s) => {
@@ -45,6 +56,7 @@ export default function CalendarSyncScreen() {
   }, []);
 
   async function run() {
+    pendingSync.current = false;
     setSyncing(true);
     await syncCalendars();
     setSettings(await loadCalendarSettings());
@@ -87,16 +99,28 @@ export default function CalendarSyncScreen() {
     if (on) {
       setCalendars(await listImportableCalendars().catch(() => []));
       await run();
+    } else {
+      // Off takes the imported events out too; on brings them back.
+      await removeImportedEvents();
     }
   }
 
-  async function toggleCalendar(id: string) {
+  async function toggleCalendar(calendar: ExpoCalendar) {
     if (!settings) return;
-    const ids = settings.importCalendarIds.includes(id)
-      ? settings.importCalendarIds.filter((c) => c !== id)
-      : [...settings.importCalendarIds, id];
-    setSettings(await saveCalendarSettings({ importCalendarIds: ids }));
-    await run();
+    const { id } = calendar;
+    const ticked = isTickedCalendar(settings, calendar);
+    const ids = settings.importCalendarIds.filter((c) => c !== id);
+    const keys = { ...settings.importCalendarKeys };
+    delete keys[id];
+    if (!ticked) {
+      ids.push(id);
+      keys[id] = calendarKey(calendar);
+    }
+    setSettings(await saveCalendarSettings({ importCalendarIds: ids, importCalendarKeys: keys }));
+    // Not synced on every tap — a stray one while scrolling the list would
+    // pull a whole calendar in at once. Changes sync when the screen closes
+    // (below) or on "Sync now".
+    pendingSync.current = true;
   }
 
   if (!settings) return null;
@@ -128,11 +152,11 @@ export default function CalendarSyncScreen() {
         />
         {settings.importEnabled
           ? calendars.map((calendar) => {
-              const selected = settings.importCalendarIds.includes(calendar.id);
+              const selected = isTickedCalendar(settings, calendar);
               return (
                 <Pressable
                   key={calendar.id}
-                  onPress={() => toggleCalendar(calendar.id)}
+                  onPress={() => toggleCalendar(calendar)}
                   style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md }}
                 >
                   <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: calendar.color ?? colors.outline }} />

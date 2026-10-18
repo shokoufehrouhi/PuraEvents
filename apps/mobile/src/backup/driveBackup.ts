@@ -4,6 +4,7 @@ import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/goo
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
 
+import { resetCalendarSyncAfterRestore } from '../calendar/calendarSync';
 import { forgetScheduled } from '../storage/notificationLog';
 
 // Backup to the user's own Google Drive, in the app's hidden appDataFolder
@@ -273,5 +274,6 @@ export async function restoreFromDrive(): Promise<void> {
   // next launch (restoreMissingReminders sees nothing scheduled).
   await Notifications.cancelAllScheduledNotificationsAsync();
   await forgetScheduled();
+  await resetCalendarSyncAfterRestore();
   await saveState({ lastHash: fingerprint(backup.records, backup.media), lastBackupAt: backup.createdAt });
 }

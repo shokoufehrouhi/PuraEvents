@@ -517,7 +517,7 @@
     "export": "Añadir mis eventos al calendario del teléfono",
     "exportNote": "Tus eventos de PuraEvents se mantienen al día en un calendario aparte llamado \"PuraEvents\". Al desactivarlo se elimina ese calendario; tus otros calendarios nunca se modifican.",
     "import": "Traer eventos de mis calendarios",
-    "importNote": "Los próximos eventos de los calendarios que marques aparecen en PuraEvents y siguen los cambios que hagas allí. Aquí puedes seguir cambiando su aspecto y recordatorios.",
+    "importNote": "Los próximos eventos de los calendarios que marques aparecen en PuraEvents y siguen los cambios que hagas allí. Aquí puedes seguir cambiando su aspecto y recordatorios. Al desactivarlo se quitan de PuraEvents.",
     "noCalendars": "No se encontraron calendarios en este teléfono.",
     "syncNow": "Sincronizar ahora",
     "lastSync": "Última sincronización: {{date}}",
