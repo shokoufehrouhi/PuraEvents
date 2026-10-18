@@ -1,8 +1,9 @@
-import { ScrollView } from 'react-native';
+import { AppState, Platform, ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { canScheduleExactAlarms, openExactAlarmSettings } from '../modules/exact-alarms';
 import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
 import { applyNotificationsEnabledChange } from '../src/notifications';
@@ -24,6 +25,15 @@ export default function NotificationSettingsScreen() {
   const { prefs, setPrefs } = usePreferences();
   const { isPro } = usePro();
   const [unseenCount, setUnseenCount] = useState(0);
+  // Android 12+: whether reminders may fire on the minute (see
+  // modules/exact-alarms). Re-read on return from the system screen.
+  const [exactAllowed, setExactAllowed] = useState(canScheduleExactAlarms);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') setExactAllowed(canScheduleExactAlarms());
+    });
+    return () => sub.remove();
+  }, []);
 
   // Re-read every time this screen regains focus — coming back from
   // History (which marks everything seen on open) should clear the badge
@@ -83,6 +93,15 @@ export default function NotificationSettingsScreen() {
           value={defaultRemindersLabel}
           onPress={pickDefaultReminders}
         />
+        {Platform.OS === 'android' && prefs.notificationsEnabled && !exactAllowed ? (
+          <Row
+            icon="time-outline"
+            badgeColor={rowBadgeColors.orange}
+            label={t('settings.exactReminders')}
+            value={t('settings.exactRemindersOff')}
+            onPress={openExactAlarmSettings}
+          />
+        ) : null}
         <Row
           type="switch"
           icon="volume-medium-outline"

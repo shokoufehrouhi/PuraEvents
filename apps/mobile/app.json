@@ -31,7 +31,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "com.android.launcher.permission.INSTALL_SHORTCUT"
+        "com.android.launcher.permission.INSTALL_SHORTCUT",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "package": "com.puraapps.puraevents",
       "versionCode": 10

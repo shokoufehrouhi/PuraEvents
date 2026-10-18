@@ -69,11 +69,6 @@ export function NotificationDetailModal({ notification, onClose }: Props) {
           <Text style={[typography.body, { color: colors.secondary, marginTop: 6 }]}>{notification?.body}</Text>
 
           <View style={{ marginTop: spacing.md, gap: 4 }}>
-            {notification?.eventId ? (
-              <Text style={[typography.caption, { color: colors.secondary }]}>
-                {t('notificationPopup.eventIdLabel')}: {notification.eventId}
-              </Text>
-            ) : null}
             <Text style={[typography.caption, { color: colors.secondary }]}>
               {t('notificationPopup.sentLabel')}: {notification
                 ? `${formatCivilDateFull(notification.firedAt, prefs.calendar, i18n.language)} · ${localizeDigits(

@@ -136,7 +136,9 @@
     "noteSectionTitle": "Nota",
     "reminderCountOne": "{{count}} recordatorio",
     "reminderCountMany": "{{count}} recordatorios",
-    "repeatWithNote": "{{repeat}}, con nota"
+    "repeatWithNote": "{{repeat}}, con nota",
+    "reminderPassed": "ya pasó",
+    "remindersAllPassed": "El recordatorio ya pasó"
   },
   "countdown": {
     "days": "{{count}}d",
@@ -179,7 +181,12 @@
     "rateApp": "Calificar PuraEvents",
     "version": "Versión",
     "manageSubscription": "Gestionar",
-    "calendarSync": "Sincronizar calendario"
+    "calendarSync": "Sincronizar calendario",
+    "exactReminders": "Recordatorios a la hora exacta",
+    "exactRemindersOff": "Desactivado — toca para permitir",
+    "exactRemindersTitle": "Recibe los recordatorios a tiempo",
+    "exactRemindersMessage": "Android puede mostrar los recordatorios de PuraEvents hasta una hora tarde si no se le permite programar alarmas y recordatorios. Permítelo en la siguiente pantalla.",
+    "exactRemindersAllow": "Permitir"
   },
   "notificationHistory": {
     "newCount": "{{count}} nuevas",
@@ -187,7 +194,6 @@
     "emptySubtitle": "Los recordatorios que recibas aparecerán aquí."
   },
   "notificationPopup": {
-    "eventIdLabel": "ID del evento",
     "sentLabel": "Enviado",
     "timeUntilLabel": "Tiempo restante para el evento",
     "viewEvent": "Ver evento",

@@ -214,6 +214,9 @@ export default function EventDetailScreen() {
   // language as a frozen widget (see widgetAccess.ts), just not Pro-gated.
   const isPast = event.repeat === 'none' && !nextOccurrence.isAfter(dayjs());
   const activeReminders = getActiveReminders(event.reminders, isPro);
+  // A one-time event whose reminders' times have all gone by gets none.
+  const remindersAllPassed =
+    event.repeat === 'none' && activeReminders.length > 0 && activeReminders.every((offset) => nextOccurrence.subtract(offset, 'minute').isBefore(dayjs()));
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
@@ -298,7 +301,7 @@ export default function EventDetailScreen() {
           <View style={[styles.reminderPill, { borderColor: colors.outline, marginTop: spacing.md }]}>
             <Ionicons name="notifications-outline" size={14} color={colors.text} />
             <Text style={[typography.caption, { color: colors.text, marginLeft: 6 }]}>
-              {activeReminders.length > 0 ? t('events.reminderOn') : t('events.noReminders')}
+              {activeReminders.length === 0 ? t('events.noReminders') : remindersAllPassed ? t('events.remindersAllPassed') : t('events.reminderOn')}
             </Text>
           </View>
         </View>
@@ -317,13 +320,25 @@ export default function EventDetailScreen() {
               // so it's obvious the reminder still exists and just needs
               // Pro back rather than having silently vanished.
               const locked = !activeReminders.includes(offset);
-              const fireAt = nextOccurrence.subtract(offset, 'minute');
+              // The next time this reminder actually fires: for a repeating
+              // event, before the first occurrence still far enough ahead.
+              const fireAt =
+                event.repeat === 'none'
+                  ? nextOccurrence.subtract(offset, 'minute')
+                  : getNextOccurrence(event.dateTimeISO, event.repeat, dayjs().add(offset, 'minute')).subtract(offset, 'minute');
+              // A one-time event's reminder whose time has gone by (e.g. "1
+              // day before" an event less than a day away) never fires —
+              // say so instead of listing it like an upcoming one.
+              const passed = !locked && fireAt.isBefore(dayjs());
               const fireTime = localizeDigits(fireAt.format(prefs.timeFormat === '12h' ? 'h:mm A' : 'HH:mm'), i18n.language);
+              const fireDate = `${formatCivilDateFull(fireAt.toISOString(), prefs.calendar, i18n.language)} · ${fireTime}`;
               const fireValue = locked
                 ? t('widgets.availableWithPro')
-                : `${formatCivilDateFull(fireAt.toISOString(), prefs.calendar, i18n.language)} · ${fireTime}`;
+                : passed
+                  ? `${fireDate} · ${t('events.reminderPassed')}`
+                  : fireDate;
               return (
-                <View key={offset} style={{ opacity: locked ? 0.55 : 1 }}>
+                <View key={offset} style={{ opacity: locked || passed ? 0.55 : 1 }}>
                   <DetailRow icon={locked ? 'lock-closed' : 'notifications-outline'} label={reminderLabel(offset, t)} value={fireValue} />
                 </View>
               );

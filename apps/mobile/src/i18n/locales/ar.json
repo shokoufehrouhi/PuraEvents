@@ -136,7 +136,9 @@
     "noteSectionTitle": "ملاحظة",
     "reminderCountOne": "تذكير واحد",
     "reminderCountMany": "{{count}} تذكيرات",
-    "repeatWithNote": "{{repeat}}، مع ملاحظة"
+    "repeatWithNote": "{{repeat}}، مع ملاحظة",
+    "reminderPassed": "انقضى وقته",
+    "remindersAllPassed": "انقضى وقت التذكير"
   },
   "countdown": {
     "days": "{{count}} يوم",
@@ -179,7 +181,12 @@
     "rateApp": "تقييم PuraEvents",
     "version": "الإصدار",
     "manageSubscription": "إدارة",
-    "calendarSync": "مزامنة التقويم"
+    "calendarSync": "مزامنة التقويم",
+    "exactReminders": "أوقات التذكير الدقيقة",
+    "exactRemindersOff": "متوقف — اضغط للسماح",
+    "exactRemindersTitle": "لتصل التذكيرات في وقتها",
+    "exactRemindersMessage": "قد يعرض أندرويد تذكيرات PuraEvents متأخرة حتى ساعة ما لم يُسمح له بضبط المنبهات والتذكيرات. اسمح بذلك في الشاشة التالية.",
+    "exactRemindersAllow": "السماح"
   },
   "notificationHistory": {
     "newCount": "{{count}} جديد",
@@ -187,7 +194,6 @@
     "emptySubtitle": "التذكيرات التي تلقيتها ستظهر هنا."
   },
   "notificationPopup": {
-    "eventIdLabel": "معرّف الحدث",
     "sentLabel": "وقت الإرسال",
     "timeUntilLabel": "الوقت المتبقي للحدث",
     "viewEvent": "عرض الحدث",

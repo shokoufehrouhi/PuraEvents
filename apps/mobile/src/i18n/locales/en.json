@@ -136,7 +136,9 @@
     "noteSectionTitle": "Note",
     "reminderCountOne": "{{count}} reminder",
     "reminderCountMany": "{{count}} reminders",
-    "repeatWithNote": "{{repeat}}, note added"
+    "repeatWithNote": "{{repeat}}, note added",
+    "reminderPassed": "already passed",
+    "remindersAllPassed": "Reminder time passed"
   },
   "countdown": {
     "days": "{{count}}d",
@@ -179,7 +181,12 @@
     "rateApp": "Rate PuraEvents",
     "version": "Version",
     "manageSubscription": "Manage",
-    "calendarSync": "Calendar sync"
+    "calendarSync": "Calendar sync",
+    "exactReminders": "Exact reminder times",
+    "exactRemindersOff": "Off — tap to allow",
+    "exactRemindersTitle": "Let reminders arrive on time",
+    "exactRemindersMessage": "Android may deliver PuraEvents reminders up to an hour late unless it is allowed to set alarms and reminders. Allow it on the next screen.",
+    "exactRemindersAllow": "Allow"
   },
   "notificationHistory": {
     "newCount": "{{count}} new",
@@ -187,7 +194,6 @@
     "emptySubtitle": "Reminders you've received will show up here."
   },
   "notificationPopup": {
-    "eventIdLabel": "Event ID",
     "sentLabel": "Sent",
     "timeUntilLabel": "Time until event",
     "viewEvent": "View Event",

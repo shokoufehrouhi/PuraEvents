@@ -136,7 +136,9 @@
     "noteSectionTitle": "Not",
     "reminderCountOne": "{{count}} hatırlatıcı",
     "reminderCountMany": "{{count}} hatırlatıcı",
-    "repeatWithNote": "{{repeat}}, not eklendi"
+    "repeatWithNote": "{{repeat}}, not eklendi",
+    "reminderPassed": "zamanı geçti",
+    "remindersAllPassed": "Hatırlatma zamanı geçti"
   },
   "countdown": {
     "days": "{{count}}g",
@@ -179,7 +181,12 @@
     "rateApp": "PuraEvents'i değerlendir",
     "version": "Sürüm",
     "manageSubscription": "Yönet",
-    "calendarSync": "Takvim senkronizasyonu"
+    "calendarSync": "Takvim senkronizasyonu",
+    "exactReminders": "Tam zamanlı hatırlatmalar",
+    "exactRemindersOff": "Kapalı — izin vermek için dokun",
+    "exactRemindersTitle": "Hatırlatmalar zamanında gelsin",
+    "exactRemindersMessage": "Alarm ve hatırlatıcı izni verilmezse Android, PuraEvents hatırlatmalarını bir saate kadar geç gösterebilir. Sonraki ekranda izin ver.",
+    "exactRemindersAllow": "İzin ver"
   },
   "notificationHistory": {
     "newCount": "{{count}} yeni",
@@ -187,7 +194,6 @@
     "emptySubtitle": "Aldığın hatırlatmalar burada görünecek."
   },
   "notificationPopup": {
-    "eventIdLabel": "Etkinlik Kimliği",
     "sentLabel": "Gönderildi",
     "timeUntilLabel": "Etkinliğe kalan süre",
     "viewEvent": "Etkinliği Görüntüle",

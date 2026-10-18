@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform, Pressable, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -21,6 +22,7 @@ import {
   extractNotificationInfo,
   initNotificationLogListeners,
   requestNotificationPermissions,
+  applyNotificationsEnabledChange,
   refreshRepeatingReminders,
   restoreMissingReminders,
   type NotificationInfo,
@@ -30,7 +32,9 @@ import { PreferencesProvider, usePreferences, useTheme } from '../src/theme/Pref
 import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 import { syncAppShortcuts } from '../src/shortcuts/appShortcuts';
-import { onEventsChanged } from '../src/storage/events';
+import { listEvents, onEventsChanged } from '../src/storage/events';
+import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
+import { canScheduleExactAlarms, openExactAlarmSettings } from '../modules/exact-alarms';
 
 // Side-effect import: initializes i18next before any screen renders.
 // RootLayout then swaps in the saved language and its layout direction
@@ -60,6 +64,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // screen's usePro()/paywall touches it.
 initSubscriptions();
 
+const EXACT_ALARM_ASKED_KEY = 'puraevents:exactAlarmAsked';
+
 function Navigation() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -72,6 +78,7 @@ function Navigation() {
   // killed state just as easily as while already inside the app. See
   // NotificationDetailModal for the popup itself.
   const [tappedNotification, setTappedNotification] = useState<NotificationInfo | null>(null);
+  const [exactAlarmAlert, setExactAlarmAlert] = useState<AppAlertState | null>(null);
 
   useEffect(() => {
     requestNotificationPermissions();
@@ -126,6 +133,37 @@ function Navigation() {
     });
     return () => sub.remove();
   }, [proReady, isPro]);
+
+  // Android 12+ only fires reminders on the minute with "Alarms &
+  // reminders" access (off by default from Android 14); without it one can
+  // be up to an hour late. Asked once, when there are reminders to lose;
+  // Settings > Notifications keeps a row for it. Once it's granted, every
+  // reminder is scheduled again so the already-set ones become exact too.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !proReady || !prefsReady || !prefs.notificationsEnabled) return;
+    let exact = canScheduleExactAlarms();
+    if (!exact) {
+      (async () => {
+        if (await AsyncStorage.getItem(EXACT_ALARM_ASKED_KEY).catch(() => null)) return;
+        const events = await listEvents();
+        if (!events.some((e) => e.reminders.length > 0)) return;
+        await AsyncStorage.setItem(EXACT_ALARM_ASKED_KEY, '1').catch(() => {});
+        setExactAlarmAlert({
+          title: t('settings.exactRemindersTitle'),
+          message: t('settings.exactRemindersMessage'),
+          variant: 'warning',
+          action: { label: t('settings.exactRemindersAllow'), onPress: openExactAlarmSettings },
+        });
+      })();
+    }
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') return;
+      const now = canScheduleExactAlarms();
+      if (now && !exact) applyNotificationsEnabledChange(true, isPro).catch(() => {});
+      exact = now;
+    });
+    return () => sub.remove();
+  }, [proReady, prefsReady, prefs.notificationsEnabled, isPro, t]);
 
   // App icon shortcuts: rebuilt on launch, when the app comes back to the
   // foreground, after any event change, and when the language or calendar
@@ -325,6 +363,7 @@ function Navigation() {
           check above). Same popup notification-history.tsx's own row tap
           opens. */}
       <NotificationDetailModal notification={tappedNotification} onClose={() => setTappedNotification(null)} />
+      <AppAlertModal alert={exactAlarmAlert} onClose={() => setExactAlarmAlert(null)} />
       <HomeScreenShortcutPrompt />
       {/* Re-enabled — see AppOpenAdController.tsx's own comment: the
           confirmed-live "AdActivity appears then immediately gets torn

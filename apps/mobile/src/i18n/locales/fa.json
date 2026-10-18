@@ -136,7 +136,9 @@
     "noteSectionTitle": "یادداشت",
     "reminderCountOne": "{{count}} یادآور",
     "reminderCountMany": "{{count}} یادآور",
-    "repeatWithNote": "{{repeat}}، با یادداشت"
+    "repeatWithNote": "{{repeat}}، با یادداشت",
+    "reminderPassed": "زمانش گذشته",
+    "remindersAllPassed": "زمان یادآور گذشته"
   },
   "countdown": {
     "days": "{{count}} روز",
@@ -179,7 +181,12 @@
     "rateApp": "امتیاز به PuraEvents",
     "version": "نسخه",
     "manageSubscription": "مدیریت",
-    "calendarSync": "همگام‌سازی تقویم"
+    "calendarSync": "همگام‌سازی تقویم",
+    "exactReminders": "زمان دقیق یادآورها",
+    "exactRemindersOff": "خاموش — برای اجازه بزنید",
+    "exactRemindersTitle": "یادآورها سر وقت برسند",
+    "exactRemindersMessage": "اندروید ممکن است یادآورهای PuraEvents را تا یک ساعت دیرتر نشان دهد، مگر اینکه اجازه‌ی «هشدارها و یادآورها» داده شود. در صفحه‌ی بعد اجازه بدهید.",
+    "exactRemindersAllow": "اجازه دادن"
   },
   "notificationHistory": {
     "newCount": "{{count}} جدید",
@@ -187,7 +194,6 @@
     "emptySubtitle": "یادآورهایی که دریافت کرده‌ای اینجا نمایش داده می‌شن."
   },
   "notificationPopup": {
-    "eventIdLabel": "شناسه رویداد",
     "sentLabel": "زمان ارسال",
     "timeUntilLabel": "زمان باقی‌مانده تا رویداد",
     "viewEvent": "مشاهده رویداد",

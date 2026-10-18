@@ -136,7 +136,9 @@
     "noteSectionTitle": "Notiz",
     "reminderCountOne": "{{count}} Erinnerung",
     "reminderCountMany": "{{count}} Erinnerungen",
-    "repeatWithNote": "{{repeat}}, mit Notiz"
+    "repeatWithNote": "{{repeat}}, mit Notiz",
+    "reminderPassed": "bereits vorbei",
+    "remindersAllPassed": "Erinnerungszeit vorbei"
   },
   "countdown": {
     "days": "{{count}}T",
@@ -179,7 +181,12 @@
     "rateApp": "PuraEvents bewerten",
     "version": "Version",
     "manageSubscription": "Verwalten",
-    "calendarSync": "Kalender-Sync"
+    "calendarSync": "Kalender-Sync",
+    "exactReminders": "Erinnerungen zur genauen Zeit",
+    "exactRemindersOff": "Aus — zum Erlauben tippen",
+    "exactRemindersTitle": "Erinnerungen pünktlich erhalten",
+    "exactRemindersMessage": "Android kann Erinnerungen von PuraEvents bis zu einer Stunde später zeigen, wenn Wecker und Erinnerungen nicht erlaubt sind. Erlaube es auf dem nächsten Bildschirm.",
+    "exactRemindersAllow": "Erlauben"
   },
   "notificationHistory": {
     "newCount": "{{count}} neu",
@@ -187,7 +194,6 @@
     "emptySubtitle": "Erinnerungen, die du erhalten hast, erscheinen hier."
   },
   "notificationPopup": {
-    "eventIdLabel": "Ereignis-ID",
     "sentLabel": "Gesendet",
     "timeUntilLabel": "Zeit bis zum Ereignis",
     "viewEvent": "Ereignis ansehen",
