@@ -184,9 +184,10 @@
     "calendarSync": "Takvim senkronizasyonu",
     "exactReminders": "Tam zamanlı hatırlatmalar",
     "exactRemindersOff": "Kapalı — izin vermek için dokun",
-    "exactRemindersTitle": "Hatırlatmalar zamanında gelsin",
-    "exactRemindersMessage": "Alarm ve hatırlatıcı izni verilmezse Android, PuraEvents hatırlatmalarını bir saate kadar geç gösterebilir. Sonraki ekranda izin ver.",
-    "exactRemindersAllow": "İzin ver"
+    "exactRemindersTitle": "Hatırlatmalar zamanında",
+    "exactRemindersMessage": "Hatırlatmaların tam zamanında gelmesi için PuraEvents uygulamasına alarm ve hatırlatıcı kurma izni ver.",
+    "exactRemindersAllow": "İzin ver",
+    "exactRemindersLater": "Şimdi değil"
   },
   "notificationHistory": {
     "newCount": "{{count}} yeni",

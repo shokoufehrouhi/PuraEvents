@@ -184,9 +184,10 @@
     "calendarSync": "همگام‌سازی تقویم",
     "exactReminders": "زمان دقیق یادآورها",
     "exactRemindersOff": "خاموش — برای اجازه بزنید",
-    "exactRemindersTitle": "یادآورها سر وقت برسند",
-    "exactRemindersMessage": "اندروید ممکن است یادآورهای PuraEvents را تا یک ساعت دیرتر نشان دهد، مگر اینکه اجازه‌ی «هشدارها و یادآورها» داده شود. در صفحه‌ی بعد اجازه بدهید.",
-    "exactRemindersAllow": "اجازه دادن"
+    "exactRemindersTitle": "یادآورها سر وقت",
+    "exactRemindersMessage": "به PuraEvents اجازه‌ی تنظیم هشدارها و یادآورها را بدهید تا یادآورها دقیقاً سر وقت برسند.",
+    "exactRemindersAllow": "اجازه دادن",
+    "exactRemindersLater": "فعلاً نه"
   },
   "notificationHistory": {
     "newCount": "{{count}} جدید",

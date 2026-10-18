@@ -184,9 +184,10 @@
     "calendarSync": "Calendar sync",
     "exactReminders": "Exact reminder times",
     "exactRemindersOff": "Off — tap to allow",
-    "exactRemindersTitle": "Let reminders arrive on time",
-    "exactRemindersMessage": "Android may deliver PuraEvents reminders up to an hour late unless it is allowed to set alarms and reminders. Allow it on the next screen.",
-    "exactRemindersAllow": "Allow"
+    "exactRemindersTitle": "Get reminders on time",
+    "exactRemindersMessage": "Allow PuraEvents to set alarms and reminders, so reminders arrive right on time.",
+    "exactRemindersAllow": "Allow",
+    "exactRemindersLater": "Not now"
   },
   "notificationHistory": {
     "newCount": "{{count}} new",

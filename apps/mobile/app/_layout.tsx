@@ -32,7 +32,7 @@ import { PreferencesProvider, usePreferences, useTheme } from '../src/theme/Pref
 import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 import { syncAppShortcuts } from '../src/shortcuts/appShortcuts';
-import { listEvents, onEventsChanged } from '../src/storage/events';
+import { onEventsChanged } from '../src/storage/events';
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { canScheduleExactAlarms, openExactAlarmSettings } from '../modules/exact-alarms';
 
@@ -81,7 +81,22 @@ function Navigation() {
   const [exactAlarmAlert, setExactAlarmAlert] = useState<AppAlertState | null>(null);
 
   useEffect(() => {
-    requestNotificationPermissions();
+    // On Android 12+ reminders are only on the minute with "Alarms &
+    // reminders" access (off by default from Android 14, and only the
+    // system screen can turn it on). Asked once, right after notifications
+    // are allowed on first launch; Settings > Notifications keeps a row.
+    requestNotificationPermissions().then(async (granted) => {
+      if (!granted || Platform.OS !== 'android' || canScheduleExactAlarms()) return;
+      if (await AsyncStorage.getItem(EXACT_ALARM_ASKED_KEY).catch(() => null)) return;
+      await AsyncStorage.setItem(EXACT_ALARM_ASKED_KEY, '1').catch(() => {});
+      setExactAlarmAlert({
+        title: t('settings.exactRemindersTitle'),
+        message: t('settings.exactRemindersMessage'),
+        variant: 'warning',
+        action: { label: t('settings.exactRemindersAllow'), onPress: openExactAlarmSettings },
+        dismissLabel: t('settings.exactRemindersLater'),
+      });
+    });
     // Covers cases where nothing changed since the last write but the
     // widget should anyway — e.g. a fresh install, or the day rolling
     // over so "3 days left" should now read "2".
@@ -134,28 +149,12 @@ function Navigation() {
     return () => sub.remove();
   }, [proReady, isPro]);
 
-  // Android 12+ only fires reminders on the minute with "Alarms &
-  // reminders" access (off by default from Android 14); without it one can
-  // be up to an hour late. Asked once, when there are reminders to lose;
-  // Settings > Notifications keeps a row for it. Once it's granted, every
-  // reminder is scheduled again so the already-set ones become exact too.
+  // Once "Alarms & reminders" access is granted (see the first-launch ask
+  // above), every reminder is scheduled again so the ones already set
+  // become exact too.
   useEffect(() => {
     if (Platform.OS !== 'android' || !proReady || !prefsReady || !prefs.notificationsEnabled) return;
     let exact = canScheduleExactAlarms();
-    if (!exact) {
-      (async () => {
-        if (await AsyncStorage.getItem(EXACT_ALARM_ASKED_KEY).catch(() => null)) return;
-        const events = await listEvents();
-        if (!events.some((e) => e.reminders.length > 0)) return;
-        await AsyncStorage.setItem(EXACT_ALARM_ASKED_KEY, '1').catch(() => {});
-        setExactAlarmAlert({
-          title: t('settings.exactRemindersTitle'),
-          message: t('settings.exactRemindersMessage'),
-          variant: 'warning',
-          action: { label: t('settings.exactRemindersAllow'), onPress: openExactAlarmSettings },
-        });
-      })();
-    }
     const sub = AppState.addEventListener('change', (next) => {
       if (next !== 'active') return;
       const now = canScheduleExactAlarms();
@@ -163,7 +162,7 @@ function Navigation() {
       exact = now;
     });
     return () => sub.remove();
-  }, [proReady, prefsReady, prefs.notificationsEnabled, isPro, t]);
+  }, [proReady, prefsReady, prefs.notificationsEnabled, isPro]);
 
   // App icon shortcuts: rebuilt on launch, when the app comes back to the
   // foreground, after any event change, and when the language or calendar

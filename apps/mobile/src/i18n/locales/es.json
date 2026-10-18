@@ -184,9 +184,10 @@
     "calendarSync": "Sincronizar calendario",
     "exactReminders": "Recordatorios a la hora exacta",
     "exactRemindersOff": "Desactivado — toca para permitir",
-    "exactRemindersTitle": "Recibe los recordatorios a tiempo",
-    "exactRemindersMessage": "Android puede mostrar los recordatorios de PuraEvents hasta una hora tarde si no se le permite programar alarmas y recordatorios. Permítelo en la siguiente pantalla.",
-    "exactRemindersAllow": "Permitir"
+    "exactRemindersTitle": "Recordatorios a tiempo",
+    "exactRemindersMessage": "Permite que PuraEvents programe alarmas y recordatorios para que lleguen justo a tiempo.",
+    "exactRemindersAllow": "Permitir",
+    "exactRemindersLater": "Ahora no"
   },
   "notificationHistory": {
     "newCount": "{{count}} nuevas",

@@ -184,9 +184,10 @@
     "calendarSync": "مزامنة التقويم",
     "exactReminders": "أوقات التذكير الدقيقة",
     "exactRemindersOff": "متوقف — اضغط للسماح",
-    "exactRemindersTitle": "لتصل التذكيرات في وقتها",
-    "exactRemindersMessage": "قد يعرض أندرويد تذكيرات PuraEvents متأخرة حتى ساعة ما لم يُسمح له بضبط المنبهات والتذكيرات. اسمح بذلك في الشاشة التالية.",
-    "exactRemindersAllow": "السماح"
+    "exactRemindersTitle": "تذكيرات في وقتها",
+    "exactRemindersMessage": "اسمح لـ PuraEvents بضبط المنبهات والتذكيرات لتصلك التذكيرات في وقتها تمامًا.",
+    "exactRemindersAllow": "السماح",
+    "exactRemindersLater": "ليس الآن"
   },
   "notificationHistory": {
     "newCount": "{{count}} جديد",

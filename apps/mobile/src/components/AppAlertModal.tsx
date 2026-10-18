@@ -20,6 +20,9 @@ export type AppAlertState = {
   /** A second, primary button next to "Done" (e.g. "Show in folder") —
    *  the general form of onSettings, which keeps its fixed label. */
   action?: { label: string; onPress: () => void };
+  /** Label of the button that just closes, when "Done" doesn't fit (e.g.
+   *  "Not now" next to an "Allow"). */
+  dismissLabel?: string;
 };
 
 interface Props {
@@ -66,7 +69,7 @@ export function AppAlertModal({ alert, onClose }: Props) {
           <View style={{ flexDirection: 'row', marginTop: spacing.lg }}>
             {alert?.onSettings || alert?.action ? (
               <Button
-                label={t('events.done')}
+                label={alert.dismissLabel ?? t('events.done')}
                 variant="secondary"
                 onPress={onClose}
                 style={{ flex: 1, marginRight: 8 }}

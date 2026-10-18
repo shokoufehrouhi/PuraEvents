@@ -184,9 +184,10 @@
     "calendarSync": "Kalender-Sync",
     "exactReminders": "Erinnerungen zur genauen Zeit",
     "exactRemindersOff": "Aus — zum Erlauben tippen",
-    "exactRemindersTitle": "Erinnerungen pünktlich erhalten",
-    "exactRemindersMessage": "Android kann Erinnerungen von PuraEvents bis zu einer Stunde später zeigen, wenn Wecker und Erinnerungen nicht erlaubt sind. Erlaube es auf dem nächsten Bildschirm.",
-    "exactRemindersAllow": "Erlauben"
+    "exactRemindersTitle": "Pünktliche Erinnerungen",
+    "exactRemindersMessage": "Erlaube PuraEvents, Wecker und Erinnerungen zu stellen, damit Erinnerungen genau pünktlich kommen.",
+    "exactRemindersAllow": "Erlauben",
+    "exactRemindersLater": "Nicht jetzt"
   },
   "notificationHistory": {
     "newCount": "{{count}} neu",
