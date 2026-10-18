@@ -1,6 +1,6 @@
 import umalqura from '@umalqura/core';
-import dayjs from 'dayjs';
-import { toJalaali } from 'jalaali-js';
+import dayjs, { type Dayjs } from 'dayjs';
+import { jalaaliToDateObject, toJalaali } from 'jalaali-js';
 
 import type { CalendarSystem } from '../storage/preferences';
 
@@ -204,6 +204,25 @@ export function formatCivilDateMonthDay(iso: string, calendar: CalendarSystem, l
   const useFarsiDigits = shouldUseFarsiDigits(language);
   const dayStr = useFarsiDigits ? toPersianDigits(day) : String(day);
   return `${dayStr} ${calendar !== 'gregorian' || useFarsiDigits ? isolateRTL(monthName) : monthName}`;
+}
+
+/** Start (00:00 on day 1) of the month `offset` months from the one
+ *  `date` falls in, counted in the given calendar — a Shamsi month runs
+ *  e.g. 22 Sep – 22 Oct, not 1 Oct – 31 Oct. */
+export function civilMonthStart(date: Dayjs, calendar: CalendarSystem, offset = 0): Dayjs {
+  if (calendar === 'gregorian') return date.startOf('month').add(offset, 'month');
+  const { year, month } = toCivilDate(date.toISOString(), calendar);
+  const index = year * 12 + (month - 1) + offset;
+  const y = Math.floor(index / 12);
+  const m = (index % 12) + 1;
+  return dayjs(calendar === 'persian' ? jalaaliToDateObject(y, m, 1) : hijriToDateObject(y, m, 1));
+}
+
+/** The month's name in the given calendar ("مهر", "صفر", "October"/"Okt"…),
+ *  in the UI language for Gregorian. */
+export function civilMonthName(iso: string, calendar: CalendarSystem, language: string): string {
+  if (calendar === 'gregorian') return (GREGORIAN_MONTHS_BY_LANGUAGE[language] ?? GREGORIAN_MONTHS_BY_LANGUAGE.en)[dayjs(iso).month()];
+  return toCivilDate(iso, calendar, language).monthName;
 }
 
 /** Bare day-of-month number in the target calendar, e.g. for "every month on the 16th". */

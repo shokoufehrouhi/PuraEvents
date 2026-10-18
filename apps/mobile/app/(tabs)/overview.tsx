@@ -15,7 +15,7 @@ import { getCategoryIcon } from '../../src/theme/icons';
 import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
 import { responsiveContent } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
-import { formatCivilDateFull, GREGORIAN_MONTHS_BY_LANGUAGE, localizeDigits } from '../../src/utils/calendars';
+import { civilMonthName, formatCivilDateFull, localizeDigits } from '../../src/utils/calendars';
 import { computeOverview, type TimelineGroup } from '../../src/utils/overview';
 import { flipInRTL } from '../../src/utils/rtl';
 
@@ -42,7 +42,7 @@ export default function OverviewScreen() {
     }, []),
   );
 
-  const data = useMemo(() => computeOverview(events, log, isPro), [events, log, isPro]);
+  const data = useMemo(() => computeOverview(events, log, isPro, prefs.calendar), [events, log, isPro, prefs.calendar]);
   const n = (value: number) => localizeDigits(value, i18n.language);
 
   const card = (children: ReactNode, title?: string) => (
@@ -104,7 +104,6 @@ export default function OverviewScreen() {
   const next = data.upcoming[0];
   const maxCategory = Math.max(1, ...data.byCategory.map((c) => c.count));
   const maxMonth = Math.max(1, ...data.perMonth.map((m) => m.count));
-  const months = GREGORIAN_MONTHS_BY_LANGUAGE[i18n.language] ?? GREGORIAN_MONTHS_BY_LANGUAGE.en;
   const groupLabel: Record<TimelineGroup, string> = {
     today: t('overview.today'),
     thisWeek: t('overview.thisWeek'),
@@ -214,9 +213,13 @@ export default function OverviewScreen() {
                     <View style={[styles.columnFill, { height: `${(count / maxMonth) * 100}%`, backgroundColor: colors.primary }]} />
                   </View>
                   <Text style={[typography.caption, { color: colors.secondary, fontSize: 11 }]} numberOfLines={1}>
-                    {/* Short names where the alphabet allows (Sep, Okt, Eyl); Farsi and
-                        Arabic month names are short already. */}
-                    {['fa', 'ar'].includes(i18n.language) ? months[month.month()] : months[month.month()].slice(0, 3)}
+                    {/* The month in the app's calendar (Shamsi/Hijri months are
+                        their own spans, see computeOverview). Gregorian names
+                        are shortened where the alphabet allows (Sep, Okt, Eyl);
+                        Farsi/Arabic ones and Shamsi/Hijri names stay whole. */}
+                    {prefs.calendar === 'gregorian' && !['fa', 'ar'].includes(i18n.language)
+                      ? civilMonthName(month.toISOString(), prefs.calendar, i18n.language).slice(0, 3)
+                      : civilMonthName(month.toISOString(), prefs.calendar, i18n.language)}
                   </Text>
                 </View>
               ))}

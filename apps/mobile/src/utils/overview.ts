@@ -1,6 +1,8 @@
 import dayjs, { type Dayjs } from 'dayjs';
 
 import type { NotificationLogEntry } from '../storage/notificationLog';
+import type { CalendarSystem } from '../storage/preferences';
+import { civilMonthStart } from './calendars';
 import type { EventCategory, PurEvent } from '../types/event';
 import { getNextOccurrence, stepOccurrence } from './recurrence';
 import { getActiveReminders } from './reminders';
@@ -22,7 +24,8 @@ export interface OverviewData {
   timeline: { group: TimelineGroup; items: UpcomingItem[] }[];
   byCategory: { category: EventCategory; count: number }[];
   pastCounts: { months3: number; months6: number; months12: number };
-  /** The last 6 months, oldest first. */
+  /** The last 6 months of the user's calendar, oldest first (`month` is
+   *  the month's first moment). */
   perMonth: { month: Dayjs; count: number }[];
   remindersNext7Days: number;
   notificationsLast30Days: number;
@@ -55,6 +58,7 @@ export function computeOverview(
   events: PurEvent[],
   log: NotificationLogEntry[],
   isPro: boolean,
+  calendar: CalendarSystem = 'gregorian',
   now: Dayjs = dayjs(),
 ): OverviewData {
   const upcoming = events
@@ -80,8 +84,8 @@ export function computeOverview(
     events.reduce((sum, e) => sum + occurrencesBetween(e, now.subtract(months, 'month'), now).length, 0);
 
   const perMonth = Array.from({ length: 6 }, (_, i) => {
-    const month = now.subtract(5 - i, 'month').startOf('month');
-    const end = i === 5 ? now : month.add(1, 'month');
+    const month = civilMonthStart(now, calendar, i - 5);
+    const end = i === 5 ? now : civilMonthStart(now, calendar, i - 4);
     return { month, count: events.reduce((sum, e) => sum + occurrencesBetween(e, month, end).length, 0) };
   });
 
