@@ -27,6 +27,8 @@ export function formatEventDateLine(
   switch (repeat) {
     case 'daily':
     case 'weekdays':
+    case 'weekdaysSun':
+    case 'weekdaysSat':
     case 'weekly':
     case 'monthly':
     case 'yearly':

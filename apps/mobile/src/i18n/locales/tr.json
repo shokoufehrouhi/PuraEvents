@@ -96,6 +96,8 @@
       "none": "Tekrarlanmaz",
       "daily": "Her gün",
       "weekdays": "Hafta içi",
+      "weekdaysSun": "Hafta içi",
+      "weekdaysSat": "Hafta içi",
       "weekly": "Haftalık",
       "monthly": "Aylık",
       "yearly": "Yıllık"
@@ -122,6 +124,8 @@
     "repeatNoneDesc": "Tek seferlik etkinlik",
     "repeatDailyDesc": "Her gün",
     "repeatWeekdaysDesc": "Pazartesiden cumaya",
+    "repeatWeekdaysSunDesc": "Pazardan perşembeye",
+    "repeatWeekdaysSatDesc": "Cumartesiden çarşambaya",
     "repeatWeeklyDesc": "Her hafta {{day}} günü",
     "repeatMonthlyDesc": "Her ayın {{day}}",
     "repeatYearlyDesc": "Her yıl {{date}}",

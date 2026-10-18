@@ -96,6 +96,8 @@
       "none": "Wiederholt sich nicht",
       "daily": "Täglich",
       "weekdays": "Werktags",
+      "weekdaysSun": "Werktags",
+      "weekdaysSat": "Werktags",
       "weekly": "Wöchentlich",
       "monthly": "Monatlich",
       "yearly": "Jährlich"
@@ -122,6 +124,8 @@
     "repeatNoneDesc": "Einmaliges Ereignis",
     "repeatDailyDesc": "Jeden Tag",
     "repeatWeekdaysDesc": "Montag bis Freitag",
+    "repeatWeekdaysSunDesc": "Sonntag bis Donnerstag",
+    "repeatWeekdaysSatDesc": "Samstag bis Mittwoch",
     "repeatWeeklyDesc": "Jede Woche am {{day}}",
     "repeatMonthlyDesc": "Jeden Monat am {{day}}",
     "repeatYearlyDesc": "Jedes Jahr am {{date}}",

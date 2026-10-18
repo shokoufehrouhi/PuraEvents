@@ -83,7 +83,7 @@ private enum Shared {
                 "personal": "Personal", "work": "Work", "travel": "Travel",
                 "finance": "Finance", "health": "Health", "other": "Other",
             ],
-            repeats: ["none": "No repeat", "yearly": "Yearly", "monthly": "Monthly", "weekly": "Weekly", "weekdays": "Weekdays", "daily": "Daily"],
+            repeats: ["none": "No repeat", "yearly": "Yearly", "monthly": "Monthly", "weekly": "Weekly", "weekdays": "Weekdays", "weekdaysSun": "Weekdays", "weekdaysSat": "Weekdays", "daily": "Daily"],
             units: ["DAYS", "HRS", "MIN"], leftToday: "LEFT TODAY", heroCaption: "TODAY TRIPS", today: "Today"
         )
     }

@@ -96,6 +96,8 @@
       "none": "تکرار نمی‌شود",
       "daily": "روزانه",
       "weekdays": "روزهای کاری",
+      "weekdaysSun": "روزهای کاری",
+      "weekdaysSat": "روزهای کاری",
       "weekly": "هفتگی",
       "monthly": "ماهانه",
       "yearly": "سالانه"
@@ -122,6 +124,8 @@
     "repeatNoneDesc": "رویداد یک‌باره",
     "repeatDailyDesc": "هر روز",
     "repeatWeekdaysDesc": "دوشنبه تا جمعه",
+    "repeatWeekdaysSunDesc": "یکشنبه تا پنجشنبه",
+    "repeatWeekdaysSatDesc": "شنبه تا چهارشنبه",
     "repeatWeeklyDesc": "هر هفته، روز {{day}}",
     "repeatMonthlyDesc": "هر ماه، روز {{day}}",
     "repeatYearlyDesc": "هر سال، تاریخ {{date}}",

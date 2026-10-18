@@ -17,7 +17,12 @@ export type NotificationSoundKey = 'default' | 'chime' | 'bell' | 'ping' | 'puls
 
 export type EventCategory = 'personal' | 'work' | 'travel' | 'finance' | 'health' | 'other';
 
-export type RepeatRule = 'none' | 'yearly' | 'monthly' | 'weekly' | 'weekdays' | 'daily';
+/** 'weekdays' is the 5-day work week starting Monday; 'weekdaysSun' and
+ *  'weekdaysSat' start it on Sunday / Saturday (Sun–Thu, Sat–Wed). Which
+ *  one is chosen follows Preferences > First day of week when it's picked,
+ *  then stays with the event so its days never shift. */
+export type WeekdaysRule = 'weekdays' | 'weekdaysSun' | 'weekdaysSat';
+export type RepeatRule = 'none' | 'yearly' | 'monthly' | 'weekly' | WeekdaysRule | 'daily';
 
 /** Free-tier hero card presets (see src/theme/cardThemes.ts). 'custom' is a
  *  user-supplied (or Pro category-gallery) photo background — see

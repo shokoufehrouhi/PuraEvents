@@ -10,6 +10,7 @@ import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import type { RepeatRule } from '../../src/types/event';
 import { civilDayOfMonth, formatCivilDateMonthDay, shouldUseFarsiDigits, toPersianDigits } from '../../src/utils/calendars';
 import { resolvePick } from '../../src/utils/pickerBridge';
+import { isWeekdaysRule, weekdaysRuleFor } from '../../src/utils/recurrence';
 import { flipInRTL } from '../../src/utils/rtl';
 
 // English ordinal suffix — only meaningful for the Gregorian calendar (a
@@ -50,6 +51,10 @@ export default function RepeatPickerScreen() {
         return t('events.repeatDailyDesc');
       case 'weekdays':
         return t('events.repeatWeekdaysDesc');
+      case 'weekdaysSun':
+        return t('events.repeatWeekdaysSunDesc');
+      case 'weekdaysSat':
+        return t('events.repeatWeekdaysSatDesc');
       case 'weekly':
         return t('events.repeatWeeklyDesc', { day: dayjs(dateISO).format('dddd') });
       case 'monthly': {
@@ -64,6 +69,12 @@ export default function RepeatPickerScreen() {
         return t('events.repeatNoneDesc');
     }
   }
+
+  // One "Weekdays" option: the event's own work week when it already
+  // repeats on weekdays (its days never shift), otherwise the one that
+  // starts on Preferences > First day of week.
+  const weekdaysKey = current && isWeekdaysRule(current as RepeatRule) ? (current as RepeatRule) : weekdaysRuleFor(prefs.firstDayOfWeek);
+  const options = REPEATS.map((key) => (key === 'weekdays' ? weekdaysKey : key));
 
   function pick(repeat: RepeatRule) {
     resolvePick(repeat);
@@ -85,7 +96,7 @@ export default function RepeatPickerScreen() {
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md, paddingTop: 0 }}>
         <View style={styles.list}>
-          {REPEATS.map((key) => {
+          {options.map((key) => {
             const { color, icon } = REPEAT_STYLES[key];
             const isSelected = current === key;
             return (

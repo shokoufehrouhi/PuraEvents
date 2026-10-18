@@ -96,6 +96,8 @@
       "none": "لا يتكرر",
       "daily": "يوميًا",
       "weekdays": "أيام العمل",
+      "weekdaysSun": "أيام العمل",
+      "weekdaysSat": "أيام العمل",
       "weekly": "أسبوعيًا",
       "monthly": "شهريًا",
       "yearly": "سنويًا"
@@ -122,6 +124,8 @@
     "repeatNoneDesc": "حدث لمرة واحدة",
     "repeatDailyDesc": "كل يوم",
     "repeatWeekdaysDesc": "من الإثنين إلى الجمعة",
+    "repeatWeekdaysSunDesc": "من الأحد إلى الخميس",
+    "repeatWeekdaysSatDesc": "من السبت إلى الأربعاء",
     "repeatWeeklyDesc": "كل أسبوع يوم {{day}}",
     "repeatMonthlyDesc": "كل شهر في يوم {{day}}",
     "repeatYearlyDesc": "كل سنة في {{date}}",

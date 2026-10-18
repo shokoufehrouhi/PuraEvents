@@ -20,8 +20,8 @@ import { scheduleRemindersForEvent } from '../notifications';
 import { applyImportedEvents, deleteEvent, listEvents, onEventsChanged, updateEvent } from '../storage/events';
 import { loadPreferences } from '../storage/preferences';
 import { getProState } from '../subscription';
-import { getNextOccurrence, isWeekday } from '../utils/recurrence';
-import type { NewEventInput, PurEvent, RepeatRule } from '../types/event';
+import { getNextOccurrence, isWeekday, isWeekdaysRule, workDays } from '../utils/recurrence';
+import type { NewEventInput, PurEvent, RepeatRule, WeekdaysRule } from '../types/event';
 
 // Two-way sync with the phone's calendars (Pro), each direction its own
 // switch in Settings → Calendar sync:
@@ -99,7 +99,7 @@ export async function listImportableCalendars(): Promise<ExpoCalendar[]> {
 
 // --- Export ---------------------------------------------------------------
 
-const FREQUENCY: Record<Exclude<RepeatRule, 'none' | 'weekdays'>, Frequency> = {
+const FREQUENCY: Record<Exclude<RepeatRule, 'none' | WeekdaysRule>, Frequency> = {
   daily: Frequency.DAILY,
   weekly: Frequency.WEEKLY,
   monthly: Frequency.MONTHLY,
@@ -129,7 +129,9 @@ async function exportCalendar(settings: CalendarSyncSettings): Promise<ExpoCalen
   return calendar;
 }
 
-const WEEKDAYS = [DayOfTheWeek.Monday, DayOfTheWeek.Tuesday, DayOfTheWeek.Wednesday, DayOfTheWeek.Thursday, DayOfTheWeek.Friday];
+// expo-calendar's DayOfTheWeek is 1 = Sunday … 7 = Saturday; dayjs's 0 … 6.
+const toCalendarDay = (day: number): DayOfTheWeek => (day + 1) as DayOfTheWeek;
+const WEEKDAYS_RULES: WeekdaysRule[] = ['weekdays', 'weekdaysSun', 'weekdaysSat'];
 
 type CalendarDetails = ReturnType<typeof detailsAt>;
 
@@ -147,26 +149,27 @@ function detailsAt(event: PurEvent, start: dayjs.Dayjs, recurrenceRule: Paramete
 }
 
 /** The calendar events one PuraEvents event becomes, keyed by a suffix of
- *  the export map key. Weekdays is one event repeating Monday to Friday on
- *  iOS; Android's calendar API can't set the days of a weekly rule, so
- *  there it's five weekly events, one per weekday. */
+ *  the export map key. Weekdays is one event repeating on its 5 work days
+ *  on iOS; Android's calendar API can't set the days of a weekly rule, so
+ *  there it's five weekly events, one per work day. */
 function calendarDetails(event: PurEvent): Record<string, CalendarDetails> {
   const start = dayjs(event.dateTimeISO);
   if (event.repeat === 'none') return { '': detailsAt(event, start, null) };
-  if (event.repeat !== 'weekdays') return { '': detailsAt(event, start, { frequency: FREQUENCY[event.repeat] }) };
+  if (!isWeekdaysRule(event.repeat)) return { '': detailsAt(event, start, { frequency: FREQUENCY[event.repeat] }) };
 
-  const first = isWeekday(start) ? start : getNextOccurrence(event.dateTimeISO, 'weekdays', start);
+  const rule = event.repeat;
+  const first = isWeekday(start, rule) ? start : getNextOccurrence(event.dateTimeISO, rule, start);
   if (Platform.OS === 'ios') {
     return {
       '': detailsAt(event, first, {
         frequency: Frequency.WEEKLY,
-        daysOfTheWeek: WEEKDAYS.map((dayOfTheWeek) => ({ dayOfTheWeek })),
+        daysOfTheWeek: workDays(rule).map((day) => ({ dayOfTheWeek: toCalendarDay(day) })),
       }),
     };
   }
   const out: Record<string, CalendarDetails> = {};
   for (let i = 0; i < 5; i++) {
-    const day = getNextOccurrence(event.dateTimeISO, 'weekdays', first.add(i, 'day'));
+    const day = getNextOccurrence(event.dateTimeISO, rule, first.add(i, 'day'));
     out[`#${day.day()}`] = detailsAt(event, day, { frequency: Frequency.WEEKLY });
   }
   return out;
@@ -235,11 +238,12 @@ function repeatFor(event: ExpoCalendarEvent): RepeatRule {
   if (!rule || (rule.interval ?? 1) !== 1) return 'none';
   if (rule.frequency === Frequency.DAILY) return 'daily';
   if (rule.frequency === Frequency.WEEKLY) {
-    // Only iOS reports the days of a weekly rule. Monday to Friday is
-    // weekdays; any other set of several days has no PuraEvents repeat.
-    const days = (rule.daysOfTheWeek ?? []).map((d) => d.dayOfTheWeek).sort();
-    if (days.length <= 1) return 'weekly';
-    return days.join() === [...WEEKDAYS].sort().join() ? 'weekdays' : 'none';
+    // Only iOS reports the days of a weekly rule. Mon–Fri, Sun–Thu and
+    // Sat–Wed are the weekdays rules; any other set of several days has no
+    // PuraEvents repeat.
+    const days = (rule.daysOfTheWeek ?? []).map((d) => d.dayOfTheWeek).sort().join();
+    if ((rule.daysOfTheWeek ?? []).length <= 1) return 'weekly';
+    return WEEKDAYS_RULES.find((r) => workDays(r).map(toCalendarDay).sort().join() === days) ?? 'none';
   }
   if (rule.frequency === Frequency.MONTHLY) return 'monthly';
   if (rule.frequency === Frequency.YEARLY) return 'yearly';

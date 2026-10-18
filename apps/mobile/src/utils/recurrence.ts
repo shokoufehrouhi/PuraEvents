@@ -1,42 +1,58 @@
 import dayjs, { type Dayjs, type ManipulateType } from 'dayjs';
 
-import type { RepeatRule } from '../types/event';
+import type { RepeatRule, WeekdaysRule } from '../types/event';
 
-const UNIT_BY_REPEAT: Record<Exclude<RepeatRule, 'none' | 'weekdays'>, ManipulateType> = {
+const UNIT_BY_REPEAT: Record<Exclude<RepeatRule, 'none' | WeekdaysRule>, ManipulateType> = {
   daily: 'day',
   weekly: 'week',
   monthly: 'month',
   yearly: 'year',
 };
 
-/** Monday to Friday, whatever the app language — the rule is stored, so
- *  its days must not shift when the language changes. */
-export function isWeekday(date: Dayjs): boolean {
-  const day = date.day();
-  return day >= 1 && day <= 5;
+/** First day (dayjs: 0 = Sunday) of each work week rule. */
+const WORK_WEEK_START: Record<WeekdaysRule, number> = { weekdays: 1, weekdaysSun: 0, weekdaysSat: 6 };
+
+export function isWeekdaysRule(repeat: RepeatRule): repeat is WeekdaysRule {
+  return repeat in WORK_WEEK_START;
+}
+
+/** The weekdays rule whose work week starts on Preferences > First day of
+ *  week (Monday → Mon–Fri, Sunday → Sun–Thu, Saturday → Sat–Wed). */
+export function weekdaysRuleFor(firstDayOfWeek: number): WeekdaysRule {
+  return firstDayOfWeek === 0 ? 'weekdaysSun' : firstDayOfWeek === 6 ? 'weekdaysSat' : 'weekdays';
+}
+
+/** The 5 work days of a weekdays rule, as dayjs days (0 = Sunday). */
+export function workDays(rule: WeekdaysRule): number[] {
+  return [0, 1, 2, 3, 4].map((i) => (WORK_WEEK_START[rule] + i) % 7);
+}
+
+/** Whether `date` is one of the rule's 5 work days (Mon–Fri by default). */
+export function isWeekday(date: Dayjs, rule: WeekdaysRule = 'weekdays'): boolean {
+  return (date.day() - WORK_WEEK_START[rule] + 7) % 7 < 5;
 }
 
 /** The occurrence after `at` (same time of day). */
 export function stepOccurrence(at: Dayjs, repeat: Exclude<RepeatRule, 'none'>): Dayjs {
-  if (repeat !== 'weekdays') return at.add(1, UNIT_BY_REPEAT[repeat]);
+  if (!isWeekdaysRule(repeat)) return at.add(1, UNIT_BY_REPEAT[repeat]);
   let next = at.add(1, 'day');
-  while (!isWeekday(next)) next = next.add(1, 'day');
+  while (!isWeekday(next, repeat)) next = next.add(1, 'day');
   return next;
 }
 
 /** The occurrence before `at` (same time of day). */
 function stepBack(at: Dayjs, repeat: Exclude<RepeatRule, 'none'>): Dayjs {
-  if (repeat !== 'weekdays') return at.subtract(1, UNIT_BY_REPEAT[repeat]);
+  if (!isWeekdaysRule(repeat)) return at.subtract(1, UNIT_BY_REPEAT[repeat]);
   let prev = at.subtract(1, 'day');
-  while (!isWeekday(prev)) prev = prev.subtract(1, 'day');
+  while (!isWeekday(prev, repeat)) prev = prev.subtract(1, 'day');
   return prev;
 }
 
 /** The first real occurrence: the stored date itself, except a weekdays
- *  event saved on a weekend, which starts on the next weekday. */
+ *  event saved on a day off, which starts on the next work day. */
 function firstOccurrence(dateTimeISO: string, repeat: RepeatRule): Dayjs {
   const start = dayjs(dateTimeISO);
-  return repeat === 'weekdays' && !isWeekday(start) ? stepOccurrence(start, 'weekdays') : start;
+  return isWeekdaysRule(repeat) && !isWeekday(start, repeat) ? stepOccurrence(start, repeat) : start;
 }
 
 /**
@@ -56,10 +72,10 @@ export function getNextOccurrence(dateTimeISO: string, repeat: RepeatRule, from:
   // Jump forward in whole cycles first so we're not looping one cycle at a
   // time for an event that's years overdue, then step the rest. Weekdays
   // jumps by whole days and lets stepOccurrence skip the weekends.
-  const unit = repeat === 'weekdays' ? 'day' : UNIT_BY_REPEAT[repeat];
+  const unit = isWeekdaysRule(repeat) ? 'day' : UNIT_BY_REPEAT[repeat];
   const cyclesElapsed = Math.max(0, from.diff(occurrence, unit));
   if (cyclesElapsed > 0) occurrence = occurrence.add(cyclesElapsed, unit);
-  if (repeat === 'weekdays' && !isWeekday(occurrence)) occurrence = stepOccurrence(occurrence, 'weekdays');
+  if (isWeekdaysRule(repeat) && !isWeekday(occurrence, repeat)) occurrence = stepOccurrence(occurrence, repeat);
   while (occurrence.isBefore(from)) {
     occurrence = stepOccurrence(occurrence, repeat);
   }
@@ -105,7 +121,9 @@ export function doesEventOccurOnDate(dateTimeISO: string, repeat: RepeatRule, ta
     case 'daily':
       return true;
     case 'weekdays':
-      return isWeekday(target);
+    case 'weekdaysSun':
+    case 'weekdaysSat':
+      return isWeekday(target, repeat);
     case 'weekly':
       return target.day() === start.day();
     case 'monthly':
