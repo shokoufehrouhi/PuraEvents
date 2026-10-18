@@ -106,11 +106,30 @@ const FREQUENCY: Record<Exclude<RepeatRule, 'none' | WeekdaysRule>, Frequency> =
   yearly: Frequency.YEARLY,
 };
 
+/** Every "PuraEvents" calendar this app made on the phone — on Android its
+ *  own local account, on iOS by title. More than one is left over when the
+ *  app's data was cleared (its id forgotten) and export made a new one. */
+async function ownCalendars(): Promise<ExpoCalendar[]> {
+  const calendars = await getCalendars(EntityTypes.EVENT).catch(() => [] as ExpoCalendar[]);
+  return calendars.filter(
+    (c) => c.title === CALENDAR_TITLE && (Platform.OS === 'ios' || (c.source?.name === CALENDAR_TITLE && c.source?.type === 'LOCAL')),
+  );
+}
+
 async function exportCalendar(settings: CalendarSyncSettings): Promise<ExpoCalendar> {
   if (settings.exportCalendarId) {
     const existing = await ExpoCalendar.get(settings.exportCalendarId).catch(() => null);
-    if (existing) return existing;
+    if (existing) {
+      // Leftovers from before the app's data was cleared go too.
+      for (const old of await ownCalendars()) if (old.id !== existing.id) await old.delete().catch(() => {});
+      return existing;
+    }
   }
+  // Its id was lost (data cleared, reinstall): an earlier calendar still
+  // holds copies of the events with nothing linking them, so starting
+  // fresh beside it would show every event twice.
+  for (const old of await ownCalendars()) await old.delete().catch(() => {});
+  await AsyncStorage.removeItem(EXPORT_MAP_KEY);
   const calendar = await createCalendar({
     title: CALENDAR_TITLE,
     color: BRAND_COLOR,
@@ -209,6 +228,7 @@ export async function removeExportCalendar(): Promise<void> {
     const calendar = await ExpoCalendar.get(settings.exportCalendarId).catch(() => null);
     await calendar?.delete().catch(() => {});
   }
+  for (const old of await ownCalendars()) await old.delete().catch(() => {});
   await AsyncStorage.removeItem(EXPORT_MAP_KEY);
   await saveCalendarSettings({ exportCalendarId: null });
 }
