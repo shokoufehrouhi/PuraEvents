@@ -15,11 +15,22 @@ import { getNextOccurrence } from './recurrence';
 export function getActiveEventIds(events: PurEvent[], isPro: boolean): Set<string> {
   if (isPro) return new Set(events.map((e) => e.id));
   const upcoming = events
-    .filter((e) => e.repeat !== 'none' || getNextOccurrence(e.dateTimeISO, e.repeat).isAfter(dayjs()))
+    .filter(isEventActive)
     .sort(
       (a, b) => getNextOccurrence(a.dateTimeISO, a.repeat).valueOf() - getNextOccurrence(b.dateTimeISO, b.repeat).valueOf()
     );
   return new Set(upcoming.slice(0, FREE_LIMITS.maxActiveEvents).map((e) => e.id));
+}
+
+// An event counts toward the free cap only while it still has an upcoming
+// occurrence — passed one-time events are history and must not block
+// creating new ones.
+export function isEventActive(event: PurEvent): boolean {
+  return event.repeat !== 'none' || getNextOccurrence(event.dateTimeISO, event.repeat).isAfter(dayjs());
+}
+
+export function hasReachedFreeEventLimit(events: PurEvent[], isPro: boolean): boolean {
+  return !isPro && events.filter(isEventActive).length >= FREE_LIMITS.maxActiveEvents;
 }
 
 export function isEventFrozen(event: PurEvent, activeEventIds: Set<string>, isPro: boolean): boolean {

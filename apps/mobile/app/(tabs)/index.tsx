@@ -14,13 +14,14 @@ import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 import { listEvents, onEventsChanged } from '../../src/storage/events';
 import { cacheHeroPhoto } from '../../src/storage/heroPhoto';
 import { unseenNotificationCount } from '../../src/storage/notificationLog';
-import { FREE_LIMITS, usePro } from '../../src/subscription';
+import { usePro } from '../../src/subscription';
 import { getCategoryIcon } from '../../src/theme/icons';
 import { usePreferences, useTheme } from '../../src/theme/PreferencesContext';
 import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import { accents } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
 import { formatCivilDateFull } from '../../src/utils/calendars';
+import { hasReachedFreeEventLimit } from '../../src/utils/eventAccess';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence, getPreviousOccurrence } from '../../src/utils/recurrence';
 import { syncHomeScreenWidget } from '../../src/widgets/syncHomeScreenWidget';
@@ -229,9 +230,9 @@ export default function EventListScreen() {
   }, [pastList, pastFilter, now]);
 
   const listData = tab === 'upcoming' ? upcoming : filteredPastList;
-  // "Active events" mirrors EventWizard's own create-time gate (total
-  // stored count, not just Upcoming) — see FREE_LIMITS.maxActiveEvents.
-  const limitReached = !isPro && events.length >= FREE_LIMITS.maxActiveEvents;
+  // Same gate as EventWizard's create-time check: only events that still
+  // have an upcoming occurrence count — see FREE_LIMITS.maxActiveEvents.
+  const limitReached = hasReachedFreeEventLimit(events, isPro);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>

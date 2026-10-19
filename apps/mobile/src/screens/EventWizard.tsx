@@ -17,7 +17,7 @@ import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
 import { scheduleRemindersForEvent } from '../notifications';
 import { createEvent, getEvent, listEvents, updateEvent } from '../storage/events';
-import { usePro, FREE_LIMITS } from '../subscription';
+import { usePro } from '../subscription';
 import { CARD_THEME_KEYS, CARD_THEMES } from '../theme/cardThemes';
 import { REPEAT_STYLES } from '../theme/repeatStyles';
 import { usePreferences, useTheme } from '../theme/PreferencesContext';
@@ -36,6 +36,7 @@ import {
 } from '../types/event';
 import { formatCivilDateFull, localizeDigits, shouldUseFarsiDigits } from '../utils/calendars';
 import { resolvePhotoUri } from '../utils/persistImage';
+import { hasReachedFreeEventLimit } from '../utils/eventAccess';
 import { awaitPick } from '../utils/pickerBridge';
 import { flipInRTL } from '../utils/rtl';
 
@@ -266,7 +267,7 @@ export function EventWizard({ mode, eventId }: Props) {
 
     if (mode === 'create') {
       const existing = await listEvents();
-      if (!isPro && existing.length >= FREE_LIMITS.maxActiveEvents) {
+      if (hasReachedFreeEventLimit(existing, isPro)) {
         router.push('/upgrade');
         return;
       }
