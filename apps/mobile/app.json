@@ -35,7 +35,7 @@
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "package": "com.puraapps.puraevents",
-      "versionCode": 16
+      "versionCode": 17
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -95,7 +95,8 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone to record a voice message for the shared card."
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone to record a voice message for the shared card.",
+          "enableBackgroundPlayback": false
         }
       ],
       [
