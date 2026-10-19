@@ -223,6 +223,24 @@ function Navigation() {
         <Stack.Screen name="event/new" />
         <Stack.Screen name="event/category-picker" />
         <Stack.Screen name="event/repeat-picker" />
+        {/* The New/Edit Event wizard's sections, each its own push screen
+            — same no-shared-back-title reasoning as reminder-picker below. */}
+        <Stack.Screen
+          name="event/schedule"
+          options={{ ...headerOptions, title: t('events.stepSchedule'), headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="event/appearance"
+          options={{ ...headerOptions, title: t('events.stepAppearance'), headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="event/advanced"
+          options={{ ...headerOptions, title: t('events.stepAdvanced'), headerBackButtonDisplayMode: 'minimal' }}
+        />
+        <Stack.Screen
+          name="event/share"
+          options={{ ...headerOptions, title: t('events.stepShare'), headerBackButtonDisplayMode: 'minimal' }}
+        />
         <Stack.Screen name="event/[id]/index" />
         <Stack.Screen name="event/[id]/edit" />
         <Stack.Screen
