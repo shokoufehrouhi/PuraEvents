@@ -12,13 +12,12 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Section } from '../components/ui/Section';
 import { scheduleRemindersForEvent } from '../notifications';
-import { createEvent, getEvent, listEvents, updateEvent } from '../storage/events';
+import { createEvent, getEvent, updateEvent } from '../storage/events';
 import { usePro } from '../subscription';
 import { usePreferences, useTheme } from '../theme/PreferencesContext';
 import { ACCENT_KEYS, accents, elevation, responsiveContent } from '../theme/tokens';
 import type { EventCategory } from '../types/event';
 import { formatCivilDateFull, localizeDigits } from '../utils/calendars';
-import { hasReachedFreeEventLimit } from '../utils/eventAccess';
 import { awaitPick } from '../utils/pickerBridge';
 import { flipInRTL } from '../utils/rtl';
 import { newEventDraft, resetEventDraft, updateEventDraft, useEventDraft } from './eventDraft';
@@ -119,14 +118,6 @@ export function EventWizard({ mode, eventId }: Props) {
 
   async function handleSave() {
     if (!canSave) return;
-
-    if (mode === 'create') {
-      const existing = await listEvents();
-      if (hasReachedFreeEventLimit(existing, isPro)) {
-        router.push('/upgrade');
-        return;
-      }
-    }
 
     setSaving(true);
     try {

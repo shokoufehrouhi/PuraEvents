@@ -150,3 +150,24 @@ export function useGatedAction() {
     [status, retry, runGated, t]
   );
 }
+
+// Like useGatedAction, but never blocks: shows the interstitial first when
+// one is loaded, otherwise just runs the action. For Delete — the user must
+// always be able to remove an event, even offline. Android only for now:
+// on iOS the interstitial presented black and stuck over this screen stack
+// (see the Delete handler in app/event/[id]/index.tsx), and a stuck screen
+// on a no-undo action is worse than no ad.
+export function useAdBeforeAction() {
+  const { status, runGated } = useAdGate();
+
+  return useCallback(
+    (action: () => void | Promise<void>) => {
+      if (Platform.OS === 'android' && status === 'ready') {
+        runGated(action);
+        return;
+      }
+      action();
+    },
+    [status, runGated]
+  );
+}

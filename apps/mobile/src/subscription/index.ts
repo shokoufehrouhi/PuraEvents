@@ -240,7 +240,6 @@ export async function restorePro(): Promise<boolean> {
 
 // Free-tier limits, mirrored from docs/PROJECT.md §6.1.
 export const FREE_LIMITS = {
-  maxActiveEvents: 3,
   maxWidgets: 1,
   maxRemindersPerEvent: 1,
   // Free's one reminder isn't a free choice among the presets — it's

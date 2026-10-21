@@ -21,11 +21,9 @@ import { REPEAT_STYLES } from '../../src/theme/repeatStyles';
 import { accents } from '../../src/theme/tokens';
 import type { PurEvent } from '../../src/types/event';
 import { formatCivilDateFull } from '../../src/utils/calendars';
-import { hasReachedFreeEventLimit } from '../../src/utils/eventAccess';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence, getPreviousOccurrence } from '../../src/utils/recurrence';
 import { syncHomeScreenWidget } from '../../src/widgets/syncHomeScreenWidget';
-import { flipInRTL } from '../../src/utils/rtl';
 
 type PastFilter = '3m' | '6m' | '1y' | 'all';
 
@@ -79,42 +77,6 @@ function EventRow({ event, onPress }: { event: PurEvent; onPress: () => void }) 
           ) : null}
         </View>
         <HeroCountdown targetISO={nextOccurrence.toISOString()} textColor={categoryColor} labelColor={categoryColor} numberSize={16} labelSize={8} compact />
-      </View>
-    </Pressable>
-  );
-}
-
-// Free-plan "you've hit the event cap" notice — matches the mockup: a
-// diamond badge, title/subtitle, and a "View Pro >" link, the whole card
-// tappable to /paywall (same destination the wizard's own save-time gate
-// already routes to when creating past the limit — see EventWizard.tsx).
-function LimitBanner({ onPress }: { onPress: () => void }) {
-  const { t } = useTranslation();
-  const { colors, spacing, radius, typography } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.limitBanner,
-        {
-          backgroundColor: `${colors.primary}14`,
-          borderColor: `${colors.primary}33`,
-          borderRadius: radius.lg,
-          padding: spacing.sm + 4,
-          marginBottom: spacing.sm,
-        },
-      ]}
-    >
-      <View style={[styles.limitBadge, { backgroundColor: `${colors.primary}22`, borderRadius: 999 }]}>
-        <Ionicons name="diamond" size={20} color={colors.primary} />
-      </View>
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('events.limitReachedTitle')}</Text>
-        <Text style={[typography.caption, { color: colors.secondary, marginTop: 2 }]}>{t('events.limitReachedSubtitle')}</Text>
-      </View>
-      <View style={styles.limitLink}>
-        <Text style={[typography.bodyStrong, { color: colors.primary }]}>{t('events.viewPro')}</Text>
-        <Ionicons name="chevron-forward" size={16} color={colors.primary} style={flipInRTL} />
       </View>
     </Pressable>
   );
@@ -230,9 +192,6 @@ export default function EventListScreen() {
   }, [pastList, pastFilter, now]);
 
   const listData = tab === 'upcoming' ? upcoming : filteredPastList;
-  // Same gate as EventWizard's create-time check: only events that still
-  // have an upcoming occurrence count — see FREE_LIMITS.maxActiveEvents.
-  const limitReached = hasReachedFreeEventLimit(events, isPro);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
@@ -263,7 +222,7 @@ export default function EventListScreen() {
           )}
         </View>
         <Pressable
-          onPress={() => router.push(limitReached ? '/upgrade' : '/event/new')}
+          onPress={() => router.push('/event/new')}
           hitSlop={12}
           style={({ pressed }) => [
             styles.headerAddButton,
@@ -271,11 +230,6 @@ export default function EventListScreen() {
           ]}
         >
           <Ionicons name="add" size={22} color={colors.primary} />
-          {limitReached ? (
-            <View style={[styles.lockBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-              <Ionicons name="lock-closed" size={9} color="#fff" />
-            </View>
-          ) : null}
         </Pressable>
       </View>
 
@@ -312,12 +266,6 @@ export default function EventListScreen() {
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
         ListHeaderComponent={
           <>
-            {/* Pro upsell only makes sense against the active-event cap,
-                which Upcoming represents — Past is a history view, not
-                somewhere hitting the limit is relevant. */}
-            {limitReached && tab === 'upcoming' ? (
-              <LimitBanner onPress={() => router.push('/upgrade')} />
-            ) : null}
             {/* Always a generic "Today" banner — never tied to a specific
                 event's title/countdown (a user explicitly asked why "their"
                 event had to sit on the banner instead of just showing as a
@@ -456,20 +404,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  lockBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  limitBanner: { flexDirection: 'row', alignItems: 'center', borderWidth: 1 },
-  limitBadge: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  limitLink: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowMiddle: { flex: 1, marginLeft: 12, gap: 2 },
   // Column, not row, so the icons sit above the days/hrs/min countdown

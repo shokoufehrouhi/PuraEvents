@@ -11,6 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Share from 'react-native-share';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 
+import { useAdBeforeAction } from '../../../src/ads/adGate';
 import { ConfirmModal, type ConfirmModalState } from '../../../src/components/ConfirmModal';
 import { HeroCountdown } from '../../../src/components/HeroCountdown';
 import { MiniWidget } from '../../../src/components/MiniWidget';
@@ -20,7 +21,7 @@ import { Section } from '../../../src/components/ui/Section';
 import { EventIcon } from '../../../src/components/EventIcon';
 import { cancelRemindersForEvent, scheduleRemindersForEvent } from '../../../src/notifications';
 import { forgetImportedEvent } from '../../../src/calendar/calendarSync';
-import { deleteEvent, getEvent, listEvents } from '../../../src/storage/events';
+import { deleteEvent, getEvent } from '../../../src/storage/events';
 import { usePro } from '../../../src/subscription';
 import { getCategoryIcon } from '../../../src/theme/icons';
 import { usePreferences, useTheme } from '../../../src/theme/PreferencesContext';
@@ -28,7 +29,6 @@ import { accents } from '../../../src/theme/tokens';
 import type { PurEvent } from '../../../src/types/event';
 import { formatCivilDateFull, localizeDigits } from '../../../src/utils/calendars';
 import { darken } from '../../../src/utils/color';
-import { getActiveEventIds, isEventFrozen } from '../../../src/utils/eventAccess';
 import { resolveAudioUri } from '../../../src/utils/persistAudio';
 import { getNextOccurrence } from '../../../src/utils/recurrence';
 import { getActiveReminders, reminderLabel } from '../../../src/utils/reminders';
@@ -76,9 +76,6 @@ export default function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [event, setEvent] = useState<PurEvent | null>(null);
-  // Needed to rank this event against every other one for the free-plan
-  // "only 3 editable at once" rotation below — see getActiveEventIds.
-  const [allEvents, setAllEvents] = useState<PurEvent[]>([]);
   // Off-screen capture target for the Share button (see handleShare below)
   // — the ShareCard graphic, independent of the visible widget preview
   // below (see ShareCard.tsx's own fixed gift-card dimensions).
@@ -86,11 +83,11 @@ export default function EventDetailScreen() {
   // Delete's confirm step — app-styled (ConfirmModal), not a plain OS
   // Alert.alert, to match the rest of the app's look.
   const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
+  const adBeforeAction = useAdBeforeAction();
 
   useFocusEffect(
     useCallback(() => {
       if (id) getEvent(id).then((e) => setEvent(e ?? null));
-      listEvents().then(setAllEvents);
     }, [id])
   );
 
@@ -116,23 +113,23 @@ export default function EventDetailScreen() {
       confirmLabel: t('events.delete'),
       cancelLabel: t('events.cancel'),
       destructive: true,
-      // Not ad-gated (unlike Save, see EventWizard.tsx) — confirmed stuck
-      // on a real iPhone: the interstitial's own view controller presented
-      // black and never rendered/dismissed, permanently blocking every
-      // touch underneath with no way out except force-quitting. Deleting
-      // is also the one destructive, no-undo action in this app; gating it
-      // behind anything that can get stuck is worse than just not gating
-      // it. Revisit once react-native-google-mobile-ads' interaction with
-      // this app's react-native-screens stack is actually debugged
-      // (Xcode's view hierarchy debugger, not just device logs).
-      onConfirm: async () => {
-        await cancelRemindersForEvent(event!.id);
-        // An event from a phone calendar would otherwise come back on the
-        // next calendar sync.
-        await forgetImportedEvent(event!);
-        await deleteEvent(event!.id);
-        router.back();
-      },
+      // Shows an ad first for free users, but never blocks the delete
+      // (see useAdBeforeAction). Android only: on a real iPhone the
+      // interstitial's own view controller presented black and never
+      // rendered/dismissed, permanently blocking every touch underneath
+      // with no way out except force-quitting. Revisit once
+      // react-native-google-mobile-ads' interaction with this app's
+      // react-native-screens stack is actually debugged (Xcode's view
+      // hierarchy debugger, not just device logs).
+      onConfirm: () =>
+        adBeforeAction(async () => {
+          await cancelRemindersForEvent(event!.id);
+          // An event from a phone calendar would otherwise come back on the
+          // next calendar sync.
+          await forgetImportedEvent(event!);
+          await deleteEvent(event!.id);
+          router.back();
+        }),
     });
   }
 
@@ -188,17 +185,7 @@ export default function EventDetailScreen() {
     }
   }
 
-  // Over the free-plan "3 editable at once" limit — see getActiveEventIds.
-  // Tappable, not just disabled: same as a frozen widget, tapping Edit here
-  // routes to the paywall instead of the editor.
-  const activeEventIds = getActiveEventIds(allEvents, isPro);
-  const frozen = isEventFrozen(event, activeEventIds, isPro);
-
   function goEdit() {
-    if (frozen) {
-      router.push('/upgrade');
-      return;
-    }
     router.push(`/event/${event!.id}/edit`);
   }
 
@@ -388,9 +375,8 @@ export default function EventDetailScreen() {
         {/* Edit/Delete, not Share — Share moved up to the title row (see
             its own comment above); Add Widget moved to the Widgets tab
             (add-widget-to-home.tsx) entirely, no per-event button here at
-            all. Edit still routes to /upgrade instead of the editor when
-            frozen (over the free-plan "3 at once" limit) and disables
-            when the event is simply past, nothing left to edit.
+            all. Edit disables when the event is simply past, nothing left
+            to edit.
             dangerOutline, not a solid danger fill, for Delete — sitting
             right next to a non-destructive action, a solid red button
             would be too loud (see Button.tsx's own comment). */}

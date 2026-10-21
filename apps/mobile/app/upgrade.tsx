@@ -151,7 +151,6 @@ export default function UpgradeScreen() {
   // a direct response to the toggle event, not state to keep synced).
 
   const rows: [string, string, string][] = [
-    [t('compare.activeEvents'), String(FREE_LIMITS.maxActiveEvents), t('compare.unlimited')],
     [t('compare.customWidgets'), String(FREE_LIMITS.maxWidgets), t('compare.unlimited')],
     [t('compare.categoryWidgets'), '—', t('compare.allWidgets')],
     [t('compare.reminders'), String(FREE_LIMITS.maxRemindersPerEvent), String(PRESET_REMINDER_OFFSETS.length)],
