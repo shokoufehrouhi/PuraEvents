@@ -35,6 +35,13 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 
   return (
     <Pressable
+      // Remount on disabled ↔ enabled: on Android (Fabric) the native view
+      // stays setEnabled(false) after `disabled` flips back to false, so
+      // Android stops routing touches to it — only the label Text (its own
+      // view) still received taps, e.g. the New Event "Create Event" button
+      // starts disabled (empty title) and then only worked when tapped
+      // exactly on the word.
+      key={isDisabled ? 'disabled' : 'enabled'}
       onPress={onPress}
       disabled={isDisabled}
       style={({ pressed }) => [
