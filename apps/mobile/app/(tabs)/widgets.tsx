@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PhotoGroupGallery } from '../../src/components/PhotoGroupGallery';
@@ -72,15 +72,27 @@ export default function WidgetsScreen() {
   // the preview's own (now fixed) display data.
   const [targetEventId, setTargetEventId] = useState<string | null>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(async () => {
+    const [loaded, loadedWidgets] = await Promise.all([listEvents(), listWidgets()]);
+    setEvents(loaded);
+    const upcoming = loaded.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
+    setTargetEventId(upcoming ? upcoming.id : null);
+    setWidgets(loadedWidgets);
+  }, []);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
+
   useFocusEffect(
     useCallback(() => {
-      listEvents().then((loaded) => {
-        setEvents(loaded);
-        const upcoming = loaded.find((e) => e.repeat !== 'none' || dayjs(e.dateTimeISO).isAfter(dayjs()));
-        setTargetEventId(upcoming ? upcoming.id : null);
-      });
-      listWidgets().then(setWidgets);
-    }, [])
+      load();
+    }, [load])
   );
 
   // Each saved widget (see storage/widgets.ts) paired with whichever real
@@ -216,7 +228,11 @@ export default function WidgetsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+      >
         <View style={styles.headerRow}>
           <Text style={[typography.title, { color: colors.text }]}>{t('widgets.title')}</Text>
           {/* Free reads as a tappable "Get Pro" CTA (routes to /upgrade),

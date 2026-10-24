@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventIcon } from '../../src/components/EventIcon';
@@ -41,6 +41,18 @@ export default function OverviewScreen() {
       });
     }, []),
   );
+
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const [loadedEvents, loadedLog] = await Promise.all([listEvents(), listNotificationLog()]);
+      setEvents(loadedEvents);
+      setLog(loadedLog);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const data = useMemo(() => computeOverview(events, log, isPro, prefs.calendar), [events, log, isPro, prefs.calendar]);
   const n = (value: number) => localizeDigits(value, i18n.language);
@@ -113,7 +125,10 @@ export default function OverviewScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 140, ...responsiveContent }}>
+      <ScrollView
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: 140, ...responsiveContent }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+      >
         {header}
 
         {card(

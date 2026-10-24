@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EventHeroCard } from '../../src/components/EventHeroCard';
@@ -24,6 +24,7 @@ import { formatCivilDateFull } from '../../src/utils/calendars';
 import { fetchLocationPhotoUrl } from '../../src/utils/locationPhoto';
 import { getNextOccurrence, getPreviousOccurrence } from '../../src/utils/recurrence';
 import { syncHomeScreenWidget } from '../../src/widgets/syncHomeScreenWidget';
+import { syncCalendars } from '../../src/calendar/calendarSync';
 
 type PastFilter = '3m' | '6m' | '1y' | 'all';
 
@@ -107,6 +108,22 @@ export default function EventListScreen() {
     const interval = setInterval(() => setNow(dayjs()), 30_000);
     return () => clearInterval(interval);
   }, []);
+
+  // Pull-to-refresh: re-reads events and the bell badge, and for Pro also
+  // pulls in the chosen phone calendars first (the same sync that runs when
+  // the app comes to the foreground).
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (isPro) await Promise.resolve(syncCalendars()).catch(() => {});
+      const [loaded, unseen] = await Promise.all([listEvents(), unseenNotificationCount()]);
+      setEvents(loaded);
+      setUnseenCount(unseen);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [isPro]);
 
   useFocusEffect(
     useCallback(() => {
@@ -263,6 +280,7 @@ export default function EventListScreen() {
       <FlatList
         data={listData}
         keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
         contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
         ListHeaderComponent={
           <>
