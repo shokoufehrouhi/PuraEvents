@@ -154,6 +154,9 @@ export default function UpgradeScreen() {
     [t('compare.customWidgets'), String(FREE_LIMITS.maxWidgets), t('compare.unlimited')],
     [t('compare.categoryWidgets'), '—', t('compare.allWidgets')],
     [t('compare.reminders'), String(FREE_LIMITS.maxRemindersPerEvent), String(PRESET_REMINDER_OFFSETS.length)],
+    [t('compare.calendarSync'), '—', t('compare.yes')],
+    [t('compare.backupExport'), '—', t('compare.yes')],
+    [t('compare.insights'), '—', t('compare.yes')],
     [t('compare.ads'), t('compare.yes'), t('compare.no')],
   ];
 
