@@ -113,7 +113,14 @@ export function initSubscriptions() {
     return;
   }
 
-  if (__DEV__) Purchases.setLogLevel(Purchases.LOG_LEVEL.WARN);
+  if (__DEV__) {
+    Purchases.setLogLevel(Purchases.LOG_LEVEL.WARN);
+    // The SDK reports store problems (e.g. BILLING_UNAVAILABLE on an emulator
+    // without Play Billing) through console.error, which React Native turns
+    // into a red error screen with source code. Route them to console.warn so
+    // dev builds only show the small yellow toast.
+    Purchases.setLogHandler((_level, message) => console.warn(message));
+  }
   Purchases.configure({ apiKey: API_KEY });
   // Fires on purchase, restore, renewal and expiry alike — this is what
   // replaced the old 15s clock poll for the "Pro lapsed" downgrade.
