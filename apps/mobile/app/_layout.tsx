@@ -14,6 +14,7 @@ import { AdGateProvider } from '../src/ads/adGate';
 import { AppOpenAdController } from '../src/ads/AppOpenAdController';
 import { backUpIfChanged } from '../src/backup/driveBackup';
 import { startCalendarSync, syncCalendars } from '../src/calendar/calendarSync';
+import { AnimatedSplash } from '../src/components/AnimatedSplash';
 import { AppSplash } from '../src/components/AppSplash';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
@@ -410,6 +411,9 @@ function RootLayout() {
   // under way — otherwise the first frame would show the wrong language or
   // mirroring.
   const [languageReady, setLanguageReady] = useState(false);
+  // The reveal animation plays over the app (already mounting underneath)
+  // once the language is in place; see AnimatedSplash.
+  const [revealDone, setRevealDone] = useState(false);
   useEffect(() => {
     restoreLanguage()
       .then((reloading) => {
@@ -427,13 +431,16 @@ function RootLayout() {
   if (!languageReady) return <AppSplash />;
 
   return (
-    <SafeAreaProvider>
-      <PreferencesProvider>
-        <AdGateProvider>
-          <Navigation />
-        </AdGateProvider>
-      </PreferencesProvider>
-    </SafeAreaProvider>
+    <>
+      <SafeAreaProvider>
+        <PreferencesProvider>
+          <AdGateProvider>
+            <Navigation />
+          </AdGateProvider>
+        </PreferencesProvider>
+      </SafeAreaProvider>
+      {revealDone ? null : <AnimatedSplash onFinish={() => setRevealDone(true)} />}
+    </>
   );
 }
 

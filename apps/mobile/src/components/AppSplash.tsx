@@ -1,7 +1,7 @@
 import { Image, useColorScheme, View } from 'react-native';
 
 // Same colors as the native splash (app.json → expo-splash-screen).
-const BACKGROUND = { light: '#FFFFFF', dark: '#0E0E14' };
+export const SPLASH_BACKGROUND = { light: '#FFFFFF', dark: '#0E0E14' };
 
 /** The splash screen drawn in JS — the logo centered on the splash color.
  *  Shown wherever the app is up but not ready to draw yet: right after
@@ -16,7 +16,7 @@ export function AppSplash() {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: scheme === 'dark' ? BACKGROUND.dark : BACKGROUND.light,
+        backgroundColor: scheme === 'dark' ? SPLASH_BACKGROUND.dark : SPLASH_BACKGROUND.light,
       }}
     >
       <Image source={require('../../assets/images/app-logo.png')} style={{ width: 120, height: 120 }} />
