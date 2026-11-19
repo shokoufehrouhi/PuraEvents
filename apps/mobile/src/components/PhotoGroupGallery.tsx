@@ -7,7 +7,14 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useTheme } from '../theme/PreferencesContext';
 import { ACCENT_KEYS } from '../theme/tokens';
 import type { PurEvent } from '../types/event';
-import { getGroupPhotos, PHOTO_GROUPS, PHOTOS_PER_GROUP, thumbnailUrl, type PhotoGroup } from '../widgets/photoGroups';
+import {
+  getGroupPhotos,
+  getLoadedGroupPhotos,
+  PHOTO_GROUPS,
+  PHOTOS_PER_GROUP,
+  thumbnailUrl,
+  type PhotoGroup,
+} from '../widgets/photoGroups';
 import { EventIcon } from './EventIcon';
 import { MiniWidget } from './MiniWidget';
 
@@ -23,6 +30,13 @@ interface Props {
   onPick: (url: string, name: string) => void;
 }
 
+// How many groups mount at first, and how many more each tick after that.
+// All 16 groups at once is 64 cards in a single render, which froze the tab
+// switch for seconds on a mid-range phone (taps seemed not to register).
+const FIRST_GROUPS = 2;
+const GROUP_BATCH = 2;
+const BATCH_DELAY_MS = 40;
+
 // The "Categories" tab of both the Widgets tab and the Choose Widget
 // screen: every photo group (widgets/photoGroups.ts) as its own section of
 // Pro curated photos. Mounted only while that tab is open, so Pexels is
@@ -30,7 +44,10 @@ interface Props {
 export function PhotoGroupGallery({ query, isPro, pickedPhotoUrl, downloadingUrl, onPick }: Props) {
   const { t } = useTranslation();
   const { colors, spacing, radius, typography } = useTheme();
-  const [photos, setPhotos] = useState<Record<string, string[]>>({});
+  // Starts from today's photos when the app already loaded them (see
+  // prefetchGroupPhotos), so the cards have their photo from the first frame.
+  const [photos, setPhotos] = useState<Record<string, string[]>>(() => getLoadedGroupPhotos() ?? {});
+  const [shownGroups, setShownGroups] = useState(FIRST_GROUPS);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,10 +59,17 @@ export function PhotoGroupGallery({ query, isPro, pickedPhotoUrl, downloadingUrl
     };
   }, []);
 
+  useEffect(() => {
+    if (shownGroups >= PHOTO_GROUPS.length) return;
+    const timer = setTimeout(() => setShownGroups((n) => n + GROUP_BATCH), BATCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [shownGroups]);
+
   const name = (group: PhotoGroup) => (group.category ? t(`events.category.${group.category}`) : t(`photoGroups.${group.id}.name`));
 
   const q = query.trim().toLowerCase();
-  const visibleGroups = q ? PHOTO_GROUPS.filter((g) => name(g).toLowerCase().includes(q)) : PHOTO_GROUPS;
+  const matchingGroups = q ? PHOTO_GROUPS.filter((g) => name(g).toLowerCase().includes(q)) : PHOTO_GROUPS;
+  const visibleGroups = matchingGroups.slice(0, shownGroups);
 
   return (
     <>

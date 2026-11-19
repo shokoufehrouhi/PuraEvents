@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -61,6 +61,11 @@ export default function WidgetsScreen() {
   // selection actually applies to is tracked separately, below.
   const [sample, setSample] = useState<PurEvent>(SAMPLE_EVENT);
   const [tab, setTab] = useState<Tab>('mine');
+  // Each tab's content (cards with photos, the Categories gallery) is heavy
+  // to mount, so it follows `tab` at a lower priority: the segmented control
+  // highlights the tap at once and the content swaps right after, without
+  // blocking it.
+  const shownTab = useDeferredValue(tab);
   const [query, setQuery] = useState('');
   const [events, setEvents] = useState<PurEvent[]>([]);
   const [widgets, setWidgets] = useState<Widget[]>([]);
@@ -310,7 +315,7 @@ export default function WidgetsScreen() {
         {/* Built-in — the 3 flat presets, same canonical MiniWidget-format
             card as My Widgets/Categories (not a small color swatch), per
             explicit request that widget format stay identical everywhere. */}
-        {tab === 'builtin' ? (
+        {shownTab === 'builtin' ? (
           <View style={[styles.list, { gap: spacing.md }]}>
             {CARD_THEME_KEYS.map((key) => {
               const selected = sample.cardTheme === key;
@@ -336,7 +341,7 @@ export default function WidgetsScreen() {
             trailing action grammar as the "View Pro" upsell rows
             elsewhere (Events tab's LimitBanner, the wizard's Appearance
             Pro note), not a bare dashed placeholder. */}
-        {tab === 'mine' ? (
+        {shownTab === 'mine' ? (
           <Pressable
             onPress={openNewCustom}
             style={[
@@ -370,7 +375,7 @@ export default function WidgetsScreen() {
         ) : null}
 
         {/* My Widgets — every saved custom (photo) widget. */}
-        {tab === 'mine' ? (
+        {shownTab === 'mine' ? (
           <View style={styles.myWidgetsHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={[typography.bodyStrong, { color: colors.text }]}>{t('widgets.myWidgets')}</Text>
@@ -391,7 +396,7 @@ export default function WidgetsScreen() {
             simplified overlay, per explicit request that widget format
             stay identical everywhere. A photo grid tile can't fit that
             much content, so this is a list, not a grid. */}
-        {tab === 'mine' ? (
+        {shownTab === 'mine' ? (
           <View style={[styles.list, { gap: spacing.md }]}>
             {sortedMyWidgets.map(({ widget, linkedEvent }) => {
               const selected = sample.widgetId === widget.id;
@@ -430,7 +435,7 @@ export default function WidgetsScreen() {
           </View>
         ) : null}
 
-        {tab === 'categories' ? (
+        {shownTab === 'categories' ? (
           <PhotoGroupGallery
             query={query}
             isPro={isPro}

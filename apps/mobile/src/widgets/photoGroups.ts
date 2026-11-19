@@ -1,5 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'expo-image';
 import type { ComponentProps } from 'react';
 
 import type { EventCategory } from '../types/event';
@@ -78,6 +79,15 @@ function pageFor(date: string): number {
   return 1 + (hash % PAGE_COUNT);
 }
 
+// Today's photos kept in memory for the session, so the gallery can render
+// them on its very first frame instead of waiting on the async cache read.
+let loaded: { date: string; photos: Record<string, string[]> } | null = null;
+
+/** Today's photos if they're already loaded in this session, else null. */
+export function getLoadedGroupPhotos(): Record<string, string[]> | null {
+  return loaded?.date === todayKey() ? loaded.photos : null;
+}
+
 /** Today's photos for every group, from the daily cache when there.
  *  Only groups missing from today's cache (or that came back empty) are
  *  fetched again, so adding a group doesn't refetch the others. */
@@ -93,7 +103,10 @@ export async function getGroupPhotos(): Promise<Record<string, string[]>> {
   }
 
   const missing = PHOTO_GROUPS.filter((g) => !cached[g.id]?.length);
-  if (!missing.length) return cached;
+  if (!missing.length) {
+    loaded = { date: today, photos: cached };
+    return cached;
+  }
 
   const page = pageFor(today);
   const results = await Promise.all(missing.map((g) => fetchPhotos(g.query, PHOTOS_PER_GROUP, page)));
@@ -101,10 +114,41 @@ export async function getGroupPhotos(): Promise<Record<string, string[]>> {
   missing.forEach((g, i) => {
     photos[g.id] = results[i];
   });
+  loaded = { date: today, photos };
   try {
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, photos } satisfies Cache));
   } catch {
     // Best effort; today's photos still come back below.
   }
   return photos;
+}
+
+const PREFETCHED_KEY = 'puraevents:photoGroupsPrefetchedDate';
+
+/** Downloads today's gallery thumbnails into the image disk cache, so the
+ *  Categories tab shows them at once instead of fetching on open. Meant to
+ *  run in the background at app start. Done at most once a day: the photo
+ *  pick rotates daily (see pageFor), so yesterday's thumbnails simply stop
+ *  being used. Marked done only if every thumbnail arrived, so a flaky
+ *  connection is retried on the next launch. */
+export async function prefetchGroupPhotos(): Promise<void> {
+  const today = todayKey();
+  // Always loaded, even when the thumbnails are already downloaded: it also
+  // fills the in-memory copy the gallery starts from (see getLoadedGroupPhotos).
+  const photos = await getGroupPhotos();
+
+  try {
+    if ((await AsyncStorage.getItem(PREFETCHED_KEY)) === today) return;
+  } catch {
+    // Unreadable marker: just prefetch (a cached image is cheap to re-check).
+  }
+
+  const urls = Object.values(photos).flat().map(thumbnailUrl);
+  if (!urls.length) return;
+  // Same URLs the gallery cards load (see thumbnailUrl) — the disk cache is
+  // keyed by URL. Disk only: decoding all of them into memory at once is
+  // what thumbnailUrl's own comment warns about.
+  if (await Image.prefetch(urls, 'disk')) {
+    await AsyncStorage.setItem(PREFETCHED_KEY, today).catch(() => {});
+  }
 }
