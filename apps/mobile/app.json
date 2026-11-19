@@ -87,6 +87,8 @@
               "description": "See how many days are left until your next event, right on your home screen.",
               "minWidth": "165dp",
               "minHeight": "165dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
               "updatePeriodMillis": 1800000
             }
           ]

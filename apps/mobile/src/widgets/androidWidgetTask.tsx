@@ -28,6 +28,10 @@ import { preparePhotoDataUri } from './widgetPhoto';
 // registers against it once and handles every instance.
 export const ANDROID_WIDGET_NAME = 'CountdownWidgetSmall';
 
+// Side of the square card, in dp — same as the provider's minWidth/minHeight
+// in app.json, so on MIUI the card fills the widget exactly.
+const WIDGET_CARD_SIZE = 165;
+
 // Same "on-brand violet skyline" fallback EventHeroCard.tsx uses for the
 // in-app Today banner when there's no event to theme it with — reused here
 // (not a fresh asset) so the zero-events widget reads as the same "hero"
@@ -317,7 +321,17 @@ export async function buildCountdownWidgetElement(summary: WidgetEventSummary | 
   // above), so skip the extra AsyncStorage read/image resize otherwise.
   const heroPhotoDataUri = summary ? null : await preparePhotoDataUri(await getCachedHeroPhotoPath());
   const text = await loadWidgetText();
-  return <CountdownWidget summary={summary} photoDataUri={photoDataUri} heroPhotoDataUri={heroPhotoDataUri} text={text} />;
+  // Launchers disagree on what size a 165dp provider becomes: MIUI uses the
+  // exact dp, One UI snaps it to a much taller cell block. The card is a
+  // fixed square centered in whatever area the launcher hands over, so it
+  // looks the same everywhere.
+  return (
+    <FlexWidget clickAction="OPEN_APP" style={{ width: 'match_parent', height: 'match_parent', justifyContent: 'center', alignItems: 'center' }}>
+      <FlexWidget style={{ width: WIDGET_CARD_SIZE, height: WIDGET_CARD_SIZE }}>
+        <CountdownWidget summary={summary} photoDataUri={photoDataUri} heroPhotoDataUri={heroPhotoDataUri} text={text} />
+      </FlexWidget>
+    </FlexWidget>
+  );
 }
 
 // Every instance of this provider always shows the same thing: whichever
