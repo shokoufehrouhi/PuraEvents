@@ -31,6 +31,7 @@ import {
 import { initSubscriptions, usePro } from '../src/subscription';
 import { PreferencesProvider, usePreferences, useTheme } from '../src/theme/PreferencesContext';
 import { initAndroidWidgetTaskHandler } from '../src/widgets/androidWidgetTask';
+import { prefetchGroupPhotos } from '../src/widgets/photoGroups';
 import { syncHomeScreenWidget } from '../src/widgets/syncHomeScreenWidget';
 import { syncAppShortcuts } from '../src/shortcuts/appShortcuts';
 import { onEventsChanged } from '../src/storage/events';
@@ -424,6 +425,17 @@ function RootLayout() {
 
   useEffect(() => {
     if (languageReady) SplashScreen.hideAsync().catch(() => {});
+  }, [languageReady]);
+
+  // Warm the Widgets tab's Categories photos once the app is up, so opening
+  // that tab doesn't wait on downloads. Delayed past the reveal animation so
+  // it doesn't compete with startup.
+  useEffect(() => {
+    if (!languageReady) return;
+    const timer = setTimeout(() => {
+      prefetchGroupPhotos().catch(() => {});
+    }, 3500);
+    return () => clearTimeout(timer);
   }, [languageReady]);
 
   // Also covers a reload in progress (layout direction change, Drive
