@@ -16,6 +16,11 @@ import { useTheme } from '../../src/theme/PreferencesContext';
 // the real shape.
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
+// Gap between the floating bar and the system navigation area. Added on top
+// of the bottom inset (not max()ed with it): with 3-button navigation the
+// inset is the full button bar's height, and max() left the bar glued to it.
+const BAR_BOTTOM_GAP = 12;
+
 const ROUTE_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
   index: { active: 'calendar', inactive: 'calendar-outline' },
   widgets: { active: 'grid', inactive: 'grid-outline' },
@@ -44,7 +49,7 @@ function CustomTabBar({ state, descriptors, navigation }: TabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+    <View style={[styles.wrap, { paddingBottom: insets.bottom + BAR_BOTTOM_GAP }]}>
       <View style={[styles.bar, { backgroundColor: colors.surface, shadowColor: '#000' }]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
