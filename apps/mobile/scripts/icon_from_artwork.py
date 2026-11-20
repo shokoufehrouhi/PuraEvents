@@ -9,8 +9,8 @@ app-icon.png and delete assets/logo-preview.png (a review sheet only).
 
 Steps: crop to the icon, paint the white corners with the neighbouring
 background colour (icon.png must be full-bleed: iOS and the stores apply
-their own mask), then derive the Android adaptive layers — the rounded
-violet badge centred on a white backdrop — and a monochrome silhouette.
+their own mask), then derive the Android adaptive layers — a full violet
+backdrop plus the white glass glyph on top, no white margin — and a monochrome silhouette.
 """
 import sys
 
@@ -82,24 +82,28 @@ def fill_corners(img):
 
 
 def adaptive_layers(full, size=1024):
-    """Android launcher icon in the style of Google's own: a white backdrop
-    (the launcher's circle/squircle) with the violet rounded-square icon
-    sitting in the middle of it, like Maps or Play Store."""
-    bg = Image.new('RGB', (size, size), (255, 255, 255))
-    # Launchers show the middle 72 of the 108dp layer; the badge takes a
-    # bit over half of that visible area.
-    inner = int(size * 0.40)
-    badge = full.resize((inner, inner), Image.LANCZOS).convert('RGBA')
-    m = Image.new('L', (inner * 4, inner * 4), 0)
-    ImageDraw.Draw(m).rounded_rectangle([0, 0, inner * 4 - 1, inner * 4 - 1], radius=int(inner * 4 * 0.24), fill=255)
-    badge.putalpha(m.resize((inner, inner), Image.LANCZOS))
+    """Android launcher icon with no white margin: the violet gradient fills
+    the whole backdrop layer and only the white glass glyph (clock, speed
+    bars, sparkle) sits on top, sized to the launcher safe zone."""
+    w = full.size[0]
+    # Backdrop: the icon blurred until the glyph melts into the gradient.
+    bg = full.filter(ImageFilter.GaussianBlur(w / 5)).resize((size, size), Image.LANCZOS)
+    # Glyph mask: the shapes are near-white, the backdrop is saturated violet,
+    # so the red channel separates them. Dilate + soften so the shaded parts
+    # inside the glass shapes (clock hands) stay with the glyph.
+    red = full.split()[0]
+    mask = red.point(lambda v: 0 if v < 175 else min(255, (v - 175) * 5))
+    mask = mask.filter(ImageFilter.MaxFilter(41)).filter(ImageFilter.GaussianBlur(w / 60))
+    glyph = full.convert('RGBA')
+    glyph.putalpha(mask)
+    box = glyph.getbbox()
+    glyph = glyph.crop(box)
+    # Visible area is the middle 72/108 of the layer; keep the glyph inside
+    # roughly 60% of the layer so circular masks don't clip the sparkle.
+    scale = size * 0.60 / max(glyph.size)
+    glyph = glyph.resize((int(glyph.width * scale), int(glyph.height * scale)), Image.LANCZOS)
     fg = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    # Soft shadow under the badge.
-    sh = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    o = (size - inner) // 2
-    ImageDraw.Draw(sh).rounded_rectangle([o, o + size * 0.012, o + inner, o + inner + size * 0.012], radius=int(inner * 0.24), fill=(60, 40, 160, 70))
-    fg.alpha_composite(sh.filter(ImageFilter.GaussianBlur(size / 90)))
-    fg.alpha_composite(badge, (o, o))
+    fg.alpha_composite(glyph, ((size - glyph.width) // 2, (size - glyph.height) // 2))
     return fg, bg
 
 
@@ -123,15 +127,20 @@ def rounded_badge(full, size, shadow=False):
 
 def monochrome(full, size=432):
     """The light, glassy shapes as a white silhouette on transparent."""
-    small = full.resize((size, size), Image.LANCZOS).convert('L')
-    alpha = small.point(lambda v: 0 if v < 190 else min(255, (v - 190) * 5))
+    # Green channel: the glyph is near-white, while the violet backdrop —
+    # even its pale top-left highlight — stays low in green.
+    small = full.resize((size, size), Image.LANCZOS).split()[1]
+    alpha = small.point(lambda v: 0 if v < 175 else min(255, (v - 175) * 5))
     alpha = alpha.filter(ImageFilter.GaussianBlur(0.8))
-    inner = int(size * 0.52)
-    alpha = alpha.resize((inner, inner), Image.LANCZOS)
+    # Same placement as the colour glyph in adaptive_layers: crop to the
+    # shapes and fit them into ~60% of the layer.
+    alpha = alpha.crop(alpha.getbbox())
+    k = size * 0.60 / max(alpha.size)
+    alpha = alpha.resize((int(alpha.width * k), int(alpha.height * k)), Image.LANCZOS)
     out = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    white = Image.new('RGBA', (inner, inner), (255, 255, 255, 255))
+    white = Image.new('RGBA', alpha.size, (255, 255, 255, 255))
     white.putalpha(alpha)
-    out.alpha_composite(white, ((size - inner) // 2, (size - inner) // 2))
+    out.alpha_composite(white, ((size - alpha.width) // 2, (size - alpha.height) // 2))
     return out
 
 
