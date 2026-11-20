@@ -21,8 +21,8 @@ import { usePreferences, useTheme } from '../theme/PreferencesContext';
 import { rowBadgeColors } from '../theme/tokens';
 import { formatCivilDateFull } from '../utils/calendars';
 import { AppAlertModal, type AppAlertState } from './AppAlertModal';
-import { AppSplash } from './AppSplash';
 import { ConfirmModal, type ConfirmModalState } from './ConfirmModal';
+import { RestoreSplash } from './RestoreSplash';
 import { Row } from './ui/Row';
 import { Section } from './ui/Section';
 
@@ -37,9 +37,11 @@ export function DriveBackupSection() {
   const { isPro } = usePro();
   const [state, setState] = useState<DriveBackupState | null>(null);
   const [busy, setBusy] = useState(false);
-  // Restore replaces everything and reloads the app — the splash covers
-  // the whole time, from the download until the reloaded app is drawn.
+  // Restore replaces everything and reloads the app — the restore screen
+  // (logo + progress ring) covers the whole time, from the download until
+  // the reloaded app is drawn (_layout.tsx carries it over the reload).
   const [restoring, setRestoring] = useState(false);
+  const [restoreProgress, setRestoreProgress] = useState(0);
   const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
 
@@ -96,9 +98,10 @@ export function DriveBackupSection() {
       cancelLabel: t('manage.cancel'),
       warning: true,
       onConfirm: async () => {
+        setRestoreProgress(0);
         setRestoring(true);
         const ok = await run(async () => {
-          await restoreFromDrive();
+          await restoreFromDrive(setRestoreProgress);
           return true;
         });
         if (!ok) setRestoring(false);
@@ -211,7 +214,7 @@ export function DriveBackupSection() {
       </Text>
       {busy ? <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} /> : null}
       <Modal visible={restoring} animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
-        <AppSplash />
+        <RestoreSplash progress={restoreProgress} />
       </Modal>
       <ConfirmModal state={confirm} onClose={() => setConfirm(null)} />
       <AppAlertModal alert={alert} onClose={() => setAlert(null)} />

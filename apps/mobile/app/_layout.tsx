@@ -16,6 +16,8 @@ import { backUpIfChanged } from '../src/backup/driveBackup';
 import { startCalendarSync, syncCalendars } from '../src/calendar/calendarSync';
 import { AnimatedSplash } from '../src/components/AnimatedSplash';
 import { AppSplash } from '../src/components/AppSplash';
+import { RestoreReveal } from '../src/components/RestoreSplash';
+import { clearJustRestored, wasJustRestored } from '../src/backup/restoreFlag';
 import { HomeScreenShortcutPrompt } from '../src/components/HomeScreenShortcutPrompt';
 import { NotificationDetailModal } from '../src/components/NotificationDetailModal';
 import { initCrashReporting, wrapWithCrashReporting } from '../src/monitoring/sentry';
@@ -407,15 +409,21 @@ function Navigation() {
 }
 
 function RootLayout() {
-  // Only the splash renders until the saved language is in place (an
-  // AsyncStorage read), or while a reload to flip the layout direction is
-  // under way — otherwise the first frame would show the wrong language or
-  // mirroring.
+  // The app itself only renders once the saved language is in place (an
+  // AsyncStorage read), and not while a reload to flip the layout direction
+  // is under way — otherwise the first frame would show the wrong language
+  // or mirroring.
   const [languageReady, setLanguageReady] = useState(false);
-  // The reveal animation plays over the app (already mounting underneath)
-  // once the language is in place; see AnimatedSplash.
+  // The reveal animation has no text to translate, so it starts as soon as
+  // the first frame is drawn instead of waiting for the language; the app
+  // mounts underneath it. See AnimatedSplash.
   const [revealDone, setRevealDone] = useState(false);
+  // Whether this launch follows a Google Drive restore (null until read).
+  // Then the restore screen (logo + full progress ring) stands in for the
+  // reveal animation, so the app comes up straight from the restore.
+  const [restored, setRestored] = useState<boolean | null>(null);
   useEffect(() => {
+    wasJustRestored().then(setRestored);
     restoreLanguage()
       .then((reloading) => {
         if (!reloading) setLanguageReady(true);
@@ -424,8 +432,8 @@ function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (languageReady) SplashScreen.hideAsync().catch(() => {});
-  }, [languageReady]);
+    if (languageReady || restored === false) SplashScreen.hideAsync().catch(() => {});
+  }, [languageReady, restored]);
 
   // Warm the Widgets tab's Categories photos once the app is up, so opening
   // that tab doesn't wait on downloads. Delayed past the reveal animation so
@@ -438,9 +446,21 @@ function RootLayout() {
     return () => clearTimeout(timer);
   }, [languageReady]);
 
+  // Same element at the same position in both returns (and keyed), so the
+  // animation keeps playing when the app swaps in underneath it.
+  const reveal =
+    restored === false && !revealDone ? <AnimatedSplash key="reveal" onFinish={() => setRevealDone(true)} /> : null;
+
   // Also covers a reload in progress (layout direction change, Drive
   // restore), where the native splash doesn't come back on its own.
-  if (!languageReady) return <AppSplash />;
+  if (!languageReady) {
+    return (
+      <>
+        <AppSplash />
+        {reveal}
+      </>
+    );
+  }
 
   return (
     <>
@@ -451,7 +471,15 @@ function RootLayout() {
           </AdGateProvider>
         </PreferencesProvider>
       </SafeAreaProvider>
-      {revealDone ? null : <AnimatedSplash onFinish={() => setRevealDone(true)} />}
+      {reveal}
+      {restored && !revealDone ? (
+        <RestoreReveal
+          onFinish={() => {
+            setRevealDone(true);
+            clearJustRestored();
+          }}
+        />
+      ) : null}
     </>
   );
 }
