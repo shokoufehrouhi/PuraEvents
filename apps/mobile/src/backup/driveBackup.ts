@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 
 import { resetCalendarSyncAfterRestore } from '../calendar/calendarSync';
 import { forgetScheduled } from '../storage/notificationLog';
+import { markJustRestored } from './restoreFlag';
 
 // Backup to the user's own Google Drive, in the app's hidden appDataFolder
 // (drive.appdata: only this app can see those files, nothing shows up in
@@ -243,8 +244,9 @@ export async function findRemoteBackup(): Promise<string | null> {
 
 /** Replaces this device's events, widgets and settings with the backup.
  *  The caller reloads the app afterwards, so every screen, reminder and
- *  widget starts from the restored data (and the restored language). */
-export async function restoreFromDrive(): Promise<void> {
+ *  widget starts from the restored data (and the restored language).
+ *  `onProgress` gets 0–1 as the backup downloads, for the restore screen's ring. */
+export async function restoreFromDrive(onProgress?: (fraction: number) => void): Promise<void> {
   const remote = await listAppFiles();
   const backupFile = remote.find((f) => f.name === BACKUP_FILE);
   if (!backupFile) throw new DriveBackupError('noBackup');
@@ -253,6 +255,11 @@ export async function restoreFromDrive(): Promise<void> {
   if (backup?.app !== 'PuraEvents' || backup.version !== 1 || typeof backup.records !== 'object') {
     throw new DriveBackupError('invalid');
   }
+  // Steps for the progress ring: the backup file itself, each media file,
+  // then applying it all.
+  const steps = backup.media.length + 2;
+  let done = 1;
+  onProgress?.(done / steps);
 
   // Media first: if this fails part-way, local data is still untouched.
   const remoteByName = new Map(remote.map((f) => [f.name, f.id]));
@@ -262,8 +269,8 @@ export async function restoreFromDrive(): Promise<void> {
   for (const path of backup.media) {
     const id = remoteByName.get(path);
     const local = `${FileSystem.documentDirectory}${path}`;
-    if (!id || (await FileSystem.getInfoAsync(local)).exists) continue;
-    await downloadToLocal(id, local);
+    if (id && !(await FileSystem.getInfoAsync(local)).exists) await downloadToLocal(id, local);
+    onProgress?.(++done / steps);
   }
 
   const toSet = Object.entries(backup.records).filter((e): e is [string, string] => e[1] !== null);
@@ -276,4 +283,7 @@ export async function restoreFromDrive(): Promise<void> {
   await forgetScheduled();
   await resetCalendarSyncAfterRestore();
   await saveState({ lastHash: fingerprint(backup.records, backup.media), lastBackupAt: backup.createdAt });
+  // The reloaded app carries the restore screen through to the end.
+  await markJustRestored();
+  onProgress?.(1);
 }

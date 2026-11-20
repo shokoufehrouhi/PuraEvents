@@ -78,15 +78,13 @@ const SHARDS = TRIANGLES.map((points, i) => {
   };
 });
 
-/** The splash's reveal animation: a faint wireframe of the logo, then the
- *  logo assembled from shards flying in, a small pulse, and the app name
+/** The splash's reveal animation: the logo assembled from shards flying in, a small pulse, and the app name
  *  typed out. Plays over the app once it's ready (see app/_layout.tsx) and
  *  calls onFinish when it has faded out. Tap skips; with the system's
  *  "remove animations" setting it doesn't play at all. */
 export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
   const dark = useColorScheme() === 'dark';
   const [progress] = useState(() => SHARDS.map(() => new Animated.Value(0)));
-  const [wireframe] = useState(() => new Animated.Value(0));
   const [assembled] = useState(() => new Animated.Value(0));
   const [pulse] = useState(() => new Animated.Value(0));
   const [exit] = useState(() => new Animated.Value(1));
@@ -108,13 +106,12 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
     };
 
     function play() {
-      Animated.timing(wireframe, { toValue: 1, duration: 350, useNativeDriver: true }).start();
       Animated.parallel(
         progress.map((value, i) =>
           Animated.timing(value, {
             toValue: 1,
             duration: 620,
-            delay: 150 + i * 35,
+            delay: i * 35,
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
           })
@@ -124,10 +121,7 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
       // hide the hairline seams between the clipped triangles.
       Animated.sequence([
         Animated.delay(1350),
-        Animated.parallel([
-          Animated.timing(assembled, { toValue: 1, duration: 250, useNativeDriver: true }),
-          Animated.timing(wireframe, { toValue: 0, duration: 250, useNativeDriver: true }),
-        ]),
+        Animated.timing(assembled, { toValue: 1, duration: 250, useNativeDriver: true }),
         Animated.timing(pulse, { toValue: 1, duration: 200, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(pulse, { toValue: 0, duration: 260, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
       ]).start();
@@ -169,7 +163,6 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const stroke = dark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(101, 88, 217, 0.4)';
   const textColor = dark ? TEXT.dark : TEXT.light;
   const shownName = typed >= 0 ? NAME.slice(0, typed) : '';
 
@@ -192,14 +185,6 @@ export function AnimatedSplash({ onFinish }: { onFinish: () => void }) {
         </Animated.View>
 
         <Animated.View style={{ width: SIZE, height: SIZE, transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.07] }) }] }}>
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: wireframe }]}>
-            <Svg width={SIZE} height={SIZE}>
-              {SHARDS.map((shard, i) => (
-                <Polygon key={i} points={shard.polygon} fill="none" stroke={stroke} strokeWidth={1} />
-              ))}
-            </Svg>
-          </Animated.View>
-
           {SHARDS.map((shard, i) => {
             const p = progress[i];
             return (

@@ -1,25 +1,15 @@
-import { Image, useColorScheme, View } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 
 // Same colors as the native splash (app.json → expo-splash-screen).
-export const SPLASH_BACKGROUND = { light: '#FFFFFF', dark: '#0E0E14' };
+export const SPLASH_BACKGROUND = { light: '#F1EFFC', dark: '#0E0E14' };
 
-/** The splash screen drawn in JS — the logo centered on the splash color.
- *  Shown wherever the app is up but not ready to draw yet: right after
- *  the native splash hides while the saved language loads, and while a
- *  Google Drive restore runs and the app reloads. Sized to sit where the
- *  native splash's logo does, so the hand-over doesn't jump. */
+/** The splash background drawn in JS — just the splash color, matching the
+ *  native splash (which is blank too: the logo only ever appears through
+ *  AnimatedSplash's reveal, so it isn't shown twice). Shown wherever the app
+ *  is up but not ready to draw yet: right after the native splash hides
+ *  while the saved language loads, and while a reload to flip the layout
+ *  direction is under way. */
 export function AppSplash() {
   const scheme = useColorScheme();
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: scheme === 'dark' ? SPLASH_BACKGROUND.dark : SPLASH_BACKGROUND.light,
-      }}
-    >
-      <Image source={require('../../assets/images/app-logo.png')} style={{ width: 120, height: 120 }} />
-    </View>
-  );
+  return <View style={{ flex: 1, backgroundColor: scheme === 'dark' ? SPLASH_BACKGROUND.dark : SPLASH_BACKGROUND.light }} />;
 }
