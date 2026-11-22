@@ -18,16 +18,16 @@ import { AppAlertModal } from './AppAlertModal';
 // waiting for them to discover the problem by trying to add a widget.
 const SHOWN_KEY = 'puraevents:homeScreenShortcutPromptShown';
 
-export function HomeScreenShortcutPrompt() {
+export function HomeScreenShortcutPrompt({ enabled }: { enabled: boolean }) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (Platform.OS !== 'android' || !isLikelyMiuiDevice()) return;
+    if (!enabled || Platform.OS !== 'android' || !isLikelyMiuiDevice()) return;
     AsyncStorage.getItem(SHOWN_KEY).then((shown) => {
       if (!shown) setVisible(true);
     });
-  }, []);
+  }, [enabled]);
 
   function dismiss() {
     setVisible(false);
