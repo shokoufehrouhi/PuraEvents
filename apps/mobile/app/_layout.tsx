@@ -71,7 +71,9 @@ initSubscriptions();
 
 const EXACT_ALARM_ASKED_KEY = 'puraevents:exactAlarmAsked';
 
-function Navigation() {
+// `introDone` is false while the launch animation (or the restore screen) still
+// covers the app — permission prompts wait for it so they don't pop up over it.
+function Navigation({ introDone }: { introDone: boolean }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { colors, scheme } = useTheme();
@@ -90,6 +92,8 @@ function Navigation() {
     // reminders" access (off by default from Android 14, and only the
     // system screen can turn it on). Asked once, right after notifications
     // are allowed on first launch; Settings > Notifications keeps a row.
+    // Waits for the launch animation so neither prompt shows over it.
+    if (!introDone) return;
     requestNotificationPermissions().then(async (granted) => {
       if (!granted || Platform.OS !== 'android' || canScheduleExactAlarms()) return;
       if (await AsyncStorage.getItem(EXACT_ALARM_ASKED_KEY).catch(() => null)) return;
@@ -102,6 +106,9 @@ function Navigation() {
         dismissLabel: t('settings.exactRemindersLater'),
       });
     });
+  }, [introDone]);
+
+  useEffect(() => {
     // Covers cases where nothing changed since the last write but the
     // widget should anyway — e.g. a fresh install, or the day rolling
     // over so "3 days left" should now read "2".
@@ -395,7 +402,7 @@ function Navigation() {
           opens. */}
       <NotificationDetailModal notification={tappedNotification} onClose={() => setTappedNotification(null)} />
       <AppAlertModal alert={exactAlarmAlert} onClose={() => setExactAlarmAlert(null)} />
-      <HomeScreenShortcutPrompt />
+      <HomeScreenShortcutPrompt enabled={introDone} />
       {/* Re-enabled — see AppOpenAdController.tsx's own comment: the
           confirmed-live "AdActivity appears then immediately gets torn
           down" bug is now understood to be a race between load()/show()
@@ -467,7 +474,7 @@ function RootLayout() {
       <SafeAreaProvider>
         <PreferencesProvider>
           <AdGateProvider>
-            <Navigation />
+            <Navigation introDone={revealDone} />
           </AdGateProvider>
         </PreferencesProvider>
       </SafeAreaProvider>
