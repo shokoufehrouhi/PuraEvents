@@ -1,14 +1,16 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { BlurTargetView } from 'expo-blur';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Platform, ScrollView, Text, View } from 'react-native';
 
 import { adPrivacyOptionsRequired, showAdPrivacyOptions } from '../src/ads/mobileAdsInit';
+import { BackupBlurOverlay } from '../src/components/BackupBlurOverlay';
 import { AppAlertModal, type AppAlertState } from '../src/components/AppAlertModal';
 import { ConfirmModal, type ConfirmModalState } from '../src/components/ConfirmModal';
-import { DriveBackupSection } from '../src/components/DriveBackupSection';
+import { DriveBackupSection, type BackupOverlay } from '../src/components/DriveBackupSection';
 import { ExportModal } from '../src/components/ExportModal';
 import { Row } from '../src/components/ui/Row';
 import { Section } from '../src/components/ui/Section';
@@ -56,6 +58,9 @@ export default function DataPrivacyScreen() {
   const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
   const [busy, setBusy] = useState(false);
+  // A Drive backup or restore in progress blurs the whole screen behind the logo + ring.
+  const [overlay, setOverlay] = useState<BackupOverlay>(null);
+  const blurTarget = useRef<View>(null);
 
   // Export/Import are Pro-only, per explicit request — a free user sees the
   // rows (with a "Pro" trailing badge) and tapping one routes to the
@@ -171,6 +176,8 @@ export default function DataPrivacyScreen() {
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <BlurTargetView ref={blurTarget} style={{ flex: 1 }}>
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.md }}>
       <Section>
         <Row
@@ -212,7 +219,7 @@ export default function DataPrivacyScreen() {
             : t('dataBackup.neverExported')}
         </Text>
       ) : null}
-      <DriveBackupSection />
+      <DriveBackupSection onOverlayChange={setOverlay} />
       {busy ? (
         <View style={{ marginTop: spacing.lg, alignItems: 'center' }}>
           <ActivityIndicator color={colors.primary} />
@@ -222,5 +229,8 @@ export default function DataPrivacyScreen() {
       <ConfirmModal state={confirm} onClose={() => setConfirm(null)} />
       <AppAlertModal alert={alert} onClose={() => setAlert(null)} />
     </ScrollView>
+      </BlurTargetView>
+      {overlay ? <BackupBlurOverlay blurTarget={blurTarget} progress={overlay.progress} /> : null}
+    </View>
   );
 }

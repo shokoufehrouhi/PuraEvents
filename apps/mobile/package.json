@@ -13,6 +13,7 @@
     "dayjs": "^1.11.23",
     "expo": "~57.0.20",
     "expo-audio": "~57.0.5",
+    "expo-blur": "~57.0.3",
     "expo-build-properties": "~57.0.17",
     "expo-calendar": "~57.0.5",
     "expo-constants": "~57.0.17",

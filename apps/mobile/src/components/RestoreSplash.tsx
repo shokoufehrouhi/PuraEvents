@@ -20,8 +20,9 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 /** The splash with a circular progress ring around the logo, shown while a
  *  Google Drive restore downloads and applies the backup. `progress` is
  *  0–1; the ring eases to it and keeps turning slowly, so it still looks
- *  alive while one big file downloads. */
-export function RestoreSplash({ progress }: { progress: number }) {
+ *  alive while one big file downloads. `transparent` drops the background so
+ *  the screen can sit blurred behind it (see BackupBlurOverlay). */
+export function RestoreSplash({ progress, transparent = false }: { progress: number; transparent?: boolean }) {
   const dark = useColorScheme() === 'dark';
   const [arc] = useState(() => new Animated.Value(0));
   const [turn] = useState(() => new Animated.Value(0));
@@ -43,7 +44,7 @@ export function RestoreSplash({ progress }: { progress: number }) {
   }, [progress, arc]);
 
   return (
-    <View style={[styles.root, { backgroundColor: dark ? SPLASH_BACKGROUND.dark : SPLASH_BACKGROUND.light }]}>
+    <View style={[styles.root, { backgroundColor: transparent ? 'transparent' : dark ? SPLASH_BACKGROUND.dark : SPLASH_BACKGROUND.light }]}>
       <Animated.View style={[styles.ring, { opacity: fadeIn, transform: [{ rotate: turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}>
         <Svg width={RING} height={RING}>
           <Circle
