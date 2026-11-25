@@ -3,7 +3,7 @@ import { reloadAppAsync } from 'expo';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import {
   backUpNow,
@@ -22,14 +22,17 @@ import { rowBadgeColors } from '../theme/tokens';
 import { formatCivilDateFull } from '../utils/calendars';
 import { AppAlertModal, type AppAlertState } from './AppAlertModal';
 import { ConfirmModal, type ConfirmModalState } from './ConfirmModal';
-import { RestoreSplash } from './RestoreSplash';
 import { Row } from './ui/Row';
 import { Section } from './ui/Section';
 
 // Data & Privacy's "Google Drive backup" block (see backup/driveBackup.ts).
 // Connecting and restoring are open to everyone, so a backup made while on
 // Pro can always be brought back; making backups is the Pro part.
-export function DriveBackupSection() {
+/** What the screen should show over itself (blurred, logo + ring) while a
+ *  backup or restore runs; null when nothing is. */
+export type BackupOverlay = { progress: number } | null;
+
+export function DriveBackupSection({ onOverlayChange }: { onOverlayChange?: (overlay: BackupOverlay) => void }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { colors, spacing, typography } = useTheme();
@@ -37,11 +40,6 @@ export function DriveBackupSection() {
   const { isPro } = usePro();
   const [state, setState] = useState<DriveBackupState | null>(null);
   const [busy, setBusy] = useState(false);
-  // Restore replaces everything and reloads the app — the restore screen
-  // (logo + progress ring) covers the whole time, from the download until
-  // the reloaded app is drawn (_layout.tsx carries it over the reload).
-  const [restoring, setRestoring] = useState(false);
-  const [restoreProgress, setRestoreProgress] = useState(0);
   const [confirm, setConfirm] = useState<ConfirmModalState | null>(null);
   const [alert, setAlert] = useState<AppAlertState | null>(null);
 
@@ -83,7 +81,8 @@ export function DriveBackupSection() {
       router.push('/upgrade');
       return;
     }
-    const next = await run(backUpNow);
+    onOverlayChange?.({ progress: 0.28 });
+    const next = await run(backUpNow).finally(() => onOverlayChange?.(null));
     if (next) {
       setState(next);
       setAlert({ title: t('driveBackup.doneTitle'), message: t('driveBackup.doneMessage'), variant: 'success' });
@@ -98,13 +97,15 @@ export function DriveBackupSection() {
       cancelLabel: t('manage.cancel'),
       warning: true,
       onConfirm: async () => {
-        setRestoreProgress(0);
-        setRestoring(true);
+        // Restore replaces everything and reloads the app; the overlay
+        // (logo + progress ring over the blurred screen) covers the whole
+        // time, from the download until the reload.
+        onOverlayChange?.({ progress: 0 });
         const ok = await run(async () => {
-          await restoreFromDrive(setRestoreProgress);
+          await restoreFromDrive((progress) => onOverlayChange?.({ progress }));
           return true;
         });
-        if (!ok) setRestoring(false);
+        if (!ok) onOverlayChange?.(null);
         // Every screen, reminder and the widget start over from the
         // restored data — and in the restored language.
         if (ok) await reloadAppAsync('Restored from Google Drive');
@@ -213,9 +214,6 @@ export function DriveBackupSection() {
           : t('driveBackup.note')}
       </Text>
       {busy ? <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} /> : null}
-      <Modal visible={restoring} animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
-        <RestoreSplash progress={restoreProgress} />
-      </Modal>
       <ConfirmModal state={confirm} onClose={() => setConfirm(null)} />
       <AppAlertModal alert={alert} onClose={() => setAlert(null)} />
     </View>
