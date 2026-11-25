@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import * as Notifications from 'expo-notifications';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -80,6 +81,9 @@ export default function NotificationHistoryScreen() {
         // visit (and the Settings row's own "N new" badge) starts clean.
         setEntries(loaded);
         markAllNotificationsSeen();
+        // Seen here means seen everywhere: also clear them from the system
+        // tray, otherwise the launcher icon keeps counting them as unread.
+        Notifications.dismissAllNotificationsAsync().catch(() => {});
       });
       return () => {
         cancelled = true;
